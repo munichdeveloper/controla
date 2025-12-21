@@ -18,7 +18,7 @@ function VersionBadge({ version, latestVersion }) {
   if (isUpToDate) {
     return (
       <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-        (aktuell)
+        aktuell
       </span>
     );
   }
