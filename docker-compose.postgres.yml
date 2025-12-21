@@ -1,0 +1,28 @@
+# Docker Compose nur für PostgreSQL
+# Für lokale Entwicklung: Backend und Frontend laufen lokal
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: n8n-manager-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: n8n_manager
+      POSTGRES_USER: n8n_user
+      POSTGRES_PASSWORD: n8n_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n_user -d n8n_manager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+

@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: n8n-manager-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: n8n_manager
+      POSTGRES_USER: n8n_user
+      POSTGRES_PASSWORD: n8n_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n_user -d n8n_manager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - n8n-network
+
+  # n8n Instance Manager Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder
+    ports:
+      - "8080:8080"
+    environment:
+      - CORE_BASE_URL=http://host.docker.internal:8081
+      - CORE_API_TOKEN=dev-apikey-123
+      - CORE_TENANT_ID=123e4567-e89b-12d3-a456-426614174000
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/n8n_manager
+      - SPRING_DATASOURCE_USERNAME=n8n_user
+      - SPRING_DATASOURCE_PASSWORD=n8n_secure_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      postgres:
+        condition: service_healthy
+      core:
+        condition: service_started
+    networks:
+      - n8n-network
+
+  # n8n Instance Manager Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend-builder
+    ports:
+      - "3000:3000"
+    environment:
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - n8n-network
+
+  # Optional: Agency Core Service
+  # Fügen Sie hier Ihre Core Service Konfiguration hinzu
+  core:
+    # image: your-core-image:latest
+    # oder
+    # build: ../path-to-core-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - n8n-network
+
+networks:
+  n8n-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+
