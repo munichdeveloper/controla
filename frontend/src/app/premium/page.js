@@ -142,7 +142,7 @@ export default function PremiumPage() {
                 <CheckIcon className="h-6 w-5 flex-none text-emerald-400" />
                 API
               </li>
-              <li className="flex gap-x-3 text-emerald-400">
+              <li className="flex gap-x-3 text-emerald-400 font-bold">
                 <CheckIcon className="h-6 w-5 flex-none text-emerald-400" />
                 AI Tools - Coming soon
               </li>
