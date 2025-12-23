@@ -8,7 +8,8 @@ public class TenantContext {
     }
 
     public static String getTenantId() {
-        return currentTenant.get();
+        String tenantId = currentTenant.get();
+        return tenantId != null ? tenantId : "default";
     }
 
     public static void clear() {
