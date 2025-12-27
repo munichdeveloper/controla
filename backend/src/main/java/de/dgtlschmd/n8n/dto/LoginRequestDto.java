@@ -6,6 +6,7 @@ package de.dgtlschmd.n8n.dto;
 public class LoginRequestDto {
     private String username;
     private String password;
+    private String tenantId;
 
     public LoginRequestDto() {
     }
@@ -30,5 +31,12 @@ public class LoginRequestDto {
     public void setPassword(String password) {
         this.password = password;
     }
-}
 
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+}

@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 import javax.crypto.SecretKey;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@ConditionalOnMissingBean(AuthController.class)
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
