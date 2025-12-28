@@ -41,7 +41,10 @@ jobs:
       id: get_version
       run: |
         if [ "${{ github.event_name }}" == "release" ]; then
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Remove refs/tags/ prefix
+          VERSION=${GITHUB_REF#refs/tags/}
+          # Remove leading 'v' if present
+          VERSION=${VERSION#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         else
           echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
