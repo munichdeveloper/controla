@@ -74,3 +74,7 @@ export interface LicenseInfo {
     [key: string]: boolean;
   };
 }
+
+export interface VersionInfo {
+  version: string;
+}

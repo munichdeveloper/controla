@@ -246,3 +246,12 @@ export async function importWorkflow(instanceId: string, workflowJson: any): Pro
     throw new Error(errorText || `Import failed: ${response.statusText}`);
   }
 }
+
+export interface VersionInfo {
+  version: string;
+}
+
+export async function getVersion(): Promise<VersionInfo> {
+  return fetchApi<VersionInfo>('/version');
+}
+

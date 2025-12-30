@@ -1,10 +1,11 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { ThemeProvider, useTheme } from '@/lib/theme/ThemeContext';
 import { LicenseProvider, useLicense } from '@/lib/license/LicenseContext';
+import { getVersion } from '@/lib/api';
 import './globals.css';
 
 function ThemeToggle() {
@@ -96,6 +97,54 @@ function Navigation() {
   );
 }
 
+function Footer() {
+  const { isAuthenticated } = useAuth();
+  const { isPremium } = useLicense();
+  const [version, setVersion] = useState(null);
+
+  useEffect(() => {
+    // Nur laden wenn authentifiziert und Premium
+    if (isAuthenticated && isPremium && typeof window !== 'undefined') {
+      // Kurze Verzögerung um sicherzustellen, dass das Token verfügbar ist
+      const timer = setTimeout(() => {
+        const token = localStorage.getItem('token');
+        console.log('Footer: Fetching version, token present:', !!token);
+
+        getVersion()
+          .then((info) => {
+            console.log('Footer: Version fetched successfully:', info.version);
+            setVersion(info.version);
+          })
+          .catch((err) => {
+            console.error('Footer: Failed to fetch version', err);
+          });
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, isPremium]);
+
+  if (!isAuthenticated || !isPremium) {
+    return null;
+  }
+
+  return (
+    <footer className="border-t border-gray-200/60 dark:border-zinc-800/60 bg-gray-50/50 dark:bg-zinc-900/30 py-4 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center">
+          {version ? (
+            <span className="text-xs text-gray-500 dark:text-zinc-500">
+              Version <span className="font-medium text-gray-600 dark:text-zinc-400">{version}</span>
+            </span>
+          ) : (
+            <div className="w-20 h-3 bg-gray-200 dark:bg-zinc-700 animate-pulse rounded"></div>
+          )}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 export default function RootLayout({ children }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -134,6 +183,7 @@ export default function RootLayout({ children }) {
                   <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
                     {children}
                   </main>
+                  <Footer />
                 </div>
               </ThemeProvider>
             </LicenseProvider>
