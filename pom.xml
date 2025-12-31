@@ -6,7 +6,7 @@
 
     <groupId>de.dgtlschmd.nim.ce</groupId>
     <artifactId>nim-monorepo-root</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
 
     <name>n8n Instance Manager Monorepo Root</name>
