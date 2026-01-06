@@ -40,7 +40,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/munichdeveloper/n8n-instance-manager</url>
+            <url>https://maven.pkg.github.com/munichdeveloper/controla</url>
         </repository>
     </distributionManagement>
 
