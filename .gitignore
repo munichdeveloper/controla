@@ -19,3 +19,4 @@ buildNumber.properties
 /docs/
 /scripts/
 /frontend/.env
+/backend/docs/

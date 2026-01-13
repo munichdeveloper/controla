@@ -23,13 +23,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.crypto.SecretKey;
 import java.util.UUID;
 
-/**
- * Controller für Authentifizierung (Login, Registrierung)
- */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
-@ConditionalOnMissingBean(AuthController.class)
+@ConditionalOnMissingBean(name = "customAuthController")
 @Slf4j
 public class AuthController {
 
