@@ -143,7 +143,7 @@ export default function BackupSettingsPage() {
             Sichere deine Workflows automatisch auf Google Drive. Diese Funktion ist exklusiv in der Hosted Ops verfügbar.
           </p>
           <a
-            href="https://controla.de/signup"
+            href="https://controla.dev/signup"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-lg"

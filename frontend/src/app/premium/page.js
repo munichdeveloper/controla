@@ -98,7 +98,7 @@ export default function PremiumPage() {
               </p>
             </div>
             <a
-              href="https://controla.de/signup"
+              href="https://controla.dev/signup"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 block w-full rounded-full bg-emerald-500/10 py-2 px-3 text-center text-sm font-semibold leading-6 text-emerald-400 shadow-sm hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 transition-colors"
