@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Leitet API-Anfragen im Dev-Modus an das Backend weiter
+    // Leitet API-Anfragen an das Backend weiter (funktioniert in Dev & Production)
     async rewrites() {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080/api';
+        // In Production (Docker): Backend läuft auf localhost:8081 im gleichen Container
+        // In Dev: Backend läuft separat auf localhost:8081
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:8081/api';
         console.log('Backend URL:', backendUrl);
 
         return [

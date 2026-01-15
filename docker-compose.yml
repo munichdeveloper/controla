@@ -22,55 +22,23 @@ services:
     networks:
       - controla-network
 
-  # controla Backend
-  backend:
+  # controla Backend & Frontend (combined in one container)
+  controla:
     build:
       context: .
       dockerfile: Dockerfile
-      target: backend-builder
     ports:
-      - "8080:8080"
+      - "3000:3000"
+      - "8081:8081"
     environment:
-      - CORE_BASE_URL=http://host.docker.internal:8081
-      - CORE_API_TOKEN=dev-apikey-123
-      - CORE_TENANT_ID=123e4567-e89b-12d3-a456-426614174000
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/controla
       - SPRING_DATASOURCE_USERNAME=controla_user
       - SPRING_DATASOURCE_PASSWORD=controla_secure_password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
     depends_on:
       postgres:
         condition: service_healthy
-      core:
-        condition: service_started
-    networks:
-      - controla-network
-
-  # controla Frontend
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: frontend-builder
-    ports:
-      - "3000:3000"
-    environment:
-      - BACKEND_URL=http://backend:8080
-    depends_on:
-      - backend
-    networks:
-      - controla-network
-
-  # Optional: Agency Core Service
-  # Fügen Sie hier Ihre Core Service Konfiguration hinzu
-  core:
-    # image: your-core-image:latest
-    # oder
-    # build: ../path-to-core-service
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
     networks:
       - controla-network
 
@@ -81,4 +49,3 @@ networks:
 volumes:
   postgres_data:
     driver: local
-

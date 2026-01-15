@@ -3,6 +3,7 @@ package de.atstck.controla.config;
 import de.atstck.controla.security.CryptoService;
 import de.atstck.controla.user.User;
 import de.atstck.controla.user.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -13,14 +14,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.UUID;
 
 @Configuration
+@Slf4j
 public class AdminUserInitializer {
-
-    private static final Logger log = LoggerFactory.getLogger(AdminUserInitializer.class);
 
     @Bean
     public CommandLineRunner initAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder, CryptoService cryptoService) {
         return args -> {
+            log.info("=== AdminUserInitializer: Starting admin user initialization ===");
+
             if (userRepository.findByUsername("admin").isEmpty()) {
+                log.info("=== AdminUserInitializer: Admin user does not exist, creating... ===");
+
                 String password = UUID.randomUUID().toString().substring(0, 8);
 
                 User admin = new User();
@@ -41,6 +45,8 @@ public class AdminUserInitializer {
                 log.info("Password: {}", password);
                 log.info("=================================================");
                 log.info("\n\n");
+            } else {
+                log.info("=== AdminUserInitializer: Admin user already exists, skipping creation ===");
             }
         };
     }
