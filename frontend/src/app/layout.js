@@ -70,8 +70,8 @@ function Navigation() {
           </div>
           <div className="flex items-center space-x-4">
             {!isPremium && (
-              <a
-                href="/premium"
+              <a target="_blank"
+                href="https://www.controla.dev/pricing"
                 className="hidden sm:flex items-center px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1.5">
