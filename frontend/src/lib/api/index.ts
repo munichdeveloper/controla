@@ -68,11 +68,37 @@ export async function login(username: string, password: string): Promise<LoginRe
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || 'Login fehlgeschlagen');
+    let errorMessage = 'Login fehlgeschlagen';
+    try {
+      // Clone the response so we can read it multiple times if needed
+      const clonedResponse = response.clone();
+      const text = await clonedResponse.text();
+
+      if (text && text.trim().length > 0) {
+        // Check if it's JSON by trying to parse it
+        try {
+          const json = JSON.parse(text);
+          errorMessage = json.message || json.error || text;
+        } catch {
+          // Not JSON, use as plain text
+          errorMessage = text;
+        }
+      } else {
+        errorMessage = `Login fehlgeschlagen (${response.status} ${response.statusText})`;
+      }
+    } catch (e) {
+      // Fallback if response body cannot be read
+      errorMessage = `Login fehlgeschlagen (${response.status} ${response.statusText})`;
+    }
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  // Success case - parse JSON response
+  try {
+    return await response.json();
+  } catch (e) {
+    throw new Error('Ungültige Antwort vom Server erhalten');
+  }
 }
 
 export async function register(username: string, password: string, email: string): Promise<string> {
@@ -85,8 +111,29 @@ export async function register(username: string, password: string, email: string
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || 'Registrierung fehlgeschlagen');
+    let errorMessage = 'Registrierung fehlgeschlagen';
+    try {
+      // Clone the response so we can read it multiple times if needed
+      const clonedResponse = response.clone();
+      const text = await clonedResponse.text();
+
+      if (text && text.trim().length > 0) {
+        // Check if it's JSON by trying to parse it
+        try {
+          const json = JSON.parse(text);
+          errorMessage = json.message || json.error || text;
+        } catch {
+          // Not JSON, use as plain text
+          errorMessage = text;
+        }
+      } else {
+        errorMessage = `Registrierung fehlgeschlagen (${response.status} ${response.statusText})`;
+      }
+    } catch (e) {
+      // Fallback if response body cannot be read
+      errorMessage = `Registrierung fehlgeschlagen (${response.status} ${response.statusText})`;
+    }
+    throw new Error(errorMessage);
   }
 
   return response.text();
