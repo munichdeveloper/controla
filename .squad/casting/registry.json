@@ -1,0 +1,67 @@
+{
+  "agents": {
+    "ripley": {
+      "persistent_name": "Ripley",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "parker": {
+      "persistent_name": "Parker",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "lambert": {
+      "persistent_name": "Lambert",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "hicks": {
+      "persistent_name": "Hicks",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "bishop": {
+      "persistent_name": "Bishop",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "vasquez": {
+      "persistent_name": "Vasquez",
+      "universe": "Alien",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "scribe": {
+      "persistent_name": "Scribe",
+      "universe": "System",
+      "created_at": "2026-03-19T21:46:54.325Z",
+      "legacy_named": true,
+      "status": "active"
+    },
+    "ralph": {
+      "persistent_name": "Ralph",
+      "universe": "System",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "@copilot": {
+      "persistent_name": "@copilot",
+      "universe": "System",
+      "created_at": "2026-03-19T21:48:50.520Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  }
+}
