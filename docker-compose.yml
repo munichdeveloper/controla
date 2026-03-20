@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -7,45 +5,64 @@ services:
     container_name: controla-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_DB: controla
-      POSTGRES_USER: controla_user
-      POSTGRES_PASSWORD: controla_secure_password
+      POSTGRES_DB: ${POSTGRES_DB:-controla}
+      POSTGRES_USER: ${POSTGRES_USER:-controla_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-controla_secure_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U controla_user -d controla"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-controla_user} -d ${POSTGRES_DB:-controla}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - controla-network
-
   # controla Backend & Frontend (combined in one container)
   controla:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+        BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
     ports:
       - "3000:3000"
       - "8081:8081"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/controla
-      - SPRING_DATASOURCE_USERNAME=controla_user
-      - SPRING_DATASOURCE_PASSWORD=controla_secure_password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
-      - NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+      SERVER_PORT: ${SERVER_PORT:-8081}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      CORE_BASE_URL: ${CORE_BASE_URL:-http://host.docker.internal:8081}
+      CORE_API_TOKEN: ${CORE_API_TOKEN:-dev-apikey-123}
+      CORE_TENANT_ID: ${CORE_TENANT_ID:-123e4567-e89b-12d3-a456-426614174000}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/controla}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-controla_user}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-controla_secure_password}
+      CONTROLA_SECURITY_MASTER_KEY: ${CONTROLA_SECURITY_MASTER_KEY:-change-me-to-a-very-secure-random-string-32-chars}
+      JWT_SECRET: ${JWT_SECRET:-controla-secret-key-min-32-chars-required-for-security}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      # Optional SMTP / Mail configuration
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@controla.local}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-controla}
+      EMAIL_LOCALE: ${EMAIL_LOCALE:-de_DE}
+      EMAIL_BRANDING: ${EMAIL_BRANDING:-controla}
+      PASSWORD_RESET_TOKEN_VALIDITY_HOURS: ${PASSWORD_RESET_TOKEN_VALIDITY_HOURS:-24}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
+      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - controla-network
-
 networks:
   controla-network:
     driver: bridge
-
 volumes:
   postgres_data:
     driver: local

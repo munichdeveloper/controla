@@ -25,7 +25,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Value("${app.password-reset.token-validity-hours:24}")
     private int tokenValidityHours;
 
-    @Value("${app.frontend-app-url:http://localhost:3001}")
+    @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendAppUrl;
 
     public PasswordResetServiceImpl(

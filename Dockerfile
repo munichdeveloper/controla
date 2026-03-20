@@ -13,8 +13,11 @@ WORKDIR /build/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend ./
-# Backend URL für Frontend setzen (zur Build-Zeit)
-ENV NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+# Backend-URLs für Frontend und Rewrites zur Build-Zeit setzen
+ARG NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+ARG BACKEND_URL=http://localhost:8081/api
+ENV NEXT_PUBLIC_BACKEND_BASE_URL=${NEXT_PUBLIC_BACKEND_BASE_URL}
+ENV BACKEND_URL=${BACKEND_URL}
 RUN npm run build
 
 # --- Stufe 3: Finale Anwendung zusammenstellen ---
@@ -41,8 +44,10 @@ ENV CORE_BASE_URL=http://host.docker.internal:8081
 ENV CORE_API_TOKEN=dev-apikey-123
 ENV CORE_TENANT_ID=123e4567-e89b-12d3-a456-426614174000
 
-# Backend URL für Server-seitige API-Aufrufe in Next.js
+# URLs für Frontend- und Backend-Kommunikation
 ENV BACKEND_URL=http://localhost:8081/api
+ENV NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+ENV FRONTEND_URL=http://localhost:3000
 
 # Ports freigeben
 EXPOSE 8081
@@ -65,4 +70,3 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
 
 # Start-Skript ausführen
 CMD ["/app/start.sh"]
-

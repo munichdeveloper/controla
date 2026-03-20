@@ -1,6 +1,6 @@
 # Controla - Community Edition
 
-A monorepo project for monitoring up to 3 n8n instances (Community Edition).
+A monorepo project for monitoring up to 3 n8n instances in the Community Edition.
 
 ## License
 Controla Community Edition is licensed under the GNU Affero General Public License v3.0 (AGPLv3).
@@ -33,20 +33,25 @@ See the LICENSE file for details.
 - Docker & Docker Compose (for PostgreSQL)
 - Node.js 20+ (optional, will be installed automatically)
 
+A complete environment template for Docker Compose is available in `.env.example`.
+
 ```bash
-# Alle Services starten (PostgreSQL + Backend + Frontend)
-docker-compose up -d
+# Copy the template once and adjust the values for your environment
+cp .env.example .env
+
+# Start all services (PostgreSQL + Backend + Frontend)
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
-**URL:** http://localhost:3000
+**Application URL:** http://localhost:3000
 
-### Option 3: Local Development (without PostgreSQL)
+### Local Development without PostgreSQL
 
 ```bash
-# Start backend with H2 database
+# Start backend with the H2 development database
 cd backend
 mvn spring-boot:run -Dspring.profiles.active=dev
 
@@ -56,10 +61,10 @@ npm install
 npm run dev
 ```
 
-**H2 Console:** http://localhost:8080/h2-console  
+**H2 Console:** http://localhost:8081/h2-console  
 **JDBC URL:** `jdbc:h2:file:./data/controla-dev`
 
-### 4. Start Frontend (Development)
+### Frontend Development Only
 
 ```bash
 cd frontend
@@ -67,23 +72,23 @@ npm install
 npm run dev
 ```
 
-Frontend runs on: http://localhost:3000
+The frontend development server runs on: http://localhost:3001
 
 ## 🐳 Docker
 
-### Docker Build
+### Build the image
 
 ```bash
-docker build -t controla .
+docker build \
+  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api \
+  --build-arg BACKEND_URL=http://localhost:8081/api \
+  -t controla .
 ```
 
-### Docker Run
+### Run the image
 
 ```bash
-docker run -p 8080:8080 -p 3000:3000 \
-  -e CORE_BASE_URL=https://core-api.example.com \
-  -e CORE_API_TOKEN=your-token \
-  controla
+docker run --env-file .env -p 3000:3000 -p 8081:8081 controla
 ```
 
 ## 📁 Project Structure
@@ -142,7 +147,7 @@ controla/
 
 ```bash
 # Start PostgreSQL only
-docker-compose -f docker-compose.postgres.yml up -d
+docker compose -f docker-compose.postgres.yml up -d
 
 # Connect with psql
 docker exec -it controla-postgres psql -U controla_user -d controla
@@ -167,13 +172,13 @@ docker exec -i controla-postgres psql -U controla_user -d controla < backup.sql
 mvn spring-boot:run -Dspring.profiles.active=dev
 ```
 
-**H2 Console:** http://localhost:8080/h2-console  
+**H2 Console:** http://localhost:8081/h2-console  
 **JDBC URL:** `jdbc:h2:file:./data/controla-dev`  
 **User:** `sa` / **Password:** `password`
 
 Data is stored in `./data/` and persists.
 
-📖 **Detailed PostgreSQL Documentation:** [docs/POSTGRESQL_SETUP.md](docs/POSTGRESQL_SETUP.md)
+📖 **Detailed deployment guide:** [docs/DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md)
 
 ## 🛠️ Development
 
@@ -189,7 +194,7 @@ cd frontend
 npm run dev
 ```
 
-### Run tests
+### Run the test suite
 ```bash
 mvn test
 ```
@@ -219,8 +224,6 @@ test-pre-push-hook.bat
 git push --no-verify
 ```
 
-📖 **Detailed Hook Documentation:** [GIT_HOOKS.md](docs/GIT_HOOKS.md)
-
 ## 🎨 Frontend Technologies
 
 - **Next.js 14** - React Framework with App Router
@@ -243,14 +246,47 @@ mvn clean package
 
 ## 🔐 Environment Variables
 
-### Backend
-- `CORE_BASE_URL` - URL of the Agency Core API (Default: http://localhost:8081)
-- `CORE_API_TOKEN` - API Key for Core (Default: dev-apikey-123)
-- `CORE_TENANT_ID` - Tenant ID for Multi-Tenancy (Default: 123e4567-e89b-12d3-a456-426614174000)
-- `SERVER_PORT` - Backend Port (Default: 8080)
+A complete template for Docker Compose is available in `.env.example`.
 
-### Frontend
-- `NEXT_PUBLIC_BACKEND_BASE_URL` - Backend URL (Default: /api via Proxy)
+### Core Runtime / Docker
+
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| `POSTGRES_DB` | `controla` | Docker only | PostgreSQL database name used by the Compose services |
+| `POSTGRES_USER` | `controla_user` | Docker only | PostgreSQL username used by the Compose services |
+| `POSTGRES_PASSWORD` | `controla_secure_password` | Docker only | PostgreSQL password used by the Compose services |
+| `POSTGRES_PORT` | `5432` | No | Host port for `docker-compose.yml` |
+| `POSTGRES_DEV_PORT` | `5433` | No | Host port for `docker-compose.postgres.yml` |
+| `SERVER_PORT` | `8081` | No | Spring Boot backend port |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:3001` | No | Allowed browser origins for the backend |
+| `CORE_BASE_URL` | `http://localhost:8081` | Yes | Base URL of the Agency Core API |
+| `CORE_API_TOKEN` | `dev-apikey-123` | Yes | API token for the Agency Core API |
+| `CORE_TENANT_ID` | `123e4567-e89b-12d3-a456-426614174000` | Yes | Tenant ID for multi-tenancy |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5433/controla` (local) / `jdbc:postgresql://postgres:5432/controla` (Compose) | Yes | JDBC URL for the backend database |
+| `SPRING_DATASOURCE_USERNAME` | `controla_user` | Yes | Database username for the backend |
+| `SPRING_DATASOURCE_PASSWORD` | `controla_secure_password` | Yes | Database password for the backend |
+| `CONTROLA_SECURITY_MASTER_KEY` | `change-me-to-a-very-secure-random-string-32-chars` | No | Master key for encrypting stored API keys |
+| `JWT_SECRET` | `controla-secret-key-min-32-chars-required-for-security` | No | Secret used to sign JWT tokens |
+| `JWT_EXPIRATION` | `86400000` | No | JWT lifetime in milliseconds |
+| `BACKEND_URL` | `http://localhost:8081/api` | No | Server-side backend URL used by Next.js rewrites/build |
+| `NEXT_PUBLIC_BACKEND_BASE_URL` | `http://localhost:8081/api` | No | Client-side backend URL used by the browser |
+| `FRONTEND_URL` | `http://localhost:3000` | No | Public frontend base URL used in password-reset links |
+
+> For local frontend development (`npm run dev`), set `FRONTEND_URL=http://localhost:3001` because the Next.js development server runs on port `3001`.
+
+### Optional Mail / Password Reset Settings
+
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| `MAIL_HOST` | - | Optional | SMTP host for password reset emails |
+| `MAIL_PORT` | `587` | Optional | SMTP port |
+| `MAIL_USERNAME` | - | Optional | SMTP username |
+| `MAIL_PASSWORD` | - | Optional | SMTP password |
+| `MAIL_FROM` | `noreply@controla.local` | No | Sender email address |
+| `MAIL_FROM_NAME` | `controla` | No | Sender display name |
+| `PASSWORD_RESET_TOKEN_VALIDITY_HOURS` | `24` | No | Password reset token lifetime in hours |
+| `EMAIL_LOCALE` | `de_DE` | No | Locale used to resolve email templates |
+| `EMAIL_BRANDING` | `controla` | No | Branding namespace used to resolve email templates |
 
 ## 📈 Extensibility
 
@@ -265,13 +301,12 @@ The project is designed to be easily extended to the Pro version:
 
 ## 📚 Documentation
 
-Further documentation can be found in the [`docs/`](./docs) folder:
+Further documentation is available in the [`docs/`](./docs) folder:
 
-- **[Quick Start Guide](./docs/QUICKSTART.md)** - Quick start in 3 steps
-- **[Agency Core Integration](./docs/AGENCY_CORE_INTEGRATION.md)** - Integration with Agency Core API
-- **[Setup Complete](./docs/SETUP_COMPLETE.md)** - Complete setup documentation
-- **[Build Status](./docs/BUILD_STATUS.md)** - Build metrics and status
-- **[Status](./docs/STATUS.md)** - Original project status
+- **[Documentation Overview](./docs/README.md)** - Entry point for project documentation
+- **[Docker Deployment Guide](./docs/DOCKER_DEPLOYMENT.md)** - Docker setup, ports, and environment variables
+- **[Architecture Decisions](./docs/04_decisions/README.md)** - Index of architectural decision records
+- **[ADR-001: Single Container Deployment](./docs/04_decisions/ADR-001-single-container-deployment.md)** - Deployment decision for backend and frontend
 
 ## 📝 License
 
@@ -280,4 +315,3 @@ This project is part of the controla system.
 ## 🤝 Support
 
 For questions and support, contact the development team.
-

@@ -1,28 +1,23 @@
 # Docker Compose nur für PostgreSQL
 # Für lokale Entwicklung: Backend und Frontend laufen lokal
-
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: controla-postgres
     restart: unless-stopped
     ports:
-      - "5433:5432"
+      - "${POSTGRES_DEV_PORT:-5433}:5432"
     environment:
-      POSTGRES_DB: controla
-      POSTGRES_USER: controla_user
-      POSTGRES_PASSWORD: controla_secure_password
+      POSTGRES_DB: ${POSTGRES_DB:-controla}
+      POSTGRES_USER: ${POSTGRES_USER:-controla_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-controla_secure_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U controla_user -d controla"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-controla_user} -d ${POSTGRES_DB:-controla}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
 volumes:
   postgres_data:
     driver: local
-

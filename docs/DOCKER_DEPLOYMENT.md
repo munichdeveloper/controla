@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Controla uses a **single-container architecture** for backend and frontend:
+Controla uses a **single-container architecture** for the backend and frontend:
 
 ```
 ┌─────────────────────────────────────┐
@@ -38,62 +38,88 @@ Controla uses a **single-container architecture** for backend and frontend:
 
 ## Environment Variables
 
+A complete template for Docker Compose is available in [`.env.example`](../.env.example).
+
 ### Backend (Spring Boot)
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `SPRING_DATASOURCE_URL` | Yes | - | PostgreSQL JDBC URL |
-| `SPRING_DATASOURCE_USERNAME` | Yes | - | Database user |
-| `SPRING_DATASOURCE_PASSWORD` | Yes | - | Database password |
-| `CORE_BASE_URL` | Yes | - | Agency Core API Base URL |
-| `CORE_API_TOKEN` | Yes | - | Agency Core API Token |
-| `CORE_TENANT_ID` | Yes | - | Agency Core Tenant ID |
-| `CONTROLA_SECURITY_MASTER_KEY` | No | change-me-... | Master key for encryption |
+| `SERVER_PORT` | No | `8081` | Spring Boot backend port |
+| `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3000,http://localhost:3001` | Allowed browser origins |
+| `SPRING_DATASOURCE_URL` | Yes | `jdbc:postgresql://postgres:5432/controla` in Compose | PostgreSQL JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | Yes | `controla_user` | Database user |
+| `SPRING_DATASOURCE_PASSWORD` | Yes | `controla_secure_password` | Database password |
+| `CORE_BASE_URL` | Yes | `http://host.docker.internal:8081` | Agency Core API base URL |
+| `CORE_API_TOKEN` | Yes | `dev-apikey-123` | Agency Core API token |
+| `CORE_TENANT_ID` | Yes | `123e4567-e89b-12d3-a456-426614174000` | Agency Core tenant ID |
+| `CONTROLA_SECURITY_MASTER_KEY` | No | `change-me-to-a-very-secure-random-string-32-chars` | Master key for encryption |
+| `JWT_SECRET` | No | `controla-secret-key-min-32-chars-required-for-security` | JWT signing secret |
+| `JWT_EXPIRATION` | No | `86400000` | JWT lifetime in milliseconds |
+| `FRONTEND_URL` | No | `http://localhost:3000` | Public frontend URL used in password-reset links |
 
 ### Frontend (Next.js)
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `NEXT_PUBLIC_BACKEND_BASE_URL` | Yes | - | Backend URL for browser (e.g. `http://localhost:8081/api`) |
-| `BACKEND_URL` | No | `http://localhost:8081/api` | Backend URL for SSR (server-side) |
+| `NEXT_PUBLIC_BACKEND_BASE_URL` | No | `http://localhost:8081/api` | Client-side backend URL embedded into the browser bundle |
+| `BACKEND_URL` | No | `http://localhost:8081/api` | Server-side backend URL used for rewrites and build-time configuration |
 
-⚠️ **Important:** `NEXT_PUBLIC_BACKEND_BASE_URL` must be set at build time OR at runtime in `docker-compose.yml`!
+### Optional Mail / Password Reset
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `MAIL_HOST` | Optional | - | SMTP host for password reset emails |
+| `MAIL_PORT` | Optional | `587` | SMTP port |
+| `MAIL_USERNAME` | Optional | - | SMTP username |
+| `MAIL_PASSWORD` | Optional | - | SMTP password |
+| `MAIL_FROM` | No | `noreply@controla.local` | Sender email address |
+| `MAIL_FROM_NAME` | No | `controla` | Sender display name |
+| `PASSWORD_RESET_TOKEN_VALIDITY_HOURS` | No | `24` | Password reset token validity |
+| `EMAIL_LOCALE` | No | `de_DE` | Email template locale |
+| `EMAIL_BRANDING` | No | `controla` | Email template branding namespace |
+
+⚠️ **Important:** `NEXT_PUBLIC_BACKEND_BASE_URL` is used during the frontend build. The Compose file therefore passes it both as a build argument and as a runtime environment variable.
 
 ## Docker Compose Example
 
 ```yaml
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_DB: controla
-      POSTGRES_USER: controla_user
-      POSTGRES_PASSWORD: controla_secure_password
+      POSTGRES_DB: ${POSTGRES_DB:-controla}
+      POSTGRES_USER: ${POSTGRES_USER:-controla_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-controla_secure_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   controla:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+        BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
     ports:
       - "3000:3000"
       - "8081:8081"
     environment:
-      # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/controla
-      - SPRING_DATASOURCE_USERNAME=controla_user
-      - SPRING_DATASOURCE_PASSWORD=controla_secure_password
-      
-      # Agency Core API
-      - CORE_BASE_URL=http://your-core-api:8081
-      - CORE_API_TOKEN=your-token
-      - CORE_TENANT_ID=your-tenant-id
-      
-      # Frontend → Backend Communication
-      - NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+      SERVER_PORT: ${SERVER_PORT:-8081}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      CORE_BASE_URL: ${CORE_BASE_URL:-http://host.docker.internal:8081}
+      CORE_API_TOKEN: ${CORE_API_TOKEN:-dev-apikey-123}
+      CORE_TENANT_ID: ${CORE_TENANT_ID:-123e4567-e89b-12d3-a456-426614174000}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/controla}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-controla_user}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-controla_secure_password}
+      CONTROLA_SECURITY_MASTER_KEY: ${CONTROLA_SECURITY_MASTER_KEY:-change-me-to-a-very-secure-random-string-32-chars}
+      JWT_SECRET: ${JWT_SECRET:-controla-secret-key-min-32-chars-required-for-security}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
+      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
     depends_on:
       - postgres
 
@@ -101,9 +127,9 @@ volumes:
   postgres_data:
 ```
 
-## Start Process
+## Container Startup Process
 
-The container uses a shell script (`/app/start.sh`) that starts both services:
+The container uses a shell script (`/app/start.sh`) to start both services:
 
 ```bash
 #!/bin/sh
@@ -129,48 +155,48 @@ This ensures that:
 
 ### Server-side (Next.js SSR)
 
-Next.js Server → Backend: `http://localhost:8081/api`
+Next.js server → backend: `http://localhost:8081/api`
 
-- Both services in the same container
+- Both services run in the same container
 - `localhost` works directly
-- No DNS or service discovery needed
+- No DNS or service discovery is needed
 
 ### Client-side (Browser)
 
-Browser → Backend: `http://<server-ip-or-domain>:8081/api`
+Browser → backend: `http://<server-ip-or-domain>:8081/api`
 
-- Port 8081 must be exposed
+- Port `8081` must be exposed
 - `NEXT_PUBLIC_BACKEND_BASE_URL` defines the URL
 - CORS is configured in the backend
 
-### Why No Next.js Rewrites in Production?
+### Why rewrites do not work in production
 
-Next.js rewrites only work in the development server. In the `standalone` production build, rewrites are evaluated **at build time**, but not active as a reverse proxy at runtime.
+Next.js rewrites work in development mode. In the `standalone` production build, rewrites are evaluated at build time but do not act as a runtime reverse proxy.
 
 **Alternatives:**
-- ✅ Direct communication (our solution)
+- ✅ Direct communication (current approach)
 - ❌ Nginx reverse proxy (more complexity)
-- ❌ Traefik/Caddy (overhead for Community Edition)
+- ❌ Traefik/Caddy (additional operational overhead for the Community Edition)
 
 ## Commands
 
-### Build & Start
+### Build and start
 
 ```bash
 # Build everything from scratch
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Start
-docker-compose up -d
+docker compose up -d
 
 # Follow logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Debugging
 
 ```bash
-# Login to container
+# Open a shell in the container
 docker exec -it controla-controla-1 sh
 
 # Filter backend logs
@@ -179,23 +205,23 @@ docker logs controla-controla-1 2>&1 | grep "Spring"
 # Filter frontend logs
 docker logs controla-controla-1 2>&1 | grep "Frontend"
 
-# Check processes in container
+# Check processes in the container
 docker exec controla-controla-1 ps aux
 
 # Check ports
 docker exec controla-controla-1 netstat -tlnp
 ```
 
-### Health Checks
+### Health checks
 
 ```bash
-# Backend Health
+# Backend health
 curl http://localhost:8081/actuator/health
 
-# Frontend Health (HTML response)
+# Frontend health (HTML response)
 curl http://localhost:3000
 
-# Login test (Backend API)
+# Login test (backend API)
 curl -X POST http://localhost:8081/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
@@ -203,9 +229,9 @@ curl -X POST http://localhost:8081/api/auth/login \
 
 ## Troubleshooting
 
-### Frontend Cannot Reach Backend
+### Frontend cannot reach the backend
 
-**Symptom:** 404 or Connection Refused on API call
+**Symptom:** 404 or connection refused on an API call
 
 **Solution:**
 1. Check if `NEXT_PUBLIC_BACKEND_BASE_URL` is set:
@@ -213,19 +239,19 @@ curl -X POST http://localhost:8081/api/auth/login \
    docker exec controla-controla-1 env | grep NEXT_PUBLIC
    ```
 
-2. Check if backend is running:
+2. Check if the backend is running:
    ```bash
    curl http://localhost:8081/actuator/health
    ```
 
-3. Check CORS logs in backend:
+3. Check CORS logs in the backend:
    ```bash
    docker logs controla-controla-1 | grep CORS
    ```
 
-### Only Backend Starts, No Frontend
+### Only the backend starts, no frontend
 
-**Symptom:** Port 3000 does not respond
+**Symptom:** Port `3000` does not respond
 
 **Solution:**
 1. Check if frontend files were copied:
@@ -238,14 +264,14 @@ curl -X POST http://localhost:8081/api/auth/login \
    docker exec controla-controla-1 cat /app/start.sh
    ```
 
-3. Manually start frontend (debug):
+3. Start the frontend manually for debugging:
    ```bash
    docker exec -it controla-controla-1 sh
    cd /app/frontend
    node server.js
    ```
 
-### Port Conflict
+### Port conflict
 
 **Symptom:** `bind: address already in use`
 
@@ -266,7 +292,7 @@ ports:
 
 ## Performance
 
-### Resource Limits
+### Resource limits
 
 ```yaml
 controla:
@@ -281,7 +307,7 @@ controla:
         memory: 1G
 ```
 
-### Log Rotation
+### Log rotation
 
 ```yaml
 controla:
@@ -304,7 +330,7 @@ For production deployment:
    CONTROLA_SECURITY_MASTER_KEY=<32-char-random-string>
    ```
 
-2. **Setup HTTPS:**
+2. **Set up HTTPS:**
    - Reverse proxy (Nginx/Traefik) in front of the container
    - SSL certificate (Let's Encrypt)
 
@@ -327,5 +353,5 @@ For production deployment:
 ## See Also
 
 - [ADR-001: Single Container Deployment](04_decisions/ADR-001-single-container-deployment.md)
-- [Glossary: NEXT_PUBLIC_BACKEND_BASE_URL](../doc-meta/glossary.yaml)
+- [Glossary](../doc-meta/glossary.yaml)
 - [System Architecture](../doc-meta/system.yaml)
