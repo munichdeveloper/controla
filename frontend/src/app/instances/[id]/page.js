@@ -1,7 +1,18 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getInstance, getInstanceWorkflows, getInstanceEvents, getInstanceErrorPatterns, exportInstanceWorkflows, getInstanceLastBackup, importWorkflow } from '@/lib/api';
+import {
+  ApiError,
+  getInstance,
+  getInstanceWorkflows,
+  getInstanceEvents,
+  getInstanceErrorPatterns,
+  exportInstanceWorkflows,
+  getInstanceLastBackup,
+  getInstanceIncidents,
+  getInstanceUptimeStats,
+  importWorkflow,
+} from '@/lib/api';
 import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor } from '@/lib/utils';
 import { useState, useMemo, Fragment, useRef } from 'react';
 import Link from 'next/link';
@@ -46,6 +57,50 @@ function LockedState() {
   );
 }
 
+function isNotFoundError(error) {
+  if (!error) return false;
+  if (error instanceof ApiError) return error.status === 404;
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    return error.status === 404;
+  }
+  if (error instanceof Error) {
+    return error.message.includes('404');
+  }
+  return false;
+}
+
+function formatDowntime(seconds) {
+  if (!seconds || seconds <= 0) return '0s';
+
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hours) parts.push(`${hours}h`);
+  if (minutes) parts.push(`${minutes}m`);
+  if (secs || parts.length === 0) parts.push(`${secs}s`);
+
+  return parts.join(' ');
+}
+
+function formatPercent(value) {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(numeric)) return '-';
+  return `${numeric.toFixed(2)}%`;
+}
+
+const uptimeFields = [
+  { key: 'last24Hours', label: 'Letzte 24 Stunden' },
+  { key: 'last7Days', label: 'Letzte 7 Tage' },
+  { key: 'last30Days', label: 'Letzte 30 Tage' },
+  { key: 'last3Months', label: 'Letzte 3 Monate' },
+  { key: 'last6Months', label: 'Letzte 6 Monate' },
+  { key: 'last12Months', label: 'Letzte 12 Monate' },
+];
+
 export default function InstanceDetailPage({ params }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [patternRange, setPatternRange] = useState('14d');
@@ -59,7 +114,7 @@ export default function InstanceDetailPage({ params }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
 
-  const { data: instance, isLoading: instanceLoading } = useQuery({
+  const { data: instance, isLoading: instanceLoading, error: instanceError } = useQuery({
     queryKey: ['instance', instanceId],
     queryFn: () => getInstance(instanceId),
   });
@@ -74,6 +129,18 @@ export default function InstanceDetailPage({ params }) {
     queryKey: ['workflows', instanceId],
     queryFn: () => getInstanceWorkflows(instanceId),
     enabled: activeTab === 'workflows',
+  });
+
+  const { data: incidents, isLoading: incidentsLoading, error: incidentsError } = useQuery({
+    queryKey: ['instanceIncidents', instanceId],
+    queryFn: () => getInstanceIncidents(instanceId),
+    enabled: isPremium && activeTab === 'incidents' && !!instanceId,
+  });
+
+  const { data: uptimeStats, isLoading: uptimeLoading, error: uptimeError } = useQuery({
+    queryKey: ['instanceUptime', instanceId],
+    queryFn: () => getInstanceUptimeStats(instanceId),
+    enabled: isPremium && activeTab === 'uptime' && !!instanceId,
   });
 
   const filteredWorkflows = workflows?.filter(wf => {
@@ -98,6 +165,11 @@ export default function InstanceDetailPage({ params }) {
       return acc;
     }, {});
   }, [filteredWorkflows]);
+
+  const sortedIncidents = useMemo(() => {
+    if (!incidents) return [];
+    return [...incidents].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+  }, [incidents]);
 
   const toggleGroup = (groupKey) => {
     setCollapsedGroups(prev => ({
@@ -227,6 +299,17 @@ export default function InstanceDetailPage({ params }) {
     );
   }
 
+  const instanceNotFound = isNotFoundError(instanceError);
+  const premiumNotFound = isPremium && (isNotFoundError(incidentsError) || isNotFoundError(uptimeError));
+
+  if (instanceNotFound || premiumNotFound) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 className="text-red-800 font-semibold">Instanz nicht gefunden</h3>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Header */}
@@ -305,6 +388,30 @@ export default function InstanceDetailPage({ params }) {
           >
             Fehlermuster
           </button>
+          {isPremium && (
+            <>
+              <button
+                onClick={() => setActiveTab('incidents')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'incidents'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                    : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                }`}
+              >
+                Incidents
+              </button>
+              <button
+                onClick={() => setActiveTab('uptime')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'uptime'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                    : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                }`}
+              >
+                Uptime
+              </button>
+            </>
+          )}
         </nav>
       </div>
 
@@ -724,6 +831,115 @@ export default function InstanceDetailPage({ params }) {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {isPremium && activeTab === 'incidents' && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Incidents</h3>
+          </div>
+
+          {incidentsLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="grid grid-cols-5 gap-4 items-center">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : instance.status === 'locked' ? (
+            <LockedState />
+          ) : incidentsError ? (
+            <div className="p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="text-red-800 font-semibold mb-1">Incidents konnten nicht geladen werden</h4>
+                <p className="text-red-700 text-sm">{incidentsError.message || 'Bitte versuche es erneut.'}</p>
+              </div>
+            </div>
+          ) : sortedIncidents.length === 0 ? (
+            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Incidents gefunden</div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
+              <thead className="bg-gray-50 dark:bg-zinc-950/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Start</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Ende</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Dauer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Message</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
+                {sortedIncidents.map((incident) => {
+                  const isOpen = !incident.resolved && !incident.resolvedAt;
+
+                  return (
+                    <tr key={incident.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-zinc-100">{formatDate(incident.startedAt)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
+                        {incident.resolvedAt ? formatDate(incident.resolvedAt) : 'offen'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">{formatDowntime(incident.downtimeSeconds)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${
+                          isOpen
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/30'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/30'
+                        }`}>
+                          {isOpen ? 'Offen' : 'Resolved'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-zinc-300">{incident.message || '-'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {isPremium && activeTab === 'uptime' && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Uptime</h3>
+          </div>
+
+          {uptimeLoading ? (
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {uptimeFields.map((field) => (
+                <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <Skeleton className="h-7 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : instance.status === 'locked' ? (
+            <LockedState />
+          ) : uptimeError ? (
+            <div className="p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="text-red-800 font-semibold mb-1">Uptime konnte nicht geladen werden</h4>
+                <p className="text-red-700 text-sm">{uptimeError.message || 'Bitte versuche es erneut.'}</p>
+              </div>
+            </div>
+          ) : !uptimeStats ? (
+            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Uptime-Daten verfügbar</div>
+          ) : (
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {uptimeFields.map((field) => (
+                <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4 bg-gray-50/50 dark:bg-zinc-950/30">
+                  <p className="text-sm text-gray-500 dark:text-zinc-500 mb-1">{field.label}</p>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">{formatPercent(uptimeStats[field.key])}</p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

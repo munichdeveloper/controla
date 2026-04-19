@@ -8,9 +8,21 @@ import {
   AlertSettings,
   BackupSettings,
   LicenseInfo,
+  InstanceIncidentDto,
+  InstanceUptimeStatsDto,
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || '/api';
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 
 function getAuthHeader(): HeadersInit {
   if (typeof window !== 'undefined') {
@@ -44,7 +56,7 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(errorText || `API error: ${response.status} ${response.statusText}`);
+    throw new ApiError(errorText || `API error: ${response.status} ${response.statusText}`, response.status);
   }
 
   return response.json();
@@ -252,6 +264,14 @@ export async function getAllLastBackups(): Promise<Record<string, string>> {
 
 export async function getInstanceLastBackup(id: string): Promise<{ lastBackupAt: string }> {
   return fetchApi<{ lastBackupAt: string }>(`/premium/instances/${id}/backup`);
+}
+
+export async function getInstanceIncidents(externalId: string): Promise<InstanceIncidentDto[]> {
+  return fetchApi<InstanceIncidentDto[]>(`/premium/instances/${externalId}/incidents`);
+}
+
+export async function getInstanceUptimeStats(externalId: string): Promise<InstanceUptimeStatsDto> {
+  return fetchApi<InstanceUptimeStatsDto>(`/premium/instances/${externalId}/uptime`);
 }
 
 export async function getLicenseInfo(): Promise<LicenseInfo> {

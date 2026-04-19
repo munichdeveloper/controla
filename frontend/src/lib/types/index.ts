@@ -75,6 +75,24 @@ export interface LicenseInfo {
   };
 }
 
+export interface InstanceIncidentDto {
+  id: number;
+  startedAt: string;
+  resolvedAt: string | null;
+  resolved: boolean;
+  downtimeSeconds: number;
+  message: string;
+}
+
+export interface InstanceUptimeStatsDto {
+  last24Hours: number;
+  last7Days: number;
+  last30Days: number;
+  last3Months: number;
+  last6Months: number;
+  last12Months: number;
+}
+
 export interface VersionInfo {
   version: string;
 }
