@@ -307,7 +307,7 @@ public class InstanceService {
             instance.setStatus(newStatus);
 
             // Alerts
-            if ("offline".equals(newStatus) && "online".equals(oldStatus)) {
+            if ("offline".equals(newStatus) && ("online".equals(oldStatus) || "error".equals(oldStatus))) {
                 instanceAlertHandler.handleInstanceOffline(instance);
             } else if ("online".equals(newStatus) && ("offline".equals(oldStatus) || "error".equals(oldStatus))) {
                 instanceAlertHandler.handleInstanceOnline(instance);
