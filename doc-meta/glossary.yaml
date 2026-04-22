@@ -17,7 +17,7 @@ terms:
     definition: JSON Web Token used for stateless authentication
 
   - term: Alert Settings
-    definition: User-configurable notification preferences for instance errors
+    definition: User-configurable notification preferences for instance reachability changes and workflow errors
 
   - term: NEXT_PUBLIC_BACKEND_BASE_URL
     definition: Environment variable for Frontend to Backend communication

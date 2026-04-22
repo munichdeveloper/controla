@@ -38,6 +38,11 @@ Willkommen zur Controla-Dokumentation!
 - **Deployment-Entscheidung:** [ADR-001](04_decisions/ADR-001-single-container-deployment.md)
 - **Netzwerk-Architektur:** DOCKER_DEPLOYMENT.md → "Netzwerk-Kommunikation"
 
+## 🚨 Monitoring & Alerts
+
+- Instanz-Alerts decken Statusübergänge `online -> offline`, `online -> error`, `error -> offline` und Wiederherstellungen `offline/error -> online` ab.
+- Der `auth_error`-Pfad bleibt ein separater Alert-Fall für ungültige API-Keys.
+
 ## 📝 Dokumentations-Richtlinien
 
 Siehe: [.github/copilot-instructions.md](../.github/copilot-instructions.md)
@@ -63,6 +68,10 @@ Siehe: [.github/copilot-instructions.md](../.github/copilot-instructions.md)
 | Fehlersuche bei Docker | [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) → Troubleshooting |
 
 ## 📅 Änderungshistorie
+
+- **2026-04-23:** Alerting für Statusübergänge präzisiert
+  - `online -> error` wird als Offline-Alert behandelt
+  - `auth_error` bleibt separater Alert-Pfad für ungültige API-Keys
 
 - **2026-01-16:** Initial documentation setup
   - system.yaml erstellt

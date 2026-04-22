@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
@@ -122,6 +123,90 @@ class InstanceServiceTest {
     }
 
     @Test
+    void testStatusTransitionOnlineToErrorTriggersOfflineAlert() {
+        TenantContext.setTenantId("test-tenant");
+
+        Instance instance = new Instance();
+        instance.setId(1L);
+        instance.setExternalId("inst_test");
+        instance.setTenantId("test-tenant");
+        instance.setName("Test Instance");
+        instance.setBaseUrl("http://localhost:5678");
+        instance.setApiKey("encrypted-key");
+        instance.setStatus("online");
+        instance.setVersion("1.0.0");
+        instance.setLastSeenAt(LocalDateTime.now());
+
+        when(cryptoService.getMasterKey()).thenReturn(secretKey);
+        when(cryptoService.decrypt(any(), any())).thenReturn("decrypted-api-key");
+        when(n8nApiClient.getSystemInfo(any(), any()))
+                .thenReturn(new SystemInfo("error", "unknown"));
+
+        instanceService.updateInstanceStatus(instance);
+
+        verify(instanceAlertHandler, times(1)).handleInstanceOffline(instance);
+        verify(instanceAlertHandler, never()).handleInvalidApiKey(any());
+        verify(instanceAlertHandler, never()).handleInstanceOnline(any());
+        assertEquals("error", instance.getStatus());
+    }
+
+    @Test
+    void testStatusTransitionOnlineToErrorOnExceptionTriggersOfflineAlert() {
+        TenantContext.setTenantId("test-tenant");
+
+        Instance instance = new Instance();
+        instance.setId(1L);
+        instance.setExternalId("inst_test");
+        instance.setTenantId("test-tenant");
+        instance.setName("Test Instance");
+        instance.setBaseUrl("http://localhost:5678");
+        instance.setApiKey("encrypted-key");
+        instance.setStatus("online");
+        instance.setVersion("1.0.0");
+        instance.setLastSeenAt(LocalDateTime.now());
+
+        when(cryptoService.getMasterKey()).thenReturn(secretKey);
+        when(cryptoService.decrypt(any(), any())).thenReturn("decrypted-api-key");
+        when(n8nApiClient.getSystemInfo(any(), any()))
+                .thenThrow(new RuntimeException("boom"));
+
+        instanceService.updateInstanceStatus(instance);
+
+        verify(instanceAlertHandler, times(1)).handleInstanceOffline(instance);
+        verify(instanceAlertHandler, never()).handleInvalidApiKey(any());
+        verify(instanceAlertHandler, never()).handleInstanceOnline(any());
+        assertEquals("error", instance.getStatus());
+    }
+
+    @Test
+    void testStatusTransitionOnlineToAuthErrorTriggersInvalidApiKeyOnly() {
+        TenantContext.setTenantId("test-tenant");
+
+        Instance instance = new Instance();
+        instance.setId(1L);
+        instance.setExternalId("inst_test");
+        instance.setTenantId("test-tenant");
+        instance.setName("Test Instance");
+        instance.setBaseUrl("http://localhost:5678");
+        instance.setApiKey("encrypted-key");
+        instance.setStatus("online");
+        instance.setVersion("1.0.0");
+        instance.setLastSeenAt(LocalDateTime.now());
+
+        when(cryptoService.getMasterKey()).thenReturn(secretKey);
+        when(cryptoService.decrypt(any(), any())).thenReturn("decrypted-api-key");
+        when(n8nApiClient.getSystemInfo(any(), any()))
+                .thenReturn(new SystemInfo("auth_error", "unknown"));
+
+        instanceService.updateInstanceStatus(instance);
+
+        verify(instanceAlertHandler, times(1)).handleInvalidApiKey(instance);
+        verify(instanceAlertHandler, never()).handleInstanceOffline(any());
+        verify(instanceAlertHandler, never()).handleInstanceOnline(any());
+        assertEquals("error", instance.getStatus());
+    }
+
+    @Test
     void testStatusTransitionOfflineToOnlineTriggersAlert() {
         // Arrange: Setup tenant context
         TenantContext.setTenantId("test-tenant");
@@ -142,8 +227,7 @@ class InstanceServiceTest {
         when(n8nApiClient.getSystemInfo(any(), any()))
                 .thenReturn(new SystemInfo("online", "1.5.0"));
 
-        when(n8nApiClient.getLatestN8nVersion()).thenReturn("1.5.0");
-        when(n8nApiClient.getExecutionErrors(any(), any(), anyInt())).thenReturn(Collections.emptyList());
+        when(n8nApiClient.getExecutionErrors(any(), any(), anyInt(), any(Instant.class))).thenReturn(Collections.emptyList());
 
         // Act: Call updateInstanceStatus which should transition from offline -> online
         instanceService.updateInstanceStatus(instance);
@@ -175,8 +259,7 @@ class InstanceServiceTest {
         when(n8nApiClient.getSystemInfo(any(), any()))
                 .thenReturn(new SystemInfo("online", "1.0.0"));
 
-        when(n8nApiClient.getLatestN8nVersion()).thenReturn("1.5.0");
-        when(n8nApiClient.getExecutionErrors(any(), any(), anyInt())).thenReturn(Collections.emptyList());
+        when(n8nApiClient.getExecutionErrors(any(), any(), anyInt(), any(Instant.class))).thenReturn(Collections.emptyList());
 
         // Act: Call updateInstanceStatus with no status change
         instanceService.updateInstanceStatus(instance);
@@ -186,6 +269,34 @@ class InstanceServiceTest {
         verify(instanceAlertHandler, never()).handleInstanceOnline(any());
         // Status should remain "online"
         assertEquals("online", instance.getStatus());
+    }
+
+    @Test
+    void testStatusTransitionErrorToErrorDoesNotTriggerAlert() {
+        TenantContext.setTenantId("test-tenant");
+
+        Instance instance = new Instance();
+        instance.setId(1L);
+        instance.setExternalId("inst_test");
+        instance.setTenantId("test-tenant");
+        instance.setName("Test Instance");
+        instance.setBaseUrl("http://localhost:5678");
+        instance.setApiKey("encrypted-key");
+        instance.setStatus("error");
+        instance.setVersion("1.0.0");
+        instance.setLastSeenAt(LocalDateTime.now());
+
+        when(cryptoService.getMasterKey()).thenReturn(secretKey);
+        when(cryptoService.decrypt(any(), any())).thenReturn("decrypted-api-key");
+        when(n8nApiClient.getSystemInfo(any(), any()))
+                .thenReturn(new SystemInfo("error", "unknown"));
+
+        instanceService.updateInstanceStatus(instance);
+
+        verify(instanceAlertHandler, never()).handleInvalidApiKey(any());
+        verify(instanceAlertHandler, never()).handleInstanceOffline(any());
+        verify(instanceAlertHandler, never()).handleInstanceOnline(any());
+        assertEquals("error", instance.getStatus());
     }
 }
 

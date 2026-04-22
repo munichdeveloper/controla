@@ -285,6 +285,7 @@ public class InstanceService {
     public void updateInstanceStatus(Instance instance) {
         String oldStatus = instance.getStatus();
         String newStatus = oldStatus;
+        boolean invalidApiKeyAlertTriggered = false;
 
         logger.debug("Starting updateInstanceStatus: tenantId={}, instanceId={}, instanceName={}, oldStatus={}",
                 instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus);
@@ -303,6 +304,7 @@ public class InstanceService {
 
                 if ("auth_error".equals(infoStatus)) {
                     newStatus = "error";
+                    invalidApiKeyAlertTriggered = true;
                     logger.warn("Instance status decision: auth_error -> error and alert handler. tenantId={}, instanceId={}, instanceName={}",
                             instance.getTenantId(), instance.getExternalId(), instance.getName());
                     instanceAlertHandler.handleInvalidApiKey(instance);
@@ -330,9 +332,13 @@ public class InstanceService {
                     instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus, newStatus);
 
             // Alerts
-            if ("offline".equals(newStatus) && ("online".equals(oldStatus) || "error".equals(oldStatus))) {
-                logger.info("Triggering offline alert: tenantId={}, instanceId={}, instanceName={}, previousStatus={}",
-                        instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus);
+            boolean shouldTriggerOfflineAlert =
+                    ("offline".equals(newStatus) && ("online".equals(oldStatus) || "error".equals(oldStatus)))
+                            || ("error".equals(newStatus) && "online".equals(oldStatus) && !invalidApiKeyAlertTriggered);
+
+            if (shouldTriggerOfflineAlert) {
+                logger.info("Triggering offline alert: tenantId={}, instanceId={}, instanceName={}, previousStatus={}, currentStatus={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus, newStatus);
                 instanceAlertHandler.handleInstanceOffline(instance);
             } else if ("online".equals(newStatus) && ("offline".equals(oldStatus) || "error".equals(oldStatus))) {
                 logger.info("Triggering online alert: tenantId={}, instanceId={}, instanceName={}, previousStatus={}",
