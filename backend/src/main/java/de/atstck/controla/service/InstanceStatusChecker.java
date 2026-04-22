@@ -26,16 +26,32 @@ public class InstanceStatusChecker {
 
     @Scheduled(fixedRateString = "${n8n.monitor.interval-ms:60000}")
     public void checkInstances() {
-        logger.info("Checking instance status...");
+        long startNanos = System.nanoTime();
+        logger.info("Checking instance status... (scheduler run started)");
         List<Instance> instances = instanceRepository.findAll();
+        logger.info("Scheduler fetched {} instance(s) for status check", instances.size());
+
+        int successCount = 0;
+        int errorCount = 0;
 
         for (Instance instance : instances) {
             try {
+                logger.debug("Starting instance status update: tenantId={}, instanceId={}, instanceName={}, currentStatus={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getStatus());
                 instanceService.updateInstanceStatus(instance);
                 instanceRepository.save(instance);
+                logger.debug("Finished instance status update: tenantId={}, instanceId={}, instanceName={}, resultingStatus={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getStatus());
+                successCount++;
             } catch (Exception e) {
-                logger.error("Error checking instance {}", instance.getName(), e);
+                errorCount++;
+                logger.error("Error checking instance: tenantId={}, instanceId={}, instanceName={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), e);
             }
         }
+
+        long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+        logger.info("Scheduler run finished: totalInstances={}, successful={}, failed={}, durationMs={}",
+                instances.size(), successCount, errorCount, durationMs);
     }
 }

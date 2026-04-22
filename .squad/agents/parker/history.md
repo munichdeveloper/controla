@@ -17,3 +17,4 @@ Parker owns core Spring Boot implementation for Controla.
 ## Learnings
 
 - Controla backend already covers auth, instances, alerts, backups, licensing, and password reset.
+- Team memory now enforces Copilot-instructions compliance and OpenTelemetry constraints (env-driven config, secure defaults, HTTP + RestTemplate + InstanceStatusChecker instrumentation), so backend changes should preserve these guardrails.

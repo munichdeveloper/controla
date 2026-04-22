@@ -7,6 +7,8 @@ import de.atstck.controla.service.CoreApiClient;
 import de.atstck.controla.service.N8nApiClient;
 import de.atstck.controla.security.CryptoService;
 import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -24,6 +26,8 @@ import static java.time.ZoneId.*;
 
 @Service
 public class InstanceService {
+
+    private static final Logger logger = LoggerFactory.getLogger(InstanceService.class);
 
     private final CoreApiClient coreApiClient;
     private final InstanceRepository instanceRepository;
@@ -47,6 +51,8 @@ public class InstanceService {
         try {
             return cryptoService.decrypt(instance.getApiKey(), key);
         } catch (Exception e) {
+            logger.warn("API key decryption failed, using stored value as fallback: tenantId={}, instanceId={}, instanceName={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), e);
             // Fallback: If decryption fails (e.g. legacy plaintext key or old user key), return raw key
             // This allows migration or re-entry of keys
             return instance.getApiKey();
@@ -280,72 +286,122 @@ public class InstanceService {
         String oldStatus = instance.getStatus();
         String newStatus = oldStatus;
 
+        logger.debug("Starting updateInstanceStatus: tenantId={}, instanceId={}, instanceName={}, oldStatus={}",
+                instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus);
+
         try {
             String apiKey = getDecryptedApiKey(instance);
             if (apiKey == null) {
                 newStatus = "locked";
+                logger.warn("Instance status decision: API key unavailable -> locked. tenantId={}, instanceId={}, instanceName={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName());
             } else {
                 var info = n8nApiClient.getSystemInfo(instance.getBaseUrl(), apiKey);
                 String infoStatus = info.status();
+                logger.debug("n8n system info fetched: tenantId={}, instanceId={}, instanceName={}, infoStatus={}, infoVersion={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), infoStatus, info.version());
 
                 if ("auth_error".equals(infoStatus)) {
                     newStatus = "error";
+                    logger.warn("Instance status decision: auth_error -> error and alert handler. tenantId={}, instanceId={}, instanceName={}",
+                            instance.getTenantId(), instance.getExternalId(), instance.getName());
                     instanceAlertHandler.handleInvalidApiKey(instance);
                 } else {
                     newStatus = infoStatus;
+                    logger.debug("Instance status decision: using info status '{}'. tenantId={}, instanceId={}, instanceName={}",
+                            infoStatus, instance.getTenantId(), instance.getExternalId(), instance.getName());
                 }
 
                 if (!"unknown".equals(info.version())) {
                     instance.setVersion(info.version());
+                    logger.debug("Instance version updated: tenantId={}, instanceId={}, instanceName={}, version={}",
+                            instance.getTenantId(), instance.getExternalId(), instance.getName(), info.version());
                 }
             }
         } catch (Exception e) {
             newStatus = "error";
+            logger.error("Exception during status refresh -> setting status to error: tenantId={}, instanceId={}, instanceName={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), e);
         }
 
         if (!Objects.equals(oldStatus, newStatus)) {
             instance.setStatus(newStatus);
+            logger.info("Instance status transition: tenantId={}, instanceId={}, instanceName={}, from={}, to={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus, newStatus);
 
             // Alerts
             if ("offline".equals(newStatus) && ("online".equals(oldStatus) || "error".equals(oldStatus))) {
+                logger.info("Triggering offline alert: tenantId={}, instanceId={}, instanceName={}, previousStatus={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus);
                 instanceAlertHandler.handleInstanceOffline(instance);
             } else if ("online".equals(newStatus) && ("offline".equals(oldStatus) || "error".equals(oldStatus))) {
+                logger.info("Triggering online alert: tenantId={}, instanceId={}, instanceName={}, previousStatus={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName(), oldStatus);
                 instanceAlertHandler.handleInstanceOnline(instance);
             }
+        } else {
+            logger.debug("Instance status unchanged: tenantId={}, instanceId={}, instanceName={}, status={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), newStatus);
         }
 
         if ("online".equals(newStatus)) {
             instance.setLastSeenAt(LocalDateTime.now());
+            logger.debug("Instance marked online, updating lastSeenAt and checking workflow errors: tenantId={}, instanceId={}, instanceName={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName());
             checkWorkflowErrors(instance);
+        } else {
+            logger.debug("Skipping workflow error check because status is not online: tenantId={}, instanceId={}, instanceName={}, status={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), newStatus);
         }
+
+        logger.debug("Finished updateInstanceStatus: tenantId={}, instanceId={}, instanceName={}, finalStatus={}",
+                instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getStatus());
     }
 
     private void checkWorkflowErrors(Instance instance) {
         try {
+            logger.debug("Starting workflow error check: tenantId={}, instanceId={}, instanceName={}, lastErrorCheck={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getLastErrorCheck());
             String apiKey = getDecryptedApiKey(instance);
-            if (apiKey == null) return;
+            if (apiKey == null) {
+                logger.warn("Skipping workflow error check because API key is unavailable: tenantId={}, instanceId={}, instanceName={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName());
+                return;
+            }
 
             // Determine time range: since last check or default to last 10 minutes if never checked
             Instant since = instance.getLastErrorCheck() != null ?
                     instance.getLastErrorCheck().atZone(systemDefault()).toInstant() :
                     Instant.now().minus(10, ChronoUnit.MINUTES);
+            logger.debug("Workflow error check time window: tenantId={}, instanceId={}, instanceName={}, since={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), since);
 
             // Fetch errors
             List<EventDto> errors = n8nApiClient.getExecutionErrors(instance.getBaseUrl(), apiKey, 50, since);
+            logger.debug("Workflow error check fetched {} error event(s): tenantId={}, instanceId={}, instanceName={}",
+                    errors.size(), instance.getTenantId(), instance.getExternalId(), instance.getName());
 
             if (!errors.isEmpty()) {
                 for (EventDto error : errors) {
                     String wfName = (String) error.getPayload().get("workflowName");
                     String msg = (String) error.getPayload().get("errorMessage");
+                    logger.info("Forwarding workflow error to alert handler: tenantId={}, instanceId={}, instanceName={}, workflowName={}, occurredAt={}",
+                            instance.getTenantId(), instance.getExternalId(), instance.getName(), wfName, error.getOccurredAt());
                     instanceAlertHandler.handleWorkflowError(instance, wfName, msg);
                 }
+            } else {
+                logger.debug("No workflow errors found: tenantId={}, instanceId={}, instanceName={}",
+                        instance.getTenantId(), instance.getExternalId(), instance.getName());
             }
 
             // Update last check time
             instance.setLastErrorCheck(LocalDateTime.now());
+            logger.debug("Finished workflow error check: tenantId={}, instanceId={}, instanceName={}, newLastErrorCheck={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getLastErrorCheck());
         } catch (Exception e) {
             // Log error but don't fail status update
-            System.err.println("Failed to check workflow errors for instance " + instance.getName() + ": " + e.getMessage());
+            logger.error("Failed to check workflow errors: tenantId={}, instanceId={}, instanceName={}",
+                    instance.getTenantId(), instance.getExternalId(), instance.getName(), e);
         }
     }
 }
