@@ -27,3 +27,4 @@ buildNumber.properties
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
 /.env
+/frontend/node
