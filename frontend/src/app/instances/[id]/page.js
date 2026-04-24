@@ -20,6 +20,7 @@ import { useLicense } from '@/lib/license/LicenseContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/Skeleton';
+import { CompanionSection, CompanionIndicator } from '@/components/companion';
 
 function VersionBadge({ version, latestVersion }) {
   if (!version || version === 'unknown' || !latestVersion) return null;
@@ -312,24 +313,27 @@ export default function InstanceDetailPage({ params }) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        <Link href="/" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-emerald-400 text-sm mb-4 inline-flex items-center font-medium transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
-            <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-          </svg>
-          Zurück zur Übersicht
-        </Link>
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">{instance.name}</h2>
-            <p className="text-gray-600 dark:text-zinc-400 text-sm mt-1 font-mono">{instance.baseUrl}</p>
-          </div>
-          <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(instance.status)}`}>
-            {instance.status}
-          </span>
-        </div>
-      </div>
+       {/* Header */}
+       <div className="mb-8">
+         <Link href="/" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-emerald-400 text-sm mb-4 inline-flex items-center font-medium transition-colors">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
+             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+           </svg>
+           Zurück zur Übersicht
+         </Link>
+         <div className="flex justify-between items-start">
+           <div>
+             <div className="flex items-center gap-3">
+               <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">{instance.name}</h2>
+               <CompanionIndicator externalId={instanceId} />
+             </div>
+             <p className="text-gray-600 dark:text-zinc-400 text-sm mt-1 font-mono">{instance.baseUrl}</p>
+           </div>
+           <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(instance.status)}`}>
+             {instance.status}
+           </span>
+         </div>
+       </div>
 
       {instance.status === 'locked' && (
         <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center">
@@ -388,30 +392,40 @@ export default function InstanceDetailPage({ params }) {
           >
             Fehlermuster
           </button>
-          {isPremium && (
-            <>
-              <button
-                onClick={() => setActiveTab('incidents')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'incidents'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                    : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
-                }`}
-              >
-                Incidents
-              </button>
-              <button
-                onClick={() => setActiveTab('uptime')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'uptime'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                    : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
-                }`}
-              >
-                Uptime
-              </button>
-            </>
-          )}
+           {isPremium && (
+             <>
+               <button
+                 onClick={() => setActiveTab('companion')}
+                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                   activeTab === 'companion'
+                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                 }`}
+               >
+                 Companion
+               </button>
+               <button
+                 onClick={() => setActiveTab('incidents')}
+                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                   activeTab === 'incidents'
+                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                 }`}
+               >
+                 Incidents
+               </button>
+               <button
+                 onClick={() => setActiveTab('uptime')}
+                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                   activeTab === 'uptime'
+                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                 }`}
+               >
+                 Uptime
+               </button>
+             </>
+           )}
         </nav>
       </div>
 
@@ -905,44 +919,48 @@ export default function InstanceDetailPage({ params }) {
         </div>
       )}
 
-      {isPremium && activeTab === 'uptime' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Uptime</h3>
-          </div>
+       {isPremium && activeTab === 'uptime' && (
+         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+           <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+             <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Uptime</h3>
+           </div>
 
-          {uptimeLoading ? (
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {uptimeFields.map((field) => (
-                <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
-                  <Skeleton className="h-4 w-28 mb-2" />
-                  <Skeleton className="h-7 w-20" />
-                </div>
-              ))}
-            </div>
-          ) : instance.status === 'locked' ? (
-            <LockedState />
-          ) : uptimeError ? (
-            <div className="p-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="text-red-800 font-semibold mb-1">Uptime konnte nicht geladen werden</h4>
-                <p className="text-red-700 text-sm">{uptimeError.message || 'Bitte versuche es erneut.'}</p>
-              </div>
-            </div>
-          ) : !uptimeStats ? (
-            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Uptime-Daten verfügbar</div>
-          ) : (
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {uptimeFields.map((field) => (
-                <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4 bg-gray-50/50 dark:bg-zinc-950/30">
-                  <p className="text-sm text-gray-500 dark:text-zinc-500 mb-1">{field.label}</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">{formatPercent(uptimeStats[field.key])}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+           {uptimeLoading ? (
+             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {uptimeFields.map((field) => (
+                 <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
+                   <Skeleton className="h-4 w-28 mb-2" />
+                   <Skeleton className="h-7 w-20" />
+                 </div>
+               ))}
+             </div>
+           ) : instance.status === 'locked' ? (
+             <LockedState />
+           ) : uptimeError ? (
+             <div className="p-6">
+               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                 <h4 className="text-red-800 font-semibold mb-1">Uptime konnte nicht geladen werden</h4>
+                 <p className="text-red-700 text-sm">{uptimeError.message || 'Bitte versuche es erneut.'}</p>
+               </div>
+             </div>
+           ) : !uptimeStats ? (
+             <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Uptime-Daten verfügbar</div>
+           ) : (
+             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {uptimeFields.map((field) => (
+                 <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4 bg-gray-50/50 dark:bg-zinc-950/30">
+                   <p className="text-sm text-gray-500 dark:text-zinc-500 mb-1">{field.label}</p>
+                   <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">{formatPercent(uptimeStats[field.key])}</p>
+                 </div>
+               ))}
+             </div>
+           )}
+         </div>
+       )}
+
+       {isPremium && activeTab === 'companion' && (
+         <CompanionSection externalId={instanceId} />
+       )}
     </div>
   );
 }

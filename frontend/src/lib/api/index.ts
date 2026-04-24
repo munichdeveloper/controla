@@ -10,6 +10,12 @@ import {
   LicenseInfo,
   InstanceIncidentDto,
   InstanceUptimeStatsDto,
+  CompanionConfig,
+  CompanionStatus,
+  CompanionVersions,
+  CompanionUpdateSettings,
+  CompanionUpdateHistory,
+  CompanionUpdateResponse,
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || '/api';
@@ -320,5 +326,91 @@ export interface VersionInfo {
 
 export async function getVersion(): Promise<VersionInfo> {
   return fetchApi<VersionInfo>('/version');
+}
+
+// Companion API (Premium)
+export async function getCompanionConfig(externalId: string): Promise<CompanionConfig> {
+  return fetchApi<CompanionConfig>(`/premium/companion/${externalId}/config`);
+}
+
+export async function updateCompanionConfig(externalId: string, config: CompanionConfig): Promise<CompanionConfig> {
+  return fetchApi<CompanionConfig>(`/premium/companion/${externalId}/config`, {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+}
+
+export async function deleteCompanionConfig(externalId: string): Promise<void> {
+  return fetchApi<void>(`/premium/companion/${externalId}/config`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getCompanionStatus(externalId: string): Promise<CompanionStatus> {
+  return fetchApi<CompanionStatus>(`/premium/companion/${externalId}/status`);
+}
+
+export async function getCompanionVersions(externalId: string): Promise<CompanionVersions> {
+  return fetchApi<CompanionVersions>(`/premium/companion/${externalId}/versions`);
+}
+
+export async function getCompanionUpdateSettings(externalId: string): Promise<CompanionUpdateSettings> {
+  return fetchApi<CompanionUpdateSettings>(`/premium/companion/${externalId}/update-settings`);
+}
+
+export async function updateCompanionUpdateSettings(externalId: string, settings: CompanionUpdateSettings): Promise<CompanionUpdateSettings> {
+  return fetchApi<CompanionUpdateSettings>(`/premium/companion/${externalId}/update-settings`, {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
+}
+
+export async function startCompanionUpdate(externalId: string, targetVersion?: string): Promise<CompanionUpdateResponse> {
+  return fetchApi<CompanionUpdateResponse>(`/premium/companion/${externalId}/update`, {
+    method: 'POST',
+    body: JSON.stringify(targetVersion ? { version: targetVersion } : {}),
+  });
+}
+
+export async function scheduleCompanionUpdate(externalId: string, scheduledAt: string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/premium/companion/${externalId}/update/schedule`, {
+    method: 'POST',
+    body: JSON.stringify({ scheduledAt }),
+  });
+}
+
+export async function cancelScheduledUpdate(externalId: string): Promise<void> {
+  return fetchApi<void>(`/premium/companion/${externalId}/update/schedule`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getCompanionUpdateHistory(externalId: string, page: number = 0, size: number = 20): Promise<CompanionUpdateHistory[]> {
+  return fetchApi<CompanionUpdateHistory[]>(`/premium/companion/${externalId}/update/history?page=${page}&size=${size}`);
+}
+
+export async function startCompanionContainer(externalId: string): Promise<{ success: boolean; output: string }> {
+  return fetchApi<{ success: boolean; output: string }>(`/premium/companion/${externalId}/start`, {
+    method: 'POST',
+  });
+}
+
+export async function stopCompanionContainer(externalId: string): Promise<{ success: boolean; output: string }> {
+  return fetchApi<{ success: boolean; output: string }>(`/premium/companion/${externalId}/stop`, {
+    method: 'POST',
+  });
+}
+
+export async function pullCompanionImage(externalId: string): Promise<{ success: boolean; output: string }> {
+  return fetchApi<{ success: boolean; output: string }>(`/premium/companion/${externalId}/pull`, {
+    method: 'POST',
+  });
+}
+
+export async function pinCompanionVersion(externalId: string, version: string): Promise<{ success: boolean; output: string }> {
+  return fetchApi<{ success: boolean; output: string }>(`/premium/companion/${externalId}/version`, {
+    method: 'POST',
+    body: JSON.stringify({ version }),
+  });
 }
 

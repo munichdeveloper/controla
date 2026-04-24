@@ -96,3 +96,45 @@ export interface InstanceUptimeStatsDto {
 export interface VersionInfo {
   version: string;
 }
+
+// Companion API Types
+export interface CompanionConfig {
+  host: string;
+  port: number;
+  apiKey: string;
+  apiKeyChanged: boolean;
+}
+
+export interface CompanionStatus {
+  configured: boolean;
+  connected: boolean;
+  containerStatus: 'running' | 'exited' | 'stopped' | 'unknown';
+  pinnedVersion: string;
+  runningVersion: string;
+  updating: boolean;
+  updatePhase?: 'PULLING' | 'RESTARTING' | 'VERIFYING' | null;
+}
+
+export interface CompanionVersions {
+  versions: string[];
+}
+
+export interface CompanionUpdateSettings {
+  autoUpdateEnabled: boolean;
+  scheduledUpdateAt?: string | null;
+}
+
+export interface CompanionUpdateHistory {
+  id: number;
+  executedAt: string;
+  fromVersion: string;
+  toVersion: string;
+  status: 'SUCCESS' | 'FAILED' | 'IN_PROGRESS';
+  triggerType: 'AUTO' | 'MANUAL' | 'SCHEDULED';
+  errorMessage?: string | null;
+}
+
+export interface CompanionUpdateResponse {
+  message: string;
+  targetVersion: string;
+}
