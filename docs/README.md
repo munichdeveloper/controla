@@ -69,6 +69,10 @@ Siehe: [.github/copilot-instructions.md](../.github/copilot-instructions.md)
 
 ## 📅 Änderungshistorie
 
+- **2026-04-28:** Versionshinweis im Frontend korrigiert
+  - Die Update-Badge für Instanzen erscheint nur noch, wenn `latestVersion` semantisch neuer ist als die installierte `version`
+  - Gleich hohe oder höhere installierte Versionen werden als aktuell behandelt
+
 - **2026-04-23:** Alerting für Statusübergänge präzisiert
   - `online -> error` wird als Offline-Alert behandelt
   - `auth_error` bleibt separater Alert-Pfad für ungültige API-Keys

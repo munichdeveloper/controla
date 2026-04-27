@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getInstances, createInstance, updateInstance, exportInstanceWorkflows } from '@/lib/api';
-import { formatRelativeTime, getStatusColor } from '@/lib/utils';
+import { formatRelativeTime, getStatusColor, getVersionUpdateState } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { useRouter } from 'next/navigation';
@@ -118,16 +118,18 @@ function AddInstanceModal({ isOpen, onClose, onSuccess }) {
 }
 
 function VersionBadge({ version, latestVersion }) {
-  if (!version || version === 'unknown' || !latestVersion) return null;
+  const updateState = getVersionUpdateState(version, latestVersion);
 
-  const isUpToDate = version === latestVersion;
-
-  if (isUpToDate) {
+  if (updateState === 'up-to-date') {
     return (
       <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
         aktuell
       </span>
     );
+  }
+
+  if (updateState !== 'update-available') {
+    return null;
   }
 
   return (

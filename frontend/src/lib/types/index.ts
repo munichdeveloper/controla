@@ -6,6 +6,7 @@ export interface InstanceSummary {
   baseUrl: string;
   status: 'online' | 'offline' | 'unknown';
   version: string;
+  latestVersion?: string;
   lastSeenAt: string;
 }
 
@@ -15,6 +16,7 @@ export interface InstanceDetail {
   baseUrl: string;
   status: 'online' | 'offline' | 'unknown';
   version: string;
+  latestVersion?: string;
   lastSeenAt: string;
   createdAt: string;
 }

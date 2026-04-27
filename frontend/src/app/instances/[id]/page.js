@@ -13,7 +13,7 @@ import {
   getInstanceUptimeStats,
   importWorkflow,
 } from '@/lib/api';
-import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor } from '@/lib/utils';
+import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor, getVersionUpdateState } from '@/lib/utils';
 import { useState, useMemo, Fragment, useRef } from 'react';
 import Link from 'next/link';
 import { useLicense } from '@/lib/license/LicenseContext';
@@ -23,16 +23,18 @@ import { Skeleton } from '@/components/Skeleton';
 import { CompanionSection, CompanionIndicator } from '@/components/companion';
 
 function VersionBadge({ version, latestVersion }) {
-  if (!version || version === 'unknown' || !latestVersion) return null;
+  const updateState = getVersionUpdateState(version, latestVersion);
 
-  const isUpToDate = version === latestVersion;
-
-  if (isUpToDate) {
+  if (updateState === 'up-to-date') {
     return (
       <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
         aktuell
       </span>
     );
+  }
+
+  if (updateState !== 'update-available') {
+    return null;
   }
 
   return (
