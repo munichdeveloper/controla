@@ -8,7 +8,9 @@ The workflow uses Java 17, Node.js 20, Maven, and `npm ci`, matching the reposit
 
 Each run writes `quality-report.json` and `quality-report.md`, adds the Markdown report to the GitHub Actions job summary, and uploads the reports plus available JaCoCo, Surefire, Checkstyle, and npm diagnostic files as a 90-day artifact.
 
-The backend build/tests, frontend build, frontend lint, and frontend type check fail the workflow. Backend Checkstyle remains informational because the existing CI treats it as non-blocking. Coverage, large files, TODO/FIXME markers, dependency findings, and measured regressions are also informational in this first baseline-oriented version. Frontend tests, duplication, complexity, and backend vulnerability scanning are reported as unavailable rather than assigned invented values.
+The README badge makes the latest workflow state visible from the repository front page. The workflow also maintains at most one GitHub issue named `[Quality] Repository quality status`, labeled `quality`. It creates or reopens that issue when a required check fails, a critical/high npm vulnerability exists, coverage drops by at least two percentage points, a new oversized file appears, TODO/FIXME count grows by at least five, or vulnerability findings increase. The issue body is refreshed each run, but a notification comment is added only when the relevant finding set changes. It is closed automatically when no findings meet this policy.
+
+The backend build/tests, frontend build, frontend lint, and frontend type check fail the workflow. Failure to update the consolidated issue also fails the workflow so the visibility mechanism cannot silently stop working. Backend Checkstyle remains informational because the existing CI treats it as non-blocking. Coverage, large files, TODO/FIXME markers, dependency findings, and measured regressions are otherwise informational in this first baseline-oriented version. Frontend tests, duplication, complexity, and backend vulnerability scanning are reported as unavailable rather than assigned invented values.
 
 ## Baselines and extension
 

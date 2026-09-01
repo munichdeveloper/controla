@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: periodic-quality-review-${{ github.ref }}
@@ -102,6 +103,15 @@ jobs:
           --output-json quality-report.json
           --output-md quality-report.md
 
+      - name: Update consolidated quality issue
+        id: quality_issue
+        if: always() && steps.report.outcome == 'success'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const updateQualityIssue = require('./.github/scripts/update-quality-issue.cjs');
+            await updateQualityIssue({ github, context, core });
+
       - name: Publish job summary
         if: always()
         shell: bash
@@ -131,6 +141,7 @@ jobs:
         if: >-
           ${{ always()
           && steps.report.outcome == 'success'
+          && steps.quality_issue.outcome == 'success'
           && steps.enforce.outcome == 'success'
           && steps.backend_verify.outcome == 'success'
           && steps.frontend_build.outcome == 'success'
@@ -145,6 +156,7 @@ jobs:
         if: >-
           ${{ always()
           && steps.report.outcome == 'success'
+          && steps.quality_issue.outcome == 'success'
           && steps.enforce.outcome == 'success'
           && steps.backend_verify.outcome == 'success'
           && steps.frontend_build.outcome == 'success'

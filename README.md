@@ -1,5 +1,7 @@
 # Controla - Community Edition
 
+[![Periodic Quality Review](https://github.com/munichdeveloper/controla/actions/workflows/periodic-quality-review.yml/badge.svg?branch=main)](https://github.com/munichdeveloper/controla/actions/workflows/periodic-quality-review.yml)
+
 Controla helps you run n8n reliably in production.
 
 ---
