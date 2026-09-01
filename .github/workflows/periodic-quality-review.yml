@@ -20,17 +20,17 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: temurin
           cache: maven
 
       - name: Set up Node.js 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
@@ -38,7 +38,7 @@ jobs:
 
       - name: Restore previous quality report
         id: baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: .quality-cache
           key: quality-report-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
@@ -109,7 +109,7 @@ jobs:
 
       - name: Upload quality report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-report-${{ github.sha }}
           path: |
@@ -150,7 +150,7 @@ jobs:
           && steps.frontend_build.outcome == 'success'
           && steps.frontend_lint.outcome == 'success'
           && steps.frontend_typecheck.outcome == 'success' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: .quality-cache
           key: quality-report-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
