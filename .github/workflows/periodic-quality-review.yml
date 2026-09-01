@@ -1,0 +1,156 @@
+name: Periodic Quality Review
+
+on:
+  schedule:
+    # Weekly on Monday at 03:17 UTC, away from common top-of-hour load spikes.
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: periodic-quality-review-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Restore previous quality report
+        id: baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: .quality-cache
+          key: quality-report-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            quality-report-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build and test backend with coverage
+        id: backend_verify
+        continue-on-error: true
+        run: mvn -B -pl backend clean verify
+
+      - name: Run backend Checkstyle
+        id: backend_lint
+        continue-on-error: true
+        run: mvn -B -pl backend checkstyle:check
+
+      - name: Build frontend
+        id: frontend_build
+        continue-on-error: true
+        run: npm run build
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_BACKEND_BASE_URL: http://localhost:8081/api
+
+      - name: Lint frontend
+        id: frontend_lint
+        continue-on-error: true
+        run: npm run lint
+        working-directory: frontend
+
+      - name: Type-check frontend
+        id: frontend_typecheck
+        continue-on-error: true
+        run: npm exec tsc -- --noEmit
+        working-directory: frontend
+
+      - name: Collect dependency information
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p quality-inputs
+          (cd frontend && npm audit --json) > quality-inputs/npm-audit.json || true
+          (cd frontend && npm outdated --json) > quality-inputs/npm-outdated.json || true
+
+      - name: Generate quality report
+        id: report
+        if: always()
+        env:
+          QUALITY_BACKEND_VERIFY_OUTCOME: ${{ steps.backend_verify.outcome }}
+          QUALITY_BACKEND_LINT_OUTCOME: ${{ steps.backend_lint.outcome }}
+          QUALITY_FRONTEND_BUILD_OUTCOME: ${{ steps.frontend_build.outcome }}
+          QUALITY_FRONTEND_LINT_OUTCOME: ${{ steps.frontend_lint.outcome }}
+          QUALITY_FRONTEND_TYPECHECK_OUTCOME: ${{ steps.frontend_typecheck.outcome }}
+        run: >-
+          node .github/scripts/generate-quality-report.mjs
+          --baseline .quality-cache/quality-report.json
+          --output-json quality-report.json
+          --output-md quality-report.md
+
+      - name: Publish job summary
+        if: always()
+        shell: bash
+        run: cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report-${{ github.sha }}
+          path: |
+            quality-report.json
+            quality-report.md
+            backend/target/site/jacoco/
+            backend/target/surefire-reports/
+            backend/target/checkstyle-result.xml
+            quality-inputs/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Enforce deterministic quality checks
+        id: enforce
+        if: always()
+        run: node .github/scripts/generate-quality-report.mjs --enforce-report quality-report.json
+
+      - name: Prepare current baseline
+        if: >-
+          ${{ always()
+          && steps.report.outcome == 'success'
+          && steps.enforce.outcome == 'success'
+          && steps.backend_verify.outcome == 'success'
+          && steps.frontend_build.outcome == 'success'
+          && steps.frontend_lint.outcome == 'success'
+          && steps.frontend_typecheck.outcome == 'success' }}
+        shell: bash
+        run: |
+          mkdir -p .quality-cache
+          cp quality-report.json .quality-cache/quality-report.json
+
+      - name: Save current quality report for comparison
+        if: >-
+          ${{ always()
+          && steps.report.outcome == 'success'
+          && steps.enforce.outcome == 'success'
+          && steps.backend_verify.outcome == 'success'
+          && steps.frontend_build.outcome == 'success'
+          && steps.frontend_lint.outcome == 'success'
+          && steps.frontend_typecheck.outcome == 'success' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .quality-cache
+          key: quality-report-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}

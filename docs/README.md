@@ -10,6 +10,9 @@ Willkommen zur Controla-Dokumentation!
 ### Deployment
 - [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Detaillierte Docker-Anleitung mit Troubleshooting
 
+### Entwicklung
+- [quality-review.md](quality-review.md) - Wöchentlicher Code-Qualitätsbericht, Baselines und Fehlerregeln
+
 ### Architektur
 - [system.yaml](../doc-meta/system.yaml) - System-Architektur und Komponenten
 - [glossary.yaml](../doc-meta/glossary.yaml) - Begriffsdefinitionen

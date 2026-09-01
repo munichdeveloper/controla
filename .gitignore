@@ -28,3 +28,9 @@ buildNumber.properties
 .squad-workstream
 /.env
 /frontend/node
+
+# Periodic quality review runtime output
+/quality-report.json
+/quality-report.md
+/quality-inputs/
+/.quality-cache/
