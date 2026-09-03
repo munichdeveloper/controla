@@ -30,4 +30,4 @@ jobs:
       generated-directory: 'docs/runs/generated'
       index-path: 'docs/runs/RUN-INDEX.md'
       obsidian-base-path: 'docs/runs/Runs.base'
-      issue-number: ${{ inputs.issue-number || github.event.issue.number }}
+      issue-number: ${{ inputs['issue-number'] || github.event.issue.number }}
