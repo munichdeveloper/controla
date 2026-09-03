@@ -1,0 +1,29 @@
+# Managed by pi-spec-harness: bug-workflow-reference v1
+name: Harness Bug Triage
+
+on:
+  issues:
+    types: [opened, typed, labeled]
+
+concurrency:
+  group: harness-bug-triage-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    if: >-
+      github.event_name == 'issues' &&
+      ((github.event.action == 'opened' &&
+        (github.event.issue.type.name == 'Bug' || contains(github.event.issue.labels.*.name, 'type:bug'))) ||
+       (github.event.action == 'typed' && github.event.issue.type.name == 'Bug') ||
+       (github.event.action == 'labeled' && github.event.label.name == 'type:bug'))
+    uses: munichdeveloper/pi-spec-harness/.github/workflows/bug-triage.yml@fb7045becaf14018e3d3ae3a03e9430027043768
+    with:
+      issue-number: ${{ github.event.issue.number }}
+      issue-type-name: ${{ github.event.issue.type.name || '' }}
+      issue-labels-json: ${{ toJson(github.event.issue.labels.*.name) }}
+      issue-author: ${{ github.event.issue.user.login }}
+      reviewer: ${{ vars.HARNESS_BUG_REVIEWER || '' }}
+      claude-code-action-version: ${{ vars.HARNESS_CLAUDE_CODE_ACTION_VERSION || 'v1.0.94' }}
+      preview-verify-command: ${{ vars.HARNESS_BUG_PREVIEW_VERIFY_COMMAND || '' }}
+    secrets: inherit
