@@ -1,0 +1,41 @@
+# Managed by pi-spec-harness: capability-smoke-reference v1
+name: Harness Capability Smoke
+
+on:
+  push:
+    paths:
+      - '.github/workflows/harness-capability-smoke.yml'
+      - '.github/workflows/harness-bug-triage.yml'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      claude-code-action-version:
+        description: >-
+          Informational: the version tag or SHA the caller expects to be running.
+          This value does NOT change the action version executed by the reusable
+          workflow, which is hardcoded to its own pinned ref.
+        required: false
+        type: string
+        default: v1.0.94
+
+permissions:
+  contents: read
+  actions: write   # required for cache save/restore in the reusable workflow
+  id-token: write  # required by the pinned Claude action in the reusable workflow
+
+jobs:
+  dispatch-after-default-branch-push:
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start supported capability smoke event
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run harness-capability-smoke.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+
+  smoke:
+    if: github.event_name != 'push'
+    uses: munichdeveloper/pi-spec-harness/.github/workflows/capability-smoke.yml@fb7045becaf14018e3d3ae3a03e9430027043768
+    with:
+      claude-code-action-version: v1.0.94
+    secrets: inherit
