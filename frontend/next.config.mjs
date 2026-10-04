@@ -14,8 +14,10 @@ const nextConfig = {
             },
         ]
     },
-    // Erzeugt ein eigenständiges Build-Verzeichnis für Docker
-    output: 'standalone',
+    // Erzeugt ein eigenständiges Build-Verzeichnis für Docker.
+    // Auf Vercel darf 'standalone' NICHT gesetzt sein, sonst schlägt der Build fehl
+    // (Vercel erwartet .next/next-server.js.nft.json, das im Standalone-Modus nicht erzeugt wird).
+    output: process.env.VERCEL ? undefined : 'standalone',
 };
 
 export default nextConfig;
