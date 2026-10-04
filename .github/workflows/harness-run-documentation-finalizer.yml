@@ -1,0 +1,33 @@
+# Managed by pi-spec-harness: run-documentation-finalizer-reference v1
+name: Harness Run Documentation Finalizer
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue-number:
+        description: Tracking issue number selected by trusted reconciliation
+        required: true
+        type: string
+  issues:
+    types: [labeled]
+
+# Concurrency is delegated to the reusable workflow. Defining the same
+# non-cancelling key in caller and callee creates a nested self-lock.
+
+# TAC-16: minimal permissions only; no secrets: inherit.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  finalize:
+    uses: munichdeveloper/pi-spec-harness/.github/workflows/run-documentation-finalizer.yml@fb7045becaf14018e3d3ae3a03e9430027043768
+    with:
+      harness-ref: 'fb7045becaf14018e3d3ae3a03e9430027043768'
+      default-branch: 'main'
+      generated-directory: 'docs/runs/generated'
+      index-path: 'docs/runs/RUN-INDEX.md'
+      obsidian-base-path: 'docs/runs/Runs.base'
+      issue-number: ${{ inputs['issue-number'] || github.event.issue.number }}
