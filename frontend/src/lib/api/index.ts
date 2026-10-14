@@ -16,6 +16,16 @@ import {
   CompanionUpdateSettings,
   CompanionUpdateHistory,
   CompanionUpdateResponse,
+  DiagnosticReport,
+  CompanionServices,
+  CompanionContainer,
+  CompanionLogs,
+  CompanionStats,
+  CompanionHost,
+  CompanionEvents,
+  DiagnosticSnapshot,
+  DiagnosticSnapshotSummary,
+  ContainerAlertSettings,
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || '/api';
@@ -414,3 +424,95 @@ export async function pinCompanionVersion(externalId: string, version: string): 
   });
 }
 
+
+// Diagnostics (Community: report; Premium: companion diagnostics)
+export async function getInstanceDiagnostics(id: string): Promise<DiagnosticReport> {
+  return fetchApi<DiagnosticReport>(`/instances/${id}/diagnostics`);
+}
+
+function diagnosticsQuery(params: Record<string, string | number | undefined>): string {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') query.append(key, String(value));
+  });
+  const text = query.toString();
+  return text ? `?${text}` : '';
+}
+
+async function fetchBlob(path: string, fallbackError: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers: { ...getAuthHeader() } });
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new ApiError(text || fallbackError, response.status);
+  }
+  return response.blob();
+}
+
+export async function getCompanionDiagnosticServices(externalId: string): Promise<CompanionServices> {
+  return fetchApi<CompanionServices>(`/premium/companion/${externalId}/diagnostics/services`);
+}
+
+export async function getCompanionContainer(externalId: string, service: string): Promise<CompanionContainer> {
+  return fetchApi<CompanionContainer>(`/premium/companion/${externalId}/diagnostics/container${diagnosticsQuery({ service })}`);
+}
+
+export interface CompanionLogParams {
+  service: string;
+  tail?: number;
+  since?: string;
+}
+
+export async function getCompanionLogs(externalId: string, params: CompanionLogParams): Promise<CompanionLogs> {
+  return fetchApi<CompanionLogs>(`/premium/companion/${externalId}/diagnostics/logs${diagnosticsQuery({ ...params })}`);
+}
+
+export async function downloadCompanionLogs(externalId: string, params: CompanionLogParams): Promise<Blob> {
+  return fetchBlob(`/premium/companion/${externalId}/diagnostics/logs/download${diagnosticsQuery({ ...params })}`, 'Download fehlgeschlagen');
+}
+
+export async function getCompanionStats(externalId: string, service: string): Promise<CompanionStats> {
+  return fetchApi<CompanionStats>(`/premium/companion/${externalId}/diagnostics/stats${diagnosticsQuery({ service })}`);
+}
+
+export async function getCompanionHost(externalId: string): Promise<CompanionHost> {
+  return fetchApi<CompanionHost>(`/premium/companion/${externalId}/diagnostics/host`);
+}
+
+export async function getCompanionEvents(externalId: string, service: string, since: string): Promise<CompanionEvents> {
+  return fetchApi<CompanionEvents>(`/premium/companion/${externalId}/diagnostics/events${diagnosticsQuery({ service, since })}`);
+}
+
+export async function downloadCompanionSupportBundle(externalId: string): Promise<Blob> {
+  return fetchBlob(`/premium/companion/${externalId}/diagnostics/bundle`, 'Support-Bundle konnte nicht erstellt werden');
+}
+
+export async function getDiagnosticSnapshots(externalId: string): Promise<DiagnosticSnapshotSummary[]> {
+  return fetchApi<DiagnosticSnapshotSummary[]>(`/premium/instances/${externalId}/diagnostics/snapshots`);
+}
+
+export async function getDiagnosticSnapshot(externalId: string, snapshotId: number): Promise<DiagnosticSnapshot> {
+  return fetchApi<DiagnosticSnapshot>(`/premium/instances/${externalId}/diagnostics/snapshots/${snapshotId}`);
+}
+
+export async function getContainerAlertSettings(): Promise<ContainerAlertSettings> {
+  return fetchApi<ContainerAlertSettings>('/premium/alerts/container-settings');
+}
+
+export async function updateContainerAlertSettings(settings: ContainerAlertSettings): Promise<ContainerAlertSettings> {
+  return fetchApi<ContainerAlertSettings>('/premium/alerts/container-settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
+}
+
+/** Saves a Blob as a file in the browser. */
+export function saveBlob(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}

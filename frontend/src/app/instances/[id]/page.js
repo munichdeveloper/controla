@@ -21,6 +21,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/Skeleton';
 import { CompanionSection, CompanionIndicator } from '@/components/companion';
+import { DiagnosticsSection } from '@/components/diagnostics/DiagnosticsSection';
+import { DiagnosticSnapshotDialog } from '@/components/diagnostics/DiagnosticSnapshotDialog';
+import { FEATURES } from '@/lib/license/features';
 
 function VersionBadge({ version, latestVersion }) {
   const updateState = getVersionUpdateState(version, latestVersion);
@@ -113,7 +116,10 @@ export default function InstanceDetailPage({ params }) {
   const [isImporting, setIsImporting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const instanceId = params.id;
-  const { isPremium } = useLicense();
+  const { isPremium, isFeatureEnabled } = useLicense();
+  const diagnosticsEnabled = isFeatureEnabled(FEATURES.DIAGNOSTICS_REPORT);
+  const snapshotsEnabled = isFeatureEnabled(FEATURES.COMPANION_DIAG_SNAPSHOTS);
+  const [openSnapshotId, setOpenSnapshotId] = useState(null);
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
 
@@ -394,6 +400,18 @@ export default function InstanceDetailPage({ params }) {
           >
             Fehlermuster
           </button>
+          {diagnosticsEnabled && (
+            <button
+              onClick={() => setActiveTab('diagnostics')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'diagnostics'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+                  : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+              }`}
+            >
+              Diagnose
+            </button>
+          )}
            {isPremium && (
              <>
                <button
@@ -889,6 +907,9 @@ export default function InstanceDetailPage({ params }) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Dauer</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Message</th>
+                  {snapshotsEnabled && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Diagnose</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
@@ -912,6 +933,20 @@ export default function InstanceDetailPage({ params }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-zinc-300">{incident.message || '-'}</td>
+                      {snapshotsEnabled && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {incident.diagnosticSnapshotId ? (
+                            <button
+                              onClick={() => setOpenSnapshotId(incident.diagnosticSnapshotId)}
+                              className="text-emerald-600 dark:text-emerald-400 hover:underline"
+                            >
+                              Snapshot anzeigen
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 dark:text-zinc-600">–</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -962,6 +997,21 @@ export default function InstanceDetailPage({ params }) {
 
        {isPremium && activeTab === 'companion' && (
          <CompanionSection externalId={instanceId} />
+       )}
+
+       {diagnosticsEnabled && activeTab === 'diagnostics' && (
+         <DiagnosticsSection
+           externalId={instanceId}
+           onOpenCompanionTab={isPremium ? () => setActiveTab('companion') : undefined}
+         />
+       )}
+
+       {snapshotsEnabled && openSnapshotId !== null && (
+         <DiagnosticSnapshotDialog
+           externalId={instanceId}
+           snapshotId={openSnapshotId}
+           onClose={() => setOpenSnapshotId(null)}
+         />
        )}
     </div>
   );
