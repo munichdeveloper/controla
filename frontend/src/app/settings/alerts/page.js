@@ -6,6 +6,7 @@ import { useLicense } from '@/lib/license/LicenseContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/Skeleton';
+import { ContainerAlertSettingsCard } from '@/components/alerts/ContainerAlertSettingsCard';
 
 export default function AlertSettingsPage() {
   const queryClient = useQueryClient();
@@ -262,6 +263,7 @@ export default function AlertSettingsPage() {
           </div>
         </form>
       </div>
+      <ContainerAlertSettingsCard />
     </div>
   );
 }

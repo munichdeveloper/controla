@@ -56,7 +56,8 @@ class InstanceServiceTest {
                 n8nApiClient,
                 cryptoService,
                 licenseService,
-                instanceAlertHandler
+                instanceAlertHandler,
+                new InstanceCredentialService(cryptoService)
         );
     }
 

@@ -20,6 +20,7 @@ Willkommen zur Controla-Dokumentation!
 ### Entscheidungen
 - [04_decisions/README.md](04_decisions/README.md) - Architecture Decision Records (ADRs)
 - [ADR-001: Single Container Deployment](04_decisions/ADR-001-single-container-deployment.md)
+- [ADR-002: Feature-Registry](04_decisions/ADR-002-feature-registry.md)
 
 ## 🎯 Für neue Entwickler
 

@@ -33,6 +33,10 @@ See workflow errors across all instances without digging through logs.
 
 Know immediately when an instance goes down.
 
+### 🩺 Diagnostics
+
+Find out why an instance has problems: DNS and reachability, TLS certificate, n8n health and database readiness, API key and failed executions in one report.
+
 ### 📊 Basic metrics
 
 Understand execution behavior at a glance.
@@ -162,6 +166,11 @@ docker run --env-file .env -p 3000:3000 -p 8081:8081 controla
 * GET /api/instances/{id}/workflows
 * GET /api/instances/{id}/events
 * GET /api/instances/{id}/metrics
+* GET /api/instances/{id}/diagnostics – diagnostic report (reachability, TLS, n8n health and readiness, API key, failed executions)
+
+### License & features
+
+* GET /api/license – edition, instance limit and the feature keys of the running backend
 
 ### Alerts
 

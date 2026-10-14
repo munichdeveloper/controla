@@ -36,27 +36,20 @@ public class InstanceService {
     private final CryptoService cryptoService;
     private final de.atstck.controla.license.LicenseService licenseService;
     private final de.atstck.controla.alerts.InstanceAlertHandler instanceAlertHandler;
+    private final InstanceCredentialService credentialService;
 
-    public InstanceService(CoreApiClient coreApiClient, InstanceRepository instanceRepository, N8nApiClient n8nApiClient, CryptoService cryptoService, de.atstck.controla.license.LicenseService licenseService, de.atstck.controla.alerts.InstanceAlertHandler instanceAlertHandler) {
+    public InstanceService(CoreApiClient coreApiClient, InstanceRepository instanceRepository, N8nApiClient n8nApiClient, CryptoService cryptoService, de.atstck.controla.license.LicenseService licenseService, de.atstck.controla.alerts.InstanceAlertHandler instanceAlertHandler, InstanceCredentialService credentialService) {
         this.coreApiClient = coreApiClient;
         this.instanceRepository = instanceRepository;
         this.n8nApiClient = n8nApiClient;
         this.cryptoService = cryptoService;
         this.licenseService = licenseService;
         this.instanceAlertHandler = instanceAlertHandler;
+        this.credentialService = credentialService;
     }
 
     private String getDecryptedApiKey(Instance instance) {
-        SecretKey key = cryptoService.getMasterKey();
-        try {
-            return cryptoService.decrypt(instance.getApiKey(), key);
-        } catch (Exception e) {
-            logger.warn("API key decryption failed, using stored value as fallback: tenantId={}, instanceId={}, instanceName={}",
-                    instance.getTenantId(), instance.getExternalId(), instance.getName(), e);
-            // Fallback: If decryption fails (e.g. legacy plaintext key or old user key), return raw key
-            // This allows migration or re-entry of keys
-            return instance.getApiKey();
-        }
+        return credentialService.getDecryptedApiKey(instance);
     }
 
     public List<InstanceSummaryDto> getInstances() {

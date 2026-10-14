@@ -12,23 +12,24 @@ import java.util.Map;
 public class LicenseController {
 
     private final LicenseService licenseService;
+    private final FeatureRegistry featureRegistry;
 
-    public LicenseController(LicenseService licenseService) {
+    public LicenseController(LicenseService licenseService, FeatureRegistry featureRegistry) {
         this.licenseService = licenseService;
+        this.featureRegistry = featureRegistry;
     }
 
+    /**
+     * Edition, instance limit and the features of the running backend.
+     * {@code features} contains only keys whose code is present (see {@link FeatureRegistry});
+     * the frontend treats a missing key as disabled.
+     */
     @GetMapping
     public Map<String, Object> getLicenseInfo() {
         Map<String, Object> info = new HashMap<>();
         info.put("edition", licenseService.getEditionName());
         info.put("maxInstances", licenseService.getMaxInstances());
-
-        Map<String, Boolean> features = new HashMap<>();
-        features.put("alert.workflow_error", licenseService.isFeatureEnabled("alert.workflow_error"));
-        features.put("alert.invalid_api_key", licenseService.isFeatureEnabled("alert.invalid_api_key"));
-
-        info.put("features", features);
+        info.put("features", featureRegistry.resolve());
         return info;
     }
 }
-

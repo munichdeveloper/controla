@@ -22,8 +22,9 @@ public class N8nApiClient {
     private long lastVersionCheck = 0;
     private static final long VERSION_CHECK_INTERVAL = 3600000; // 1 hour
 
-    public N8nApiClient(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public N8nApiClient(InstanceHttpClient instanceHttpClient) {
+        // Customer-provided URLs: target policy applies (see InstanceHttpClient).
+        this.restTemplate = instanceHttpClient.restTemplate();
     }
 
     public String getLatestN8nVersion() {
@@ -231,6 +232,17 @@ public class N8nApiClient {
     }
 
     public List<EventDto> getExecutionErrors(String baseUrl, String apiKey, int limit, Instant startedAfter) {
+        try {
+            return fetchExecutionErrors(baseUrl, apiKey, limit, startedAfter);
+        } catch (Exception e) {
+            // Log error but return empty list to avoid breaking UI
+            System.err.println("Failed to fetch executions from n8n: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /** Like {@link #getExecutionErrors(String, String, int, Instant)}, but propagates request failures. */
+    public List<EventDto> fetchExecutionErrors(String baseUrl, String apiKey, int limit, Instant startedAfter) {
         if (baseUrl == null || apiKey == null) {
             return Collections.emptyList();
         }
@@ -250,24 +262,19 @@ public class N8nApiClient {
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        try {
-            ResponseEntity<Map> response = restTemplate.exchange(urlBuilder.toString(), HttpMethod.GET, entity, Map.class);
-            Map<String, Object> body = response.getBody();
+        ResponseEntity<Map> response = restTemplate.exchange(urlBuilder.toString(), HttpMethod.GET, entity, Map.class);
+        Map<String, Object> body = response.getBody();
 
-            if (body != null && body.containsKey("data")) {
-                List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
-                List<EventDto> events = data.stream().map(this::mapToEventDto).toList();
+        if (body != null && body.containsKey("data")) {
+            List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
+            List<EventDto> events = data.stream().map(this::mapToEventDto).toList();
 
-                if (startedAfter != null) {
-                    return events.stream()
-                            .filter(e -> e.getOccurredAt() != null && e.getOccurredAt().isAfter(startedAfter))
-                            .toList();
-                }
-                return events;
+            if (startedAfter != null) {
+                return events.stream()
+                        .filter(e -> e.getOccurredAt() != null && e.getOccurredAt().isAfter(startedAfter))
+                        .toList();
             }
-        } catch (Exception e) {
-            // Log error but return empty list to avoid breaking UI
-            System.err.println("Failed to fetch executions from n8n: " + e.getMessage());
+            return events;
         }
         return new ArrayList<>();
     }

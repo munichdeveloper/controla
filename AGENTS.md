@@ -51,7 +51,8 @@ Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 ### Erweiterungspunkte
 
-- Interface + CE-Default-Bean mit `@ConditionalOnMissingBean`; Premium liefert eine eigene Bean (Beispiel: `license/LicenseConfiguration`).
+- Interface + CE-Default-Bean mit `@ConditionalOnMissingBean`; Premium liefert eine eigene, per Component-Scan gefundene Bean (Beispiele: `license/LicenseConfiguration`, `security/TargetPolicyConfiguration`).
+- Beitrags-SPIs, deren Beans gesammelt werden: `license/FeatureProvider` (Feature-Keys), `diagnostics/DiagnosticCheck` und `diagnostics/DiagnosticConclusionProvider` (Diagnosebericht).
 - Interface + CE-Default; Premium übersteuert mit `@Primary` (Beispiel: `alerts/InstanceAlertHandler`).
 - Ersetzen am selben Pfad: Premium bindet ein CE-Paket nicht ein und liefert einen eigenen Controller unter demselben Pfad (Beispiel: `backups/BackupSettingsController` → `/api/backups/settings`). Das Frontend nutzt dann in beiden Editionen denselben Aufruf.
 - Neue Premium-Endpunkte liegen unter `/api/premium/**`; einige ältere Premium-Endpunkte liegen außerhalb dieses Präfixes.
@@ -63,6 +64,7 @@ Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 - Premium bindet eine **feste CE-Version** aus GitHub Packages (`.github/workflows/maven-publish.yml`). CE-Änderungen kommen dort erst nach Release und Versions-Bump an.
 - Premium scannt CE-Pakete über eine **explizite Paketliste** (`@ComponentScan`, `@EnableJpaRepositories`, `@EntityScan`). Ein neues Paket unter `de.atstck.controla.*` bleibt in Premium unsichtbar, bis es dort ergänzt wird – plane das Premium-Update mit ein.
 - Flyway: CE-Migrationen nutzen `V1`–`V99`, Premium beginnt bei `V100`.
+- Aufrufe an vom Kunden eingetragene URLs (n8n-Basis-URL, Companion) laufen über `service/InstanceHttpClient`; dort greift die `InstanceTargetPolicy` auf die aufgelöste IP, auch bei Redirects; Redirects folgt der Client nur auf denselben Host, damit Credential-Header nicht weitergereicht werden. Interne Dienste nutzen das reguläre `restTemplate`.
 
 ### Feature Flags: Vertrag zwischen Frontend und Backend
 
@@ -70,12 +72,11 @@ Das Frontend erkennt über `GET /api/license` (`edition`, `maxInstances`, `featu
 
 **Grundregel:** Ein UI-Element, das einen Endpunkt aufruft, wird nur gerendert, wenn das angeschlossene Backend diesen Endpunkt garantiert anbietet.
 
-- Eine neue Funktion mit eigener UI bekommt einen eigenen Feature-Key (`bereich.funktion`, z. B. `alert.workflow_error`).
-- Ein Key ist nur in dem Backend `true`, dessen Code den Endpunkt enthält. Ein fehlender Key gilt im Frontend als `false`.
-- Gate im Frontend über `isFeatureEnabled(key)`. `isPremium` (Vergleich des Editionsnamens) ist Altbestand; neue Gates nutzen Keys.
+- Eine neue Funktion mit eigener UI bekommt einen eigenen Feature-Key (`bereich.funktion`, z. B. `diagnostics.report`).
+- Den Key meldet der `FeatureProvider` des Moduls, das den Endpunkt enthält (CE: `license/CommunityFeatures`); der Endpunkt trägt `@RequiresFeature("<key>")`. `FeatureRegistry` liefert ihn über `GET /api/license` aus – `COMMUNITY`-Keys immer `true`, `PREMIUM`-Keys laut Lizenz. Ein fehlender Key gilt im Frontend als `false` (ADR-002).
+- `license/FeatureContractTest` prüft, dass jeder Key einen Endpunkt hat und jeder Endpunkt-Key gemeldet wird; Keys ohne eigenen Endpunkt markierst du `behaviorOnly`.
+- Gate im Frontend über `isFeatureEnabled(key)` mit Konstanten aus `frontend/src/lib/license/features.ts`. `isPremium` (Vergleich des Editionsnamens) ist Altbestand; neue Gates nutzen Keys.
 - Das gilt auch für CE-Funktionen: Das SaaS-Frontend kann neuer sein als das Premium-Backend, das eine ältere CE-Version einbindet.
 - Hängt eine Funktion zusätzlich von externem Zustand ab (z. B. Companion eingerichtet, erreichbar, ausreichend neu), zeigt die UI an dieser Stelle einen erklärenden Hinweis statt des Bedienelements.
-
-Ist-Stand: `license/LicenseController` listet die Keys fest auf; `CommunityLicenseService` liefert für jeden Key `false`, die Premium-Implementierung für jeden Key `true`. Ein Key, den du hier ergänzt, ist in Premium aktiv, sobald Premium diese CE-Version einbindet – auch wenn Premium den Endpunkt noch nicht hat.
 
 **Fertig ist eine Änderung mit UI erst, wenn** für jedes neue Bedienelement benannt ist, welcher Feature-Key es schaltet und welches Backend (CE oder Premium, ab welcher Version) den aufgerufenen Endpunkt liefert.
