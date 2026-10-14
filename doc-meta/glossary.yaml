@@ -40,3 +40,21 @@ terms:
     definition: Next.js feature to proxy API requests from /api/* to backend
     context: Only works in development mode, not in standalone production builds
 
+
+  - term: Feature Key
+    definition: Name of a function in the form area.function, reported by GET /api/license when the running backend contains its code
+    context: |
+      Reported via FeatureProvider beans and resolved by FeatureRegistry (ADR-002).
+      The frontend shows a control only if its key is true; a missing key means disabled.
+
+  - term: Diagnostic Report
+    definition: Result of GET /api/instances/{id}/diagnostics – all diagnostic checks of the running edition for one instance, plus derived conclusions
+    aliases: [Diagnosebericht]
+
+  - term: Diagnostic Check
+    definition: One check of the diagnostic report (e.g. n8n.health) with status OK, WARN, FAIL, SKIPPED or ERROR
+    context: Extension point DiagnosticCheck; further modules contribute checks as beans
+
+  - term: Target Policy
+    definition: Extension point InstanceTargetPolicy deciding which addresses calls to customer-provided URLs may reach
+    context: Community default allows all addresses; enforced on resolved IPs including redirects (InstanceHttpClient)

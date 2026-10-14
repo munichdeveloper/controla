@@ -1,6 +1,6 @@
 # Controla System Definition
 name: Controla
-version: 1.0.6
+version: 1.2.0
 description: n8n Instance Monitoring System with multi-tenant support
 
 architecture:
@@ -14,6 +14,9 @@ architecture:
         - Authentication & Authorization (JWT)
         - Multi-tenancy management
         - Alert settings management
+        - Feature registry for frontend feature flags (GET /api/license, ADR-002)
+        - Instance diagnostics (GET /api/instances/{id}/diagnostics) with extension points DiagnosticCheck and DiagnosticConclusionProvider
+        - Target policy for calls to customer-provided URLs (InstanceTargetPolicy, InstanceHttpClient)
 
     - name: Frontend
       technology: Next.js 14 (TypeScript)
