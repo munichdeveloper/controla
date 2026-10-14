@@ -60,7 +60,7 @@ public class N8nReachabilityCheck implements DiagnosticCheck {
         try {
             URI uri = URI.create(context.baseUrl());
             host = uri.getHost();
-            if (host == null || uri.getScheme() == null || !uri.getScheme().matches("https?")) {
+            if (host == null || uri.getScheme() == null || !uri.getScheme().matches("(?i)https?")) {
                 throw new IllegalArgumentException("missing scheme or host");
             }
         } catch (RuntimeException e) {

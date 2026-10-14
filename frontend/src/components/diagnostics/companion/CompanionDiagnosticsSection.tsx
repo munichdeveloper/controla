@@ -6,6 +6,7 @@ import { getCompanionDiagnosticServices, getCompanionStatus } from '@/lib/api';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { FEATURES } from '@/lib/license/features';
 import { COMPANION_CAPABILITIES as CAP, companionSectionState, worstState } from '@/lib/diagnostics/gating';
+import { BUTTON_SECONDARY, CARD } from '@/lib/diagnostics/format';
 import { CompanionPrerequisiteNotice } from './CompanionPrerequisiteNotice';
 import { ContainerDetailsCard } from './ContainerDetailsCard';
 import { ContainerLogViewer } from './ContainerLogViewer';
@@ -34,7 +35,12 @@ export function CompanionDiagnosticsSection({ externalId, onOpenCompanionTab }: 
     FEATURES.COMPANION_DIAG_BUNDLE,
   ].some((key) => isFeatureEnabled(key));
 
-  const { data: status } = useQuery({
+  const {
+    data: status,
+    error: statusError,
+    refetch: refetchStatus,
+    isFetching: statusFetching,
+  } = useQuery({
     queryKey: ['companionDiagnosticsStatus', externalId],
     queryFn: () => getCompanionStatus(externalId),
     enabled: anyFeature,
@@ -70,7 +76,18 @@ export function CompanionDiagnosticsSection({ externalId, onOpenCompanionTab }: 
         {states.bundle === 'ready' && <SupportBundleButton externalId={externalId} />}
       </div>
 
-      {!allReadyOrHidden && (
+      {statusError && !status && (
+        <div className={CARD}>
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Companion-Status konnte nicht geladen werden: {(statusError as Error).message}
+          </p>
+          <button onClick={() => refetchStatus()} disabled={statusFetching} className={`${BUTTON_SECONDARY} mt-3`}>
+            {statusFetching ? 'Lädt…' : 'Erneut versuchen'}
+          </button>
+        </div>
+      )}
+
+      {!allReadyOrHidden && !(statusError && !status) && (
         <CompanionPrerequisiteNotice state={notice} companionVersion={status?.companionVersion} onOpenCompanionTab={onOpenCompanionTab} />
       )}
 

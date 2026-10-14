@@ -20,14 +20,14 @@ const ACTION_LABEL: Record<string, string> = {
 
 function describe(event: CompanionContainerEvent): string {
   const parts = [ACTION_LABEL[event.action] ?? event.action];
-  if (event.exitCode !== null) parts.push(`Exit-Code ${event.exitCode}`);
+  if (event.exitCode != null) parts.push(`Exit-Code ${event.exitCode}`);
   if (event.signal) parts.push(`Signal ${event.signal}`);
   if (event.healthStatus) parts.push(event.healthStatus);
   return parts.join(' · ');
 }
 
 function isBad(event: CompanionContainerEvent): boolean {
-  return event.action === 'oom' || (event.action === 'die' && event.exitCode !== 0) || event.healthStatus === 'unhealthy';
+  return event.action === 'oom' || (event.action === 'die' && event.exitCode != null && event.exitCode !== 0) || event.healthStatus === 'unhealthy';
 }
 
 export function ContainerEventsTimeline({ externalId, service }: { externalId: string; service: string }) {

@@ -165,4 +165,54 @@ class N8nHttpChecksTest {
         assertThat(server.requestHeaders.get(0)).doesNotContainKey("X-n8n-api-key");
         assertThat(List.of(result.latencyMs())).allMatch(ms -> ms >= 0);
     }
+    @Test
+    void reachabilityAcceptsUpperCaseScheme() {
+        server.route("/", Response.of(200, "ok"));
+
+        DiagnosticResult result = new N8nReachabilityCheck(probe, allowAll, 2000)
+                .run(context(server.baseUrl().replace("http://", "HTTP://"), "k"));
+
+        assertThat(result.status()).isEqualTo(DiagnosticStatus.OK);
+    }
+
+    @Test
+    void tlsCheckHandlesIpLiterals() throws Exception {
+        assertThat(N8nTlsCheck.isIpLiteral("::1")).isTrue();
+        assertThat(N8nTlsCheck.isIpLiteral("10.0.0.1")).isTrue();
+        assertThat(N8nTlsCheck.isIpLiteral("n8n.example.com")).isFalse();
+
+        DiagnosticResult result = new N8nTlsCheck(allowAll, 14).run(context("https://[::1]:" + freePort(), "k"));
+
+        assertThat(result.status()).isNotEqualTo(DiagnosticStatus.ERROR);
+    }
+
+    @Test
+    void probeReadsOnlyAPrefixOfEndlessBodies() throws Exception {
+        try (ServerSocket endless = new ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1"))) {
+            Thread writer = new Thread(() -> {
+                try (java.net.Socket socket = endless.accept()) {
+                    java.io.OutputStream out = socket.getOutputStream();
+                    out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n"
+                            .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+                    byte[] chunk = ("1000\r\n" + "x".repeat(4096) + "\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+                    while (true) {
+                        out.write(chunk);
+                    }
+                } catch (java.io.IOException ignored) {
+                    // client dropped the connection
+                }
+            });
+            writer.setDaemon(true);
+            writer.start();
+
+            long started = System.nanoTime();
+            HttpProbe.Result result = probe.get("http://127.0.0.1:" + endless.getLocalPort() + "/", Map.of());
+
+            assertThat(result.httpStatus()).isEqualTo(200);
+            assertThat(result.body()).hasSize(2000);
+            assertThat(java.time.Duration.ofNanos(System.nanoTime() - started)).isLessThan(java.time.Duration.ofSeconds(5));
+            writer.join(5000);
+            assertThat(writer.isAlive()).isFalse();
+        }
+    }
 }

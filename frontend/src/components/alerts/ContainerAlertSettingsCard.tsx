@@ -25,7 +25,7 @@ export function ContainerAlertSettingsCard() {
   const [form, setForm] = useState<ContainerAlertSettings>({ containerOom: false, containerCrashLoop: false, containerUnhealthy: false });
   const [saved, setSaved] = useState(false);
 
-  const { data } = useQuery({
+  const { data, error: loadError, isLoading, refetch } = useQuery({
     queryKey: ['containerAlertSettings'],
     queryFn: getContainerAlertSettings,
     enabled,
@@ -51,12 +51,22 @@ export function ContainerAlertSettingsCard() {
       <p className="text-sm text-gray-500 dark:text-zinc-400 mb-6">
         Erkannt über den n8n Companion der jeweiligen Instanz. Benachrichtigt wird über die oben eingerichteten Kanäle.
       </p>
+      {loadError && (
+        <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+          Einstellungen konnten nicht geladen werden: {(loadError as Error).message}{' '}
+          <button onClick={() => refetch()} className="underline">
+            Erneut versuchen
+          </button>
+        </div>
+      )}
+      {isLoading && <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">Lädt…</p>}
       <div className="space-y-4">
         {OPTIONS.map((option) => (
           <label key={option.key} className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={form[option.key]}
+              disabled={!data}
               onChange={(e) => setForm((prev) => ({ ...prev, [option.key]: e.target.checked }))}
               className="mt-1 h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
             />
@@ -72,7 +82,7 @@ export function ContainerAlertSettingsCard() {
         {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">Gespeichert</span>}
         <button
           onClick={() => mutation.mutate(form)}
-          disabled={mutation.isPending}
+          disabled={!data || mutation.isPending}
           className="py-2 px-6 rounded-full text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
         >
           {mutation.isPending ? 'Speichere...' : 'Speichern'}

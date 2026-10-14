@@ -154,6 +154,69 @@ class InstanceDiagnosticsServiceTest {
     }
 
     @Test
+    void checkTimeoutCountsFromTheStartOfEachCheck() {
+        DiagnosticCheck first = check("t.first", DiagnosticCategory.N8N, 1, (self, ctx) -> {
+            Thread.sleep(250);
+            return DiagnosticResult.of(self).ok("in time");
+        });
+        DiagnosticCheck overrunning = check("t.overrun", DiagnosticCategory.N8N, 2, (self, ctx) -> {
+            Thread.sleep(500);
+            return DiagnosticResult.of(self).ok("too late");
+        });
+
+        DiagnosticReportDto report = service(List.of(first, overrunning), List.of()).runForCurrentTenant("inst_1");
+
+        assertThat(report.checks()).extracting(DiagnosticResult::status)
+                .containsExactly(DiagnosticStatus.OK, DiagnosticStatus.ERROR);
+    }
+
+    @Test
+    void queuedChecksGetTheirFullTimeout() {
+        // More checks than pool threads: the ninth starts only after one of the first eight is done.
+        List<DiagnosticCheck> checks = new java.util.ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            checks.add(check("q." + i, DiagnosticCategory.N8N, i, (self, ctx) -> {
+                Thread.sleep(200);
+                return DiagnosticResult.of(self).ok("done");
+            }));
+        }
+
+        DiagnosticReportDto report = service(checks, List.of()).runForCurrentTenant("inst_1");
+
+        assertThat(report.checks()).extracting(DiagnosticResult::status).containsOnly(DiagnosticStatus.OK);
+    }
+
+    @Test
+    void totalTimeoutAlsoBoundsConclusionProviders() {
+        DiagnosticCheck ok = check("p.ok", DiagnosticCategory.N8N, 1, (self, ctx) -> DiagnosticResult.of(self).ok("fine"));
+        DiagnosticConclusionProvider blocking = (ctx, results) -> {
+            try {
+                Thread.sleep(10_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return List.of(new DiagnosticConclusion("late", DiagnosticStatus.FAIL, "Late", "", List.of()));
+        };
+
+        long started = System.nanoTime();
+        DiagnosticReportDto report = service(List.of(ok), List.of(blocking)).runForCurrentTenant("inst_1");
+
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(5));
+        assertThat(report.conclusions()).isEmpty();
+    }
+
+    @Test
+    void overallStatusIncludesConclusionSeverity() {
+        DiagnosticCheck warn = check("o.warn", DiagnosticCategory.N8N, 1, (self, ctx) -> DiagnosticResult.of(self).warn("meh"));
+        DiagnosticConclusionProvider provider = (ctx, results) -> List.of(
+                new DiagnosticConclusion("c.fail", DiagnosticStatus.FAIL, "Combined", "Two warnings add up", List.of("o.warn")));
+
+        DiagnosticReportDto report = service(List.of(warn), List.of(provider)).runForCurrentTenant("inst_1");
+
+        assertThat(report.overallStatus()).isEqualTo(DiagnosticStatus.FAIL);
+    }
+
+    @Test
     void rejectsInstancesOfOtherTenants() {
         TenantContext.setTenantId("tenant-b");
         when(repository.findByExternalIdAndTenantId("inst_1", "tenant-b")).thenReturn(Optional.empty());

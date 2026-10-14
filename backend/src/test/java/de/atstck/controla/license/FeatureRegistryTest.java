@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FeatureRegistryTest {
 
@@ -40,5 +41,14 @@ class FeatureRegistryTest {
         assertThat(registry.resolve()).doesNotContainKey("companion.diagnostics.logs");
         assertThat(registry.isKnown("companion.diagnostics.logs")).isFalse();
         assertThat(registry.isEnabled("companion.diagnostics.logs")).isFalse();
+    }
+
+    @Test
+    void conflictingDescriptorsForTheSameKeyFailAtStartup() {
+        FeatureProvider communityClaim = () -> List.of(FeatureDescriptor.community("companion.diagnostics.logs"));
+
+        assertThatThrownBy(() -> new FeatureRegistry(List.of(communityClaim, PREMIUM_MODULE), LicenseStubs.ALL_ENABLED))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("companion.diagnostics.logs");
     }
 }

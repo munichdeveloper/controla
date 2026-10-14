@@ -26,10 +26,13 @@ export function DiagnosticSnapshotDialog({ externalId, snapshotId, onClose }: Pr
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
+        aria-labelledby="diagnostic-snapshot-title"
       >
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Diagnose-Snapshot</h3>
+            <h3 id="diagnostic-snapshot-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Diagnose-Snapshot
+            </h3>
             {data && (
               <p className="text-xs text-gray-500 dark:text-zinc-400">
                 Erfasst {formatDate(data.capturedAt)}

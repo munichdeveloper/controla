@@ -17,7 +17,7 @@ Until version 1.1.0, `LicenseController` listed the feature keys itself, the Com
 ## Decision
 
 1. **`FeatureProvider` extension point.** Every module reports the keys it implements (`FeatureDescriptor`: key, tier `COMMUNITY`/`PREMIUM`, `behaviorOnly`). The provider lives next to the implementing code.
-2. **`FeatureRegistry`** collects all providers. `COMMUNITY` keys are always enabled, `PREMIUM` keys follow `LicenseService.isFeatureEnabled`. `GET /api/license` returns only keys of the running backend; the frontend treats a missing key as disabled.
+2. **`FeatureRegistry`** collects all providers. `COMMUNITY` keys are always enabled, `PREMIUM` keys follow `LicenseService.isFeatureEnabled`. `GET /api/license` returns only keys of the running backend; the frontend treats a missing key as disabled. A key reported by two providers with different descriptors stops the application at startup, so bean order can never decide its tier.
 3. **`@RequiresFeature`** marks the endpoints of a key. `FeatureGuardInterceptor` answers `404` while the key is not enabled.
 4. **`FeatureContract`** check (unit test in every module): every key used in `@RequiresFeature` is reported, and every reported key that is not `behaviorOnly` has at least one endpoint.
 

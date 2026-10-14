@@ -71,9 +71,7 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
           {report.conclusions.map((conclusion) => (
             <div
               key={conclusion.id}
-              className={`p-4 rounded-lg border ${
-                conclusion.severity === 'OK' ? STATUS_BADGE.OK : conclusion.severity === 'WARN' ? STATUS_BADGE.WARN : STATUS_BADGE.FAIL
-              }`}
+              className={`p-4 rounded-lg border ${STATUS_BADGE[conclusion.severity]}`}
             >
               <p className="font-semibold text-sm">{conclusion.title}</p>
               <p className="text-sm mt-1">{conclusion.explanation}</p>

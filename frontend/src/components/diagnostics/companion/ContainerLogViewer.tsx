@@ -79,6 +79,7 @@ export function ContainerLogViewer({ externalId, service }: Props) {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filtern…"
+            aria-label="Logzeilen filtern"
             className={`${SELECT} w-40`}
           />
           <button onClick={() => refetch()} disabled={isFetching} className={BUTTON_SECONDARY}>
@@ -118,7 +119,12 @@ export function ContainerLogViewer({ externalId, service }: Props) {
       </div>
       {data && (
         <p className="text-xs text-gray-500 dark:text-zinc-400 mt-2">
-          {data.lines.length} Zeilen{data.truncated ? ' (gekürzt)' : ''} · Werte geheimer Variablen sind maskiert.
+          {data.lines.length} Zeilen{data.truncated ? ' (gekürzt)' : ''}
+          {data.redacted ? (
+            ' · Werte geheimer Variablen sind maskiert.'
+          ) : (
+            <span className="text-amber-700 dark:text-amber-400"> · Achtung: Diese Logs wurden nicht maskiert und können Secrets enthalten.</span>
+          )}
         </p>
       )}
     </div>

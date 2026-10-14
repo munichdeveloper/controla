@@ -10,19 +10,28 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.ProtocolException;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * HTTP access to customer-provided URLs (n8n instances, companions).
  * Every connection is resolved through {@link PolicyDnsResolver}, so the
  * {@link InstanceTargetPolicy} applies to the first request and to every
- * redirect hop. Calls to internal services (core API, mail, billing) use the
- * regular {@code restTemplate} bean instead.
+ * redirect hop. Redirects are followed only within the same host, so
+ * credential headers (e.g. {@code X-N8N-API-KEY}) never reach another host.
+ * Calls to internal services (core API, mail, billing) use the regular
+ * {@code restTemplate} bean instead.
  */
 @Component
 public class InstanceHttpClient {
@@ -39,7 +48,7 @@ public class InstanceHttpClient {
     public InstanceHttpClient(InstanceTargetPolicy policy) {
         this.policy = policy;
         this.apiClient = builder(RESPONSE_TIMEOUT)
-                .setRedirectStrategy(DefaultRedirectStrategy.INSTANCE)
+                .setRedirectStrategy(new SameHostRedirectStrategy())
                 .build();
         this.probeClient = builder(PROBE_RESPONSE_TIMEOUT)
                 .disableRedirectHandling()
@@ -65,7 +74,7 @@ public class InstanceHttpClient {
                         .build());
     }
 
-    /** RestTemplate for API calls to customer URLs (follows redirects, policy checked per hop). */
+    /** RestTemplate for API calls to customer URLs (follows same-host redirects, policy checked per hop). */
     public RestTemplate restTemplate() {
         return restTemplate;
     }
@@ -77,6 +86,31 @@ public class InstanceHttpClient {
 
     public InstanceTargetPolicy policy() {
         return policy;
+    }
+
+    /**
+     * Follows a redirect only if it stays on the host of the redirected
+     * request (scheme and port may change, e.g. http → https). Requests carry
+     * credentials as custom headers, which the default strategy would forward
+     * to any host.
+     */
+    static final class SameHostRedirectStrategy extends DefaultRedirectStrategy {
+
+        @Override
+        public URI getLocationURI(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException {
+            URI location = super.getLocationURI(request, response, context);
+            String currentHost;
+            try {
+                currentHost = request.getUri().getHost();
+            } catch (URISyntaxException e) {
+                throw new ProtocolException("Invalid request URI", e);
+            }
+            if (currentHost == null || location.getHost() == null
+                    || !currentHost.equalsIgnoreCase(location.getHost())) {
+                throw new ProtocolException("Redirect to another host is not followed: " + location.getHost());
+            }
+            return location;
+        }
     }
 
     @PreDestroy

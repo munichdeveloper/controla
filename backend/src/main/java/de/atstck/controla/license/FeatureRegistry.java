@@ -1,7 +1,5 @@
 package de.atstck.controla.license;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -17,8 +15,6 @@ import java.util.Map;
 @Component
 public class FeatureRegistry {
 
-    private static final Logger logger = LoggerFactory.getLogger(FeatureRegistry.class);
-
     private final Map<String, FeatureDescriptor> descriptors;
     private final LicenseService licenseService;
 
@@ -29,8 +25,9 @@ public class FeatureRegistry {
             for (FeatureDescriptor descriptor : provider.features()) {
                 FeatureDescriptor previous = collected.putIfAbsent(descriptor.key(), descriptor);
                 if (previous != null && !previous.equals(descriptor)) {
-                    logger.warn("Feature key '{}' reported twice with different descriptors: {} / {}",
-                            descriptor.key(), previous, descriptor);
+                    // Bean order must not decide whether a key is COMMUNITY or PREMIUM.
+                    throw new IllegalStateException("Feature key '" + descriptor.key()
+                            + "' reported twice with different descriptors: " + previous + " / " + descriptor);
                 }
             }
         }

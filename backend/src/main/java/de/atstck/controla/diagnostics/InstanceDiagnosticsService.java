@@ -19,13 +19,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * Runs all {@link DiagnosticCheck} beans for an instance in parallel and
@@ -100,14 +104,21 @@ public class InstanceDiagnosticsService {
             return cached.report();
         }
         DiagnosticReportDto report = run(instance, tenantId);
-        cache.put(cacheKey, new CachedReport(report, now.plus(cacheTtl)));
+        Instant finished = clock.instant();
+        cache.values().removeIf(entry -> !entry.expiresAt().isAfter(finished));
+        cache.put(cacheKey, new CachedReport(report, finished.plus(cacheTtl)));
         return report;
     }
 
-    /** Runs the report without cache; the tenant must match the instance (callers check ownership). */
+    /**
+     * Runs the report without cache; the tenant must match the instance (callers check ownership).
+     * Each check gets at most {@code checkTimeout} from the moment it starts; the whole run,
+     * including {@code appliesTo} and the conclusion providers, is bounded by {@code totalTimeout}.
+     */
     public DiagnosticReportDto run(Instance instance, String tenantId) {
         Instant startedAt = clock.instant();
         long started = System.nanoTime();
+        long deadline = started + totalTimeout.toNanos();
         DiagnosticContext context = new DiagnosticContext(
                 instance, () -> credentialService.getDecryptedApiKey(instance), tenantId, startedAt);
 
@@ -122,50 +133,17 @@ public class InstanceDiagnosticsService {
             }
         }
 
-        List<Future<DiagnosticResult>> futures = new ArrayList<>();
-        for (DiagnosticCheck check : applicable) {
-            futures.add(executor.submit(() -> runCheck(check, context, tenantId)));
-        }
-
-        long deadline = System.nanoTime() + totalTimeout.toNanos();
-        List<DiagnosticResult> results = new ArrayList<>();
-        for (int i = 0; i < applicable.size(); i++) {
-            DiagnosticCheck check = applicable.get(i);
-            Future<DiagnosticResult> future = futures.get(i);
-            long remaining = Math.max(0, deadline - System.nanoTime());
-            long wait = Math.min(checkTimeout.toNanos(), remaining);
-            try {
-                results.add(future.get(wait, TimeUnit.NANOSECONDS));
-            } catch (TimeoutException e) {
-                future.cancel(true);
-                results.add(DiagnosticResult.of(check)
-                        .error("Zeitüberschreitung: Die Prüfung hat nicht rechtzeitig geantwortet.")
-                        .withDuration(TimeUnit.NANOSECONDS.toMillis(wait)));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                future.cancel(true);
-                results.add(DiagnosticResult.of(check).error("Prüfung abgebrochen."));
-            } catch (Exception e) {
-                results.add(DiagnosticResult.of(check).error("Prüfung fehlgeschlagen: " + e.getMessage()));
-            }
-        }
-
+        List<DiagnosticResult> results = runChecks(applicable, context, tenantId, deadline);
         results.sort(Comparator
                 .comparing(DiagnosticResult::category)
                 .thenComparing(r -> orderOf(r.id(), applicable)));
 
-        List<DiagnosticConclusion> conclusions = new ArrayList<>();
-        for (DiagnosticConclusionProvider provider : conclusionProviders) {
-            try {
-                conclusions.addAll(provider.conclude(context, results));
-            } catch (RuntimeException e) {
-                logger.warn("Conclusion provider {} failed: {}", provider.getClass().getSimpleName(), e.getMessage());
-            }
-        }
+        List<DiagnosticConclusion> conclusions = runConclusionProviders(context, results, tenantId, deadline);
 
-        DiagnosticStatus overall = results.stream()
-                .map(DiagnosticResult::status)
-                .filter(s -> s != DiagnosticStatus.SKIPPED)
+        DiagnosticStatus overall = Stream.concat(
+                        results.stream().map(DiagnosticResult::status),
+                        conclusions.stream().map(DiagnosticConclusion::severity))
+                .filter(s -> s != null && s != DiagnosticStatus.SKIPPED)
                 .max(Comparator.naturalOrder())
                 .orElse(DiagnosticStatus.OK);
 
@@ -173,6 +151,134 @@ public class InstanceDiagnosticsService {
         logger.info("Diagnostics finished: tenantId={}, instanceId={}, checks={}, overall={}, durationMs={}",
                 tenantId, instance.getExternalId(), results.size(), overall, durationMs);
         return new DiagnosticReportDto(instance.getExternalId(), startedAt, durationMs, overall, conclusions, results);
+    }
+
+    private List<DiagnosticResult> runChecks(List<DiagnosticCheck> applicable, DiagnosticContext context,
+                                             String tenantId, long deadline) {
+        int count = applicable.size();
+        long checkTimeoutNanos = checkTimeout.toNanos();
+        long[] startedAt = new long[count];
+        boolean[] running = new boolean[count];
+        DiagnosticResult[] results = new DiagnosticResult[count];
+        // Indices of checks that started or finished; wakes the waiting loop.
+        BlockingQueue<Integer> events = new LinkedBlockingQueue<>();
+        List<Future<DiagnosticResult>> futures = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            int index = i;
+            DiagnosticCheck check = applicable.get(i);
+            FutureTask<DiagnosticResult> task = new FutureTask<>(() -> {
+                events.add(index);
+                return runCheck(check, context, tenantId);
+            }) {
+                @Override
+                protected void done() {
+                    events.add(index);
+                }
+            };
+            futures.add(task);
+            executor.execute(task);
+        }
+
+        int pending = count;
+        while (pending > 0) {
+            long now = System.nanoTime();
+            long nextWake = deadline;
+            for (int i = 0; i < count; i++) {
+                if (results[i] != null) {
+                    continue;
+                }
+                Future<DiagnosticResult> future = futures.get(i);
+                DiagnosticCheck check = applicable.get(i);
+                if (future.isDone()) {
+                    results[i] = completed(check, future);
+                    pending--;
+                    continue;
+                }
+                long checkDeadline = running[i] ? startedAt[i] + checkTimeoutNanos : deadline;
+                if (now - deadline >= 0 || now - checkDeadline >= 0) {
+                    future.cancel(true);
+                    long ranFor = running[i] ? now - startedAt[i] : 0;
+                    results[i] = DiagnosticResult.of(check)
+                            .error("Zeitüberschreitung: Die Prüfung hat nicht rechtzeitig geantwortet.")
+                            .withDuration(TimeUnit.NANOSECONDS.toMillis(ranFor));
+                    pending--;
+                    continue;
+                }
+                if (checkDeadline - nextWake < 0) {
+                    nextWake = checkDeadline;
+                }
+            }
+            if (pending == 0) {
+                break;
+            }
+            try {
+                Integer event = events.poll(Math.max(0, nextWake - System.nanoTime()), TimeUnit.NANOSECONDS);
+                for (; event != null; event = events.poll()) {
+                    if (!running[event]) {
+                        running[event] = true;
+                        startedAt[event] = System.nanoTime();
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                for (int i = 0; i < count; i++) {
+                    if (results[i] == null) {
+                        futures.get(i).cancel(true);
+                        results[i] = DiagnosticResult.of(applicable.get(i)).error("Prüfung abgebrochen.");
+                    }
+                }
+                break;
+            }
+        }
+        return new ArrayList<>(List.of(results));
+    }
+
+    private static DiagnosticResult completed(DiagnosticCheck check, Future<DiagnosticResult> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return DiagnosticResult.of(check).error("Prüfung abgebrochen.");
+        } catch (Exception e) {
+            return DiagnosticResult.of(check).error("Prüfung fehlgeschlagen: " + e.getMessage());
+        }
+    }
+
+    private List<DiagnosticConclusion> runConclusionProviders(DiagnosticContext context, List<DiagnosticResult> results,
+                                                              String tenantId, long deadline) {
+        List<DiagnosticResult> view = List.copyOf(results);
+        List<Future<List<DiagnosticConclusion>>> futures = new ArrayList<>();
+        for (DiagnosticConclusionProvider provider : conclusionProviders) {
+            futures.add(executor.submit(() -> {
+                TenantContext.setTenantId(tenantId);
+                try {
+                    return provider.conclude(context, view);
+                } finally {
+                    TenantContext.clear();
+                }
+            }));
+        }
+        List<DiagnosticConclusion> conclusions = new ArrayList<>();
+        for (int i = 0; i < futures.size(); i++) {
+            String name = conclusionProviders.get(i).getClass().getSimpleName();
+            Future<List<DiagnosticConclusion>> future = futures.get(i);
+            try {
+                List<DiagnosticConclusion> provided =
+                        future.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+                if (provided != null) {
+                    conclusions.addAll(provided);
+                }
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                logger.warn("Conclusion provider {} timed out", name);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                future.cancel(true);
+            } catch (Exception e) {
+                logger.warn("Conclusion provider {} failed: {}", name, e.getMessage());
+            }
+        }
+        return conclusions;
     }
 
     private DiagnosticResult runCheck(DiagnosticCheck check, DiagnosticContext context, String tenantId) {

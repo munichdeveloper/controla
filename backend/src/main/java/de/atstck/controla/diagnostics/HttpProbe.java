@@ -5,11 +5,13 @@ import de.atstck.controla.service.InstanceHttpClient;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
 import org.springframework.stereotype.Component;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -19,11 +21,14 @@ import java.util.Map;
 
 /**
  * Single GET request for diagnostics: no redirects, no retries, short
- * timeouts, target policy applied. Failures are classified instead of thrown.
+ * timeouts, target policy applied. Reads at most {@value #MAX_BODY_BYTES}
+ * bytes of the body and drops the connection instead of draining the rest.
+ * Failures are classified instead of thrown.
  */
 @Component
 public class HttpProbe {
 
+    static final int MAX_BODY_BYTES = 8192;
     private static final int MAX_BODY_CHARS = 2000;
 
     private final InstanceHttpClient instanceHttpClient;
@@ -59,22 +64,42 @@ public class HttpProbe {
         }
         headers.forEach(request::addHeader);
         try {
-            return instanceHttpClient.probeClient().execute(request, response -> {
-                String body = response.getEntity() != null
-                        ? EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8)
-                        : null;
-                if (body != null && body.length() > MAX_BODY_CHARS) {
-                    body = body.substring(0, MAX_BODY_CHARS);
-                }
+            ClassicHttpResponse response = instanceHttpClient.probeClient().executeOpen(null, request, null);
+            try {
+                String body = readPrefix(response.getEntity());
                 String location = response.getFirstHeader("Location") != null
                         ? response.getFirstHeader("Location").getValue()
                         : null;
                 return new Result(response.getCode(), location, body, elapsedMs(started), null, null);
-            });
+            } finally {
+                // Drop the connection: closing normally would read the rest of the body.
+                request.cancel();
+                closeQuietly(response);
+            }
         } catch (IOException e) {
             return new Result(null, null, null, elapsedMs(started), classify(e), e.getMessage());
         } catch (RuntimeException e) {
             return new Result(null, null, null, elapsedMs(started), Failure.OTHER, e.getMessage());
+        }
+    }
+
+    private static String readPrefix(HttpEntity entity) throws IOException {
+        if (entity == null) {
+            return null;
+        }
+        InputStream content = entity.getContent();
+        if (content == null) {
+            return null;
+        }
+        String body = new String(content.readNBytes(MAX_BODY_BYTES), StandardCharsets.UTF_8);
+        return body.length() > MAX_BODY_CHARS ? body.substring(0, MAX_BODY_CHARS) : body;
+    }
+
+    private static void closeQuietly(ClassicHttpResponse response) {
+        try {
+            response.close();
+        } catch (IOException | RuntimeException ignored) {
+            // connection was already discarded by cancel()
         }
     }
 

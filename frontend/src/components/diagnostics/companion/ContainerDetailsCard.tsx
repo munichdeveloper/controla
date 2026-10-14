@@ -59,7 +59,19 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
                   s.service === service ? 'bg-emerald-50/60 dark:bg-emerald-900/10' : 'hover:bg-gray-50 dark:hover:bg-zinc-800/50'
                 }`}
               >
-                <td className="py-2 pr-4 font-medium text-gray-900 dark:text-zinc-100">{s.service}</td>
+                <td className="py-2 pr-4 font-medium text-gray-900 dark:text-zinc-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onServiceChange(s.service);
+                    }}
+                    aria-pressed={s.service === service}
+                    className="text-left hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+                  >
+                    {s.service}
+                  </button>
+                </td>
                 <td className={`py-2 pr-4 ${s.state === 'running' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                   {s.state ?? 'kein Container'}
                 </td>

@@ -154,9 +154,14 @@ public class N8nTlsCheck implements DiagnosticCheck {
         try (Socket plain = new Socket()) {
             plain.connect(new InetSocketAddress(address, port), TIMEOUT_MS);
             plain.setSoTimeout(TIMEOUT_MS);
-            try (SSLSocket socket = (SSLSocket) factory.createSocket(plain, host, port, false)) {
+            // URI hosts keep IPv6 literals in brackets; the TLS layer expects the bare address.
+            String peerHost = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
+            try (SSLSocket socket = (SSLSocket) factory.createSocket(plain, peerHost, port, false)) {
                 SSLParameters parameters = socket.getSSLParameters();
-                parameters.setServerNames(List.of(new SNIHostName(host)));
+                if (!isIpLiteral(peerHost)) {
+                    // SNI must not carry IP addresses; endpoint identification still checks them.
+                    parameters.setServerNames(List.of(new SNIHostName(host)));
+                }
                 if (verifyHostname) {
                     parameters.setEndpointIdentificationAlgorithm("HTTPS");
                 }
@@ -165,6 +170,10 @@ public class N8nTlsCheck implements DiagnosticCheck {
                 return socket.getSession().getPeerCertificates();
             }
         }
+    }
+
+    static boolean isIpLiteral(String host) {
+        return host.indexOf(':') >= 0 || host.matches("\\d{1,3}(\\.\\d{1,3}){3}");
     }
 
     private static SSLSocketFactory trustAllFactory() throws Exception {
