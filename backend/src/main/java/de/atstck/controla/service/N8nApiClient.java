@@ -11,12 +11,31 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class N8nApiClient {
+    private static final Logger logger = LoggerFactory.getLogger(N8nApiClient.class);
+    private static final int MAX_LIMIT_WITH_DATA = 100;
+    private static final int SUMMARY_PAGE_SIZE = 100;
+    private static final int MAX_SUMMARY_PAGES = 10;
+    private static final int WORKFLOW_PAGE_SIZE = 250;
+    private static final int MAX_WORKFLOW_PAGES = 10;
+    private static final Duration WORKFLOW_NAME_TTL = Duration.ofMinutes(5);
+
+    private record NameKey(String baseUrl, String apiKey) {
+    }
+
+    private record CachedNames(Map<String, String> names, Instant expiresAt) {
+    }
+
+    private final Map<NameKey, CachedNames> workflowNameCache = new java.util.concurrent.ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
     private String cachedLatestVersion;
     private long lastVersionCheck = 0;
@@ -208,7 +227,7 @@ public class N8nApiClient {
             }
         } catch (Exception e) {
             // Ignore execution fetch errors, just return workflows without stats
-            System.err.println("Failed to fetch executions for stats: " + e.getMessage());
+            logger.warn("Failed to fetch executions for stats: {}", e.getMessage());
         }
 
         // Sort by name
@@ -236,7 +255,7 @@ public class N8nApiClient {
             return fetchExecutionErrors(baseUrl, apiKey, limit, startedAfter);
         } catch (Exception e) {
             // Log error but return empty list to avoid breaking UI
-            System.err.println("Failed to fetch executions from n8n: " + e.getMessage());
+            logger.warn("Failed to fetch executions from n8n: {}", e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -247,8 +266,8 @@ public class N8nApiClient {
             return Collections.emptyList();
         }
 
-        // n8n API max limit is 250
-        int effectiveLimit = Math.min(limit, 250);
+        // includeData=true makes n8n load full execution data, so keep the page small.
+        int effectiveLimit = Math.min(limit, MAX_LIMIT_WITH_DATA);
 
         // Include data to get error details
         StringBuilder urlBuilder = new StringBuilder(baseUrl.replaceAll("/$", "") + "/api/v1/executions?status=error&includeData=true");
@@ -277,6 +296,134 @@ public class N8nApiClient {
             return events;
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Lightweight variant for diagnostics: requests {@code includeData=false} and pages through the
+     * executions (newest first, cursor based) only until an execution older than {@code startedAfter}
+     * shows up or {@code limit} matches are collected. Workflow names come from
+     * {@code /api/v1/workflows} (cached briefly) instead of the execution data. The events carry no
+     * {@code errorMessage}. Request failures are propagated.
+     */
+    public List<EventDto> fetchExecutionErrorSummaries(String baseUrl, String apiKey, int limit, Instant startedAfter) {
+        if (baseUrl == null || apiKey == null || limit <= 0) {
+            return Collections.emptyList();
+        }
+        String base = baseUrl.replaceAll("/$", "");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-N8N-API-KEY", apiKey);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        int pageSize = Math.min(SUMMARY_PAGE_SIZE, limit);
+
+        List<Map<String, Object>> matches = new ArrayList<>();
+        String cursor = null;
+        for (int page = 0; page < MAX_SUMMARY_PAGES && matches.size() < limit; page++) {
+            String url = base + "/api/v1/executions?status=error&includeData=false&limit=" + pageSize
+                    + (cursor != null ? "&cursor={cursor}" : "");
+            Map<String, Object> uriVariables = cursor != null ? Map.of("cursor", cursor) : Map.of();
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class, uriVariables);
+            Map<String, Object> body = response.getBody();
+            if (body == null || !(body.get("data") instanceof List<?> data) || data.isEmpty()) {
+                break;
+            }
+            boolean reachedOlder = false;
+            for (Object item : data) {
+                if (!(item instanceof Map<?, ?> raw)) {
+                    continue;
+                }
+                @SuppressWarnings("unchecked")
+                Map<String, Object> execution = (Map<String, Object>) raw;
+                Instant started = parseInstant(execution.get("startedAt"));
+                if (started == null) {
+                    continue;
+                }
+                if (startedAfter != null && !started.isAfter(startedAfter)) {
+                    reachedOlder = true;
+                    continue;
+                }
+                matches.add(execution);
+            }
+            Object next = body.get("nextCursor");
+            cursor = next instanceof String s && !s.isBlank() ? s : null;
+            if (reachedOlder || cursor == null) {
+                break;
+            }
+        }
+
+        if (matches.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Map<String, String> names = workflowNames(base, apiKey, entity);
+        List<EventDto> events = new ArrayList<>();
+        for (Map<String, Object> execution : matches.subList(0, Math.min(limit, matches.size()))) {
+            EventDto dto = new EventDto();
+            dto.setId(String.valueOf(execution.get("id")));
+            dto.setEventType("WORKFLOW_ERROR");
+            dto.setSeverity("ERROR");
+            dto.setOccurredAt(parseInstant(execution.get("startedAt")));
+            String workflowId = execution.get("workflowId") != null ? String.valueOf(execution.get("workflowId")) : null;
+            String workflowName = workflowId == null ? "Unknown Workflow"
+                    : names.getOrDefault(workflowId, "Workflow " + workflowId);
+            dto.setPayload(Map.of(
+                    "workflowId", workflowId != null ? workflowId : "unknown",
+                    "workflowName", workflowName,
+                    "executionId", dto.getId()));
+            events.add(dto);
+        }
+        return events;
+    }
+
+    private static Instant parseInstant(Object value) {
+        if (!(value instanceof String text)) {
+            return null;
+        }
+        try {
+            return Instant.parse(text);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Workflow id to name; cached per instance for a few minutes. Failures yield an empty map (names fall back to ids). */
+    private Map<String, String> workflowNames(String base, String apiKey, HttpEntity<Void> entity) {
+        NameKey key = new NameKey(base, apiKey);
+        Instant now = Instant.now();
+        CachedNames cached = workflowNameCache.get(key);
+        if (cached != null && cached.expiresAt().isAfter(now)) {
+            return cached.names();
+        }
+        Map<String, String> names = new HashMap<>();
+        try {
+            String cursor = null;
+            for (int page = 0; page < MAX_WORKFLOW_PAGES; page++) {
+                String url = base + "/api/v1/workflows?limit=" + WORKFLOW_PAGE_SIZE
+                        + (cursor != null ? "&cursor={cursor}" : "");
+                Map<String, Object> uriVariables = cursor != null ? Map.of("cursor", cursor) : Map.of();
+                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class, uriVariables);
+                Map<String, Object> body = response.getBody();
+                if (body == null) {
+                    break;
+                }
+                if (body.get("data") instanceof List<?> data) {
+                    for (Object item : data) {
+                        if (item instanceof Map<?, ?> wf && wf.get("id") != null && wf.get("name") != null) {
+                            names.put(String.valueOf(wf.get("id")), String.valueOf(wf.get("name")));
+                        }
+                    }
+                }
+                Object next = body.get("nextCursor");
+                cursor = next instanceof String s && !s.isBlank() ? s : null;
+                if (cursor == null) {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Could not resolve workflow names: {}", e.getMessage());
+            return names;
+        }
+        workflowNameCache.values().removeIf(entry -> !entry.expiresAt().isAfter(now));
+        workflowNameCache.put(key, new CachedNames(names, now.plus(WORKFLOW_NAME_TTL)));
+        return names;
     }
 
     private EventDto mapToEventDto(Map<String, Object> data) {
@@ -327,11 +474,9 @@ public class N8nApiClient {
 
         // Debug log to help identify structure if still failing
         if ("Execution failed".equals(errorMessage)) {
-            System.out.println("Could not extract error message for execution " + dto.getId());
-            System.out.println("Data keys: " + data.keySet());
-            if (data.get("data") instanceof Map) {
-                System.out.println("inner data keys: " + ((Map) data.get("data")).keySet());
-            }
+            logger.debug("Could not extract error message for execution {}; data keys: {}, inner data keys: {}",
+                    dto.getId(), data.keySet(),
+                    data.get("data") instanceof Map ? ((Map<?, ?>) data.get("data")).keySet() : "n/a");
         }
 
         dto.setPayload(Map.of(

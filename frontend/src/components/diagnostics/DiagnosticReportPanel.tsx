@@ -7,10 +7,11 @@ import type { DiagnosticResult } from '@/lib/types';
 import { BUTTON_SECONDARY, CARD, CARD_TITLE, CATEGORY_LABEL, STATUS_BADGE, STATUS_LABEL } from '@/lib/diagnostics/format';
 import { formatDate } from '@/lib/utils';
 
-function StatusBadge({ status }: { status: DiagnosticResult['status'] }) {
+function StatusBadge({ status, incomplete }: { status: DiagnosticResult['status']; incomplete?: boolean }) {
+  const badge = incomplete ? STATUS_BADGE.WARN : STATUS_BADGE[status];
   return (
-    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap ${STATUS_BADGE[status]}`}>
-      {STATUS_LABEL[status]}
+    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap ${badge}`}>
+      {incomplete ? 'Unvollständig' : STATUS_LABEL[status]}
     </span>
   );
 }
@@ -66,6 +67,12 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
 
       {!report && isFetching && <p className="text-sm text-gray-500 dark:text-zinc-400">Prüfungen laufen…</p>}
 
+      {report?.incomplete && (
+        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded text-sm">
+          {report.incompleteChecks ?? 1} Prüfung(en) nicht abgeschlossen – der Gesamtstatus berücksichtigt nur die abgeschlossenen Prüfungen.
+        </div>
+      )}
+
       {report && report.conclusions.length > 0 && (
         <div className="mb-6 space-y-3">
           {report.conclusions.map((conclusion) => (
@@ -94,7 +101,7 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
                   return (
                     <Fragment key={check.id}>
                       <div className="p-3 flex items-start gap-3">
-                        <StatusBadge status={check.status} />
+                        <StatusBadge status={check.status} incomplete={check.incomplete} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">{check.title}</p>
                           <p className="text-sm text-gray-700 dark:text-zinc-300">{check.summary}</p>

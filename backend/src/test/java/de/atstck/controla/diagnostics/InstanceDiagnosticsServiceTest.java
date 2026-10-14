@@ -83,7 +83,41 @@ class InstanceDiagnosticsServiceTest {
                 .containsExactly(DiagnosticStatus.OK, DiagnosticStatus.ERROR, DiagnosticStatus.ERROR);
         assertThat(report.checks().get(1).summary()).contains("boom");
         assertThat(report.checks().get(2).summary()).contains("Zeitüberschreitung");
+        assertThat(report.checks().get(2).incomplete()).isTrue();
+        assertThat(report.checks().get(1).incomplete()).isFalse();
         assertThat(report.overallStatus()).isEqualTo(DiagnosticStatus.ERROR);
+    }
+
+    @Test
+    void timeoutDoesNotSetOverallStatusAndMarksReportIncomplete() {
+        DiagnosticCheck ok = check("i.ok", DiagnosticCategory.N8N, 1, (self, ctx) -> DiagnosticResult.of(self).ok("fine"));
+        DiagnosticCheck slow = check("i.slow", DiagnosticCategory.N8N, 2, (self, ctx) -> {
+            Thread.sleep(5000);
+            return DiagnosticResult.of(self).ok("late");
+        });
+
+        DiagnosticReportDto report = service(List.of(ok, slow), List.of()).runForCurrentTenant("inst_1");
+
+        assertThat(report.overallStatus()).isEqualTo(DiagnosticStatus.OK);
+        assertThat(report.incomplete()).isTrue();
+        assertThat(report.incompleteChecks()).isEqualTo(1);
+        assertThat(report.checks().get(1).incomplete()).isTrue();
+    }
+
+    @Test
+    void failFindingPlusTimeoutYieldsFailAndIncomplete() {
+        DiagnosticCheck failing = check("f.fail", DiagnosticCategory.N8N, 1, (self, ctx) -> DiagnosticResult.of(self).fail("down"));
+        DiagnosticCheck slow = check("f.slow", DiagnosticCategory.N8N, 2, (self, ctx) -> {
+            Thread.sleep(5000);
+            return DiagnosticResult.of(self).ok("late");
+        });
+
+        DiagnosticReportDto report = service(List.of(failing, slow), List.of()).runForCurrentTenant("inst_1");
+
+        assertThat(report.overallStatus()).isEqualTo(DiagnosticStatus.FAIL);
+        assertThat(report.incomplete()).isTrue();
+        assertThat(report.checks()).filteredOn(DiagnosticResult::incomplete).extracting(DiagnosticResult::id)
+                .containsExactly("f.slow");
     }
 
     @Test

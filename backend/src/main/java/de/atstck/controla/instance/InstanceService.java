@@ -108,8 +108,8 @@ public class InstanceService {
             }
         }
 
-        // Fetch errors with max allowed limit (250) for patterns
-        List<EventDto> events = n8nApiClient.getExecutionErrors(instance.getBaseUrl(), apiKey, 250, since);
+        // Fetch errors with the max limit for requests that include execution data (100) for patterns
+        List<EventDto> events = n8nApiClient.getExecutionErrors(instance.getBaseUrl(), apiKey, 100, since);
 
         // Aggregate
         Map<String, ErrorPatternDto> patterns = new HashMap<>();
