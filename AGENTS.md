@@ -53,7 +53,8 @@ Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 - Interface + CE-Default-Bean mit `@ConditionalOnMissingBean`; Premium liefert eine eigene Bean (Beispiel: `license/LicenseConfiguration`).
 - Interface + CE-Default; Premium übersteuert mit `@Primary` (Beispiel: `alerts/InstanceAlertHandler`).
-- CE-Endpunkte liegen unter `/api/**`, Premium-Endpunkte unter `/api/premium/**`.
+- Ersetzen am selben Pfad: Premium bindet ein CE-Paket nicht ein und liefert einen eigenen Controller unter demselben Pfad (Beispiel: `backups/BackupSettingsController` → `/api/backups/settings`). Das Frontend nutzt dann in beiden Editionen denselben Aufruf.
+- Neue Premium-Endpunkte liegen unter `/api/premium/**`; einige ältere Premium-Endpunkte liegen außerhalb dieses Präfixes.
 
 Öffentliche Typen, die Premium nutzt (Interfaces, Entities, Repositories, DTOs, `security/TenantContext`), sind **API**: Ändere sie abwärtskompatibel. Ein Breaking Change braucht eine neue CE-Version und ein abgestimmtes Premium-Update.
 
