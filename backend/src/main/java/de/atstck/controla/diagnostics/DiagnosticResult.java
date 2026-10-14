@@ -5,7 +5,9 @@ import java.util.Map;
 /**
  * Result of one {@link DiagnosticCheck}. {@code summary} states the finding,
  * {@code hint} what to do about it; {@code details} carries raw values for
- * the expandable section in the UI.
+ * the expandable section in the UI. {@code incomplete} marks a check that could
+ * not finish (e.g. timeout); it is reported separately and does not drive the
+ * overall status.
  */
 public record DiagnosticResult(
         String id,
@@ -15,7 +17,13 @@ public record DiagnosticResult(
         String summary,
         String hint,
         Map<String, Object> details,
-        long durationMs) {
+        long durationMs,
+        boolean incomplete) {
+
+    public DiagnosticResult(String id, DiagnosticCategory category, DiagnosticStatus status, String title,
+                            String summary, String hint, Map<String, Object> details, long durationMs) {
+        this(id, category, status, title, summary, hint, details, durationMs, false);
+    }
 
     public DiagnosticResult {
         details = details == null ? Map.of() : Map.copyOf(withoutNulls(details));
@@ -32,7 +40,7 @@ public record DiagnosticResult(
     }
 
     public DiagnosticResult withDuration(long millis) {
-        return new DiagnosticResult(id, category, status, title, summary, hint, details, millis);
+        return new DiagnosticResult(id, category, status, title, summary, hint, details, millis, incomplete);
     }
 
     public static Builder of(DiagnosticCheck check) {
@@ -80,6 +88,11 @@ public record DiagnosticResult(
 
         public DiagnosticResult error(String summary) {
             return build(DiagnosticStatus.ERROR, summary);
+        }
+
+        /** Check that could not finish (timeout/abort): status ERROR, but flagged so it does not set the overall status. */
+        public DiagnosticResult incomplete(String summary) {
+            return new DiagnosticResult(id, category, DiagnosticStatus.ERROR, title, summary, hint, details, 0, true);
         }
 
         public DiagnosticResult build(DiagnosticStatus status, String summary) {

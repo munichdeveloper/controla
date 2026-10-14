@@ -140,17 +140,20 @@ public class InstanceDiagnosticsService {
 
         List<DiagnosticConclusion> conclusions = runConclusionProviders(context, results, tenantId, deadline);
 
+        // Checks that did not finish (timeout) are reported via "incomplete", not via the overall status.
         DiagnosticStatus overall = Stream.concat(
-                        results.stream().map(DiagnosticResult::status),
+                        results.stream().filter(r -> !r.incomplete()).map(DiagnosticResult::status),
                         conclusions.stream().map(DiagnosticConclusion::severity))
                 .filter(s -> s != null && s != DiagnosticStatus.SKIPPED)
                 .max(Comparator.naturalOrder())
                 .orElse(DiagnosticStatus.OK);
+        int incompleteChecks = (int) results.stream().filter(DiagnosticResult::incomplete).count();
 
         long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
-        logger.info("Diagnostics finished: tenantId={}, instanceId={}, checks={}, overall={}, durationMs={}",
-                tenantId, instance.getExternalId(), results.size(), overall, durationMs);
-        return new DiagnosticReportDto(instance.getExternalId(), startedAt, durationMs, overall, conclusions, results);
+        logger.info("Diagnostics finished: tenantId={}, instanceId={}, checks={}, incomplete={}, overall={}, durationMs={}",
+                tenantId, instance.getExternalId(), results.size(), incompleteChecks, overall, durationMs);
+        return new DiagnosticReportDto(instance.getExternalId(), startedAt, durationMs, overall, conclusions, results,
+                incompleteChecks > 0, incompleteChecks);
     }
 
     private List<DiagnosticResult> runChecks(List<DiagnosticCheck> applicable, DiagnosticContext context,
@@ -199,7 +202,10 @@ public class InstanceDiagnosticsService {
                     future.cancel(true);
                     long ranFor = running[i] ? now - startedAt[i] : 0;
                     results[i] = DiagnosticResult.of(check)
-                            .error("Zeitüberschreitung: Die Prüfung hat nicht rechtzeitig geantwortet.")
+                            .hint("Ein langsames n8n ist selbst ein Befund; hohe Latenzen anderer Prüfungen deuten auf dieselbe Ursache hin.")
+                            .incomplete("Zeitüberschreitung: Die Prüfung hat nicht innerhalb von "
+                                    + Math.max(1, checkTimeout.toSeconds())
+                                    + " s geantwortet – die Instanz ist möglicherweise ausgelastet.")
                             .withDuration(TimeUnit.NANOSECONDS.toMillis(ranFor));
                     pending--;
                     continue;
@@ -224,7 +230,7 @@ public class InstanceDiagnosticsService {
                 for (int i = 0; i < count; i++) {
                     if (results[i] == null) {
                         futures.get(i).cancel(true);
-                        results[i] = DiagnosticResult.of(applicable.get(i)).error("Prüfung abgebrochen.");
+                        results[i] = DiagnosticResult.of(applicable.get(i)).incomplete("Prüfung abgebrochen.");
                     }
                 }
                 break;
@@ -238,7 +244,7 @@ public class InstanceDiagnosticsService {
             return future.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return DiagnosticResult.of(check).error("Prüfung abgebrochen.");
+            return DiagnosticResult.of(check).incomplete("Prüfung abgebrochen.");
         } catch (Exception e) {
             return DiagnosticResult.of(check).error("Prüfung fehlgeschlagen: " + e.getMessage());
         }

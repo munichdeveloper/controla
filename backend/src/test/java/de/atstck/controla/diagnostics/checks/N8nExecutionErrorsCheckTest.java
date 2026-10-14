@@ -46,7 +46,7 @@ class N8nExecutionErrorsCheckTest {
     @Test
     void warnsFromThresholdAndListsTopWorkflows() {
         List<EventDto> errors = new ArrayList<>(List.of(error("A"), error("B"), error("A")));
-        when(client.fetchExecutionErrors(eq("https://n8n.example.com"), eq("key"), eq(250), eq(NOW.minusSeconds(86400))))
+        when(client.fetchExecutionErrorSummaries(eq("https://n8n.example.com"), eq("key"), eq(250), eq(NOW.minusSeconds(86400))))
                 .thenReturn(errors);
 
         DiagnosticResult result = check.run(context("key"));
@@ -59,16 +59,16 @@ class N8nExecutionErrorsCheckTest {
 
     @Test
     void okBelowThresholdAndWithoutErrors() {
-        when(client.fetchExecutionErrors(anyString(), anyString(), anyInt(), any())).thenReturn(List.of(error("A")));
+        when(client.fetchExecutionErrorSummaries(anyString(), anyString(), anyInt(), any())).thenReturn(List.of(error("A")));
         assertThat(check.run(context("key")).status()).isEqualTo(DiagnosticStatus.OK);
 
-        when(client.fetchExecutionErrors(anyString(), anyString(), anyInt(), any())).thenReturn(List.of());
+        when(client.fetchExecutionErrorSummaries(anyString(), anyString(), anyInt(), any())).thenReturn(List.of());
         assertThat(check.run(context("key")).summary()).contains("Keine");
     }
 
     @Test
     void skippedWithoutApiKey() {
         assertThat(check.run(context(null)).status()).isEqualTo(DiagnosticStatus.SKIPPED);
-        verify(client, never()).fetchExecutionErrors(any(), any(), anyInt(), any());
+        verify(client, never()).fetchExecutionErrorSummaries(any(), any(), anyInt(), any());
     }
 }

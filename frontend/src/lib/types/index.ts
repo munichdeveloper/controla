@@ -160,6 +160,7 @@ export interface DiagnosticResult {
   hint: string | null;
   details: Record<string, unknown>;
   durationMs: number;
+  incomplete?: boolean;
 }
 
 export interface DiagnosticConclusion {
@@ -175,6 +176,8 @@ export interface DiagnosticReport {
   generatedAt: string;
   durationMs: number;
   overallStatus: DiagnosticStatus;
+  incomplete?: boolean;
+  incompleteChecks?: number;
   conclusions: DiagnosticConclusion[];
   checks: DiagnosticResult[];
 }

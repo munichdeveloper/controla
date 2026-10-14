@@ -64,7 +64,7 @@ public class N8nExecutionErrorsCheck implements DiagnosticCheck {
         if (apiKey == null || apiKey.isBlank()) {
             return DiagnosticResult.of(this).skipped("Ohne gültigen API-Key nicht prüfbar.");
         }
-        List<EventDto> errors = n8nApiClient.fetchExecutionErrors(
+        List<EventDto> errors = n8nApiClient.fetchExecutionErrorSummaries(
                 context.baseUrl(), apiKey, 250, clock.instant().minus(Duration.ofHours(24)));
 
         Map<String, Long> byWorkflow = errors.stream()
