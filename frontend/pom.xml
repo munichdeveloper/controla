@@ -17,10 +17,10 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.0</version>
+                <version>2.0.2</version>
                 <configuration>
-                    <nodeVersion>v20.11.1</nodeVersion>
-                    <npmVersion>10.2.4</npmVersion>
+                    <nodeVersion>v24.22.0</nodeVersion>
+                    <npmVersion>11.9.0</npmVersion>
                     <workingDirectory>.</workingDirectory>
                 </configuration>
                 <executions>
@@ -32,12 +32,12 @@
                         <phase>generate-resources</phase>
                     </execution>
                     <execution>
-                        <id>npm install</id>
+                        <id>npm ci</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install</arguments>
+                            <arguments>ci</arguments>
                         </configuration>
                     </execution>
                     <execution>

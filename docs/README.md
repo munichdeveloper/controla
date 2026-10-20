@@ -11,6 +11,7 @@ Willkommen zur Controla-Dokumentation!
 - [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Detaillierte Docker-Anleitung mit Troubleshooting
 
 ### Entwicklung
+- [DEPENDENCY_UPGRADE.md](DEPENDENCY_UPGRADE.md) - Zielversionen, Breaking Changes und Validierung des Dependency-Updates
 - [quality-review.md](quality-review.md) - Wöchentlicher Code-Qualitätsbericht, Baselines und Fehlerregeln
 
 ### Architektur

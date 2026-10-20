@@ -16,6 +16,7 @@ import {
 import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor, getVersionUpdateState } from '@/lib/utils';
 import { useState, useMemo, Fragment, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -107,7 +108,7 @@ const uptimeFields = [
   { key: 'last12Months', label: 'Letzte 12 Monate' },
 ];
 
-export default function InstanceDetailPage({ params }) {
+export default function InstanceDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [patternRange, setPatternRange] = useState('14d');
   const [workflowFilter, setWorkflowFilter] = useState('active'); // 'active', 'inactive', 'all'
@@ -115,7 +116,7 @@ export default function InstanceDetailPage({ params }) {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const instanceId = params.id;
+  const { id: instanceId } = useParams();
   const { isPremium, isFeatureEnabled } = useLicense();
   const diagnosticsEnabled = isFeatureEnabled(FEATURES.DIAGNOSTICS_REPORT);
   const snapshotsEnabled = isFeatureEnabled(FEATURES.COMPANION_DIAG_SNAPSHOTS);

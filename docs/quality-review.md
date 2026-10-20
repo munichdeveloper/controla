@@ -4,7 +4,7 @@ The `Periodic Quality Review` GitHub Actions workflow runs every Monday at 03:17
 
 ## Checks and results
 
-The workflow uses Java 17, Node.js 20, Maven, and `npm ci`, matching the repository build conventions. It runs the backend build and tests with JaCoCo coverage, the existing non-blocking backend Checkstyle check, the frontend production build, ESLint, a TypeScript no-emit check, and npm audit/outdated inspection. A dependency-free repository scan also counts TODO/FIXME markers and source files over 400 lines.
+The workflow uses Java 17, Node.js 24 LTS, Maven, and `npm ci`, matching the repository build conventions. It runs the backend build and tests with JaCoCo coverage, the existing non-blocking backend Checkstyle check, the frontend production build, ESLint, a TypeScript no-emit check, and npm audit/outdated inspection. A dependency-free repository scan also counts TODO/FIXME markers and source files over 400 lines.
 
 Each run writes `quality-report.json` and `quality-report.md`, adds the Markdown report to the GitHub Actions job summary, and uploads the reports plus available JaCoCo, Surefire, Checkstyle, and npm diagnostic files as a 90-day artifact.
 
