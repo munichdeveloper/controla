@@ -294,6 +294,23 @@ export async function getLicenseInfo(): Promise<LicenseInfo> {
   return fetchApi<LicenseInfo>('/license');
 }
 
+// Public endpoint shared by CE and Premium; do not send a stored login token.
+export async function checkApiConnection(signal: AbortSignal): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/license`, {
+    cache: 'no-store',
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new ApiError('API nicht erreichbar', response.status);
+  }
+
+  const license = await response.json();
+  if (typeof license?.edition !== 'string') {
+    throw new Error('Ungültige Antwort von der API');
+  }
+}
+
 export async function exportInstanceWorkflows(id: string, workflowIds?: string[]): Promise<Blob> {
   const query = new URLSearchParams();
   if (workflowIds && workflowIds.length > 0) {
