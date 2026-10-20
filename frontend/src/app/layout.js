@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { ThemeProvider, useTheme } from '@/lib/theme/ThemeContext';
 import { LicenseProvider, useLicense } from '@/lib/license/LicenseContext';
@@ -57,15 +58,15 @@ function Navigation() {
               )}
             </h1>
             <nav className="mt-4 flex space-x-4">
-              <a href="/" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <Link href="/" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Dashboard
-              </a>
-              <a href="/settings/alerts" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              </Link>
+              <Link href="/settings/alerts" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Alerts
-              </a>
-              <a href="/settings/backups" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              </Link>
+              <Link href="/settings/backups" className="text-gray-700 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Backups
-              </a>
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
