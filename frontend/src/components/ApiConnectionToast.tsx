@@ -1,30 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { checkApiConnection } from '@/lib/api';
+import { useState } from 'react';
+import { useLicense } from '@/lib/license/LicenseContext';
 
 export function ApiConnectionToast() {
-  const [visible, setVisible] = useState(false);
+  const { loading, error } = useLicense();
+  const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let active = true;
-    const timeout = setTimeout(() => controller.abort(), 5000);
+  if (loading) {
+    return (
+      <div
+        role="status"
+        className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-gray-700 dark:text-zinc-300 shadow-lg"
+      >
+        Lizenz wird abgerufen...
+      </div>
+    );
+  }
 
-    checkApiConnection(controller.signal)
-      .catch(() => {
-        if (active) setVisible(true);
-      })
-      .finally(() => clearTimeout(timeout));
-
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, []);
-
-  if (!visible) return null;
+  if (!error || dismissed) return null;
 
   return (
     <div
@@ -34,7 +28,7 @@ export function ApiConnectionToast() {
       <p>Keine Verbindung zur API möglich. Bitte versuche es später erneut.</p>
       <button
         type="button"
-        onClick={() => setVisible(false)}
+        onClick={() => setDismissed(true)}
         aria-label="Fehlermeldung schließen"
         className="shrink-0 rounded px-1 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
       >
