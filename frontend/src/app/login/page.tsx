@@ -16,10 +16,14 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { license, isPremium, loading: licenseLoading } = useLicense();
   const router = useRouter();
+  const licenseReady = !licenseLoading && !!license;
+  // Before hydration, React cannot prevent native form submissions.
+  // Only attach the controls to a form once the license has loaded.
+  const FormContainer = licenseReady ? 'form' : 'div';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || licenseLoading || !license) return;
+    if (loading || !licenseReady) return;
 
     setError('');
     setLoading(true);
@@ -59,61 +63,63 @@ export default function LoginPage() {
             <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Anmelden</h3>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+          <FormContainer method={licenseReady ? 'post' : undefined} onSubmit={handleSubmit}>
+            <fieldset className="space-y-6" disabled={!licenseReady || loading}>
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
-                {licenseLoading ? <Skeleton className="h-4 w-24" /> : (isPremium ? 'E-Mail' : 'Benutzername')}
-              </label>
-              <input
-                id="username"
-                name="username"
-                type={isPremium ? 'email' : 'text'}
-                required
-                disabled={!isPremium || licenseLoading}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className={`mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm ${!isPremium && !licenseLoading ? 'dark:bg-zinc-950/50 dark:text-zinc-400 text-gray-500 cursor-not-allowed' : ''}`}
-                placeholder={licenseLoading ? '' : (isPremium ? 'name@example.com' : 'admin')}
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
-                  Passwort
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
+                  {licenseLoading ? <Skeleton className="h-4 w-24" /> : (isPremium ? 'E-Mail' : 'Benutzername')}
                 </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors"
-                >
-                  Passwort vergessen?
-                </Link>
+                <input
+                  id="username"
+                  name="username"
+                  type={isPremium ? 'email' : 'text'}
+                  required
+                  disabled={!isPremium || licenseLoading}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className={`mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm ${!isPremium && !licenseLoading ? 'dark:bg-zinc-950/50 dark:text-zinc-400 text-gray-500 cursor-not-allowed' : ''}`}
+                  placeholder={licenseLoading ? '' : (isPremium ? 'name@example.com' : 'admin')}
+                />
               </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm"
-              />
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading || licenseLoading || !license}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Lade...' : 'Anmelden'}
-            </button>
-          </form>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+                    Passwort
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors"
+                  >
+                    Passwort vergessen?
+                  </Link>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm"
+                />
+              </div>
+
+              <button
+                type={licenseReady ? 'submit' : 'button'}
+                disabled={loading || !licenseReady}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Lade...' : 'Anmelden'}
+              </button>
+            </fieldset>
+          </FormContainer>
         </div>
       </div>
     </div>
