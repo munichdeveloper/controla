@@ -27,8 +27,7 @@ public class CryptoService {
 
     @PostConstruct
     public void init() {
-        // Derive a stable key from the configured master key string
-        // We use a fixed salt here because the master key itself is the secret
+        // Preserve the original key derivation exclusively for legacy reads.
         String salt = Base64.getEncoder().encodeToString("FixedSaltForMasterKey".getBytes());
         this.masterKey = deriveKey(masterKeyString, salt);
     }
@@ -55,11 +54,34 @@ public class CryptoService {
         }
     }
 
+    // New records carry their own random KDF salt and IV. The fixed-salt master
+    // key above is retained only as the public legacy key handle for old records.
+    private String keyMaterial(SecretKey key) {
+        return masterKey != null && java.security.MessageDigest.isEqual(masterKey.getEncoded(), key.getEncoded())
+                ? masterKeyString : Base64.getEncoder().encodeToString(key.getEncoded());
+    }
+
+    private SecretKey recordKey(String material, byte[] salt) throws Exception {
+        PBEKeySpec spec = new PBEKeySpec(material.toCharArray(), salt, 210000, 256);
+        try {
+            return new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                    .generateSecret(spec).getEncoded(), "AES");
+        } finally { spec.clearPassword(); }
+    }
+
     public String encrypt(String data, SecretKey key) {
         try {
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(data.getBytes()));
+            byte[] salt = new byte[16];
+            byte[] iv = new byte[12];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(salt);
+            random.nextBytes(iv);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, recordKey(keyMaterial(key), salt), new javax.crypto.spec.GCMParameterSpec(128, iv));
+            cipher.updateAAD("v1:".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] ciphertext = cipher.doFinal(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return "v1:" + Base64.getEncoder().encodeToString(java.nio.ByteBuffer
+                    .allocate(28 + ciphertext.length).put(salt).put(iv).put(ciphertext).array());
         } catch (Exception e) {
             throw new RuntimeException("Error encrypting data", e);
         }
@@ -67,9 +89,21 @@ public class CryptoService {
 
     public String decrypt(String encryptedData, SecretKey key) {
         try {
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(encryptedData)));
+            if (!encryptedData.startsWith("v1:")) {
+                Cipher legacy = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                legacy.init(Cipher.DECRYPT_MODE, key);
+                return new String(legacy.doFinal(Base64.getDecoder().decode(encryptedData)), java.nio.charset.Charset.defaultCharset());
+            }
+            byte[] payload = Base64.getDecoder().decode(encryptedData.substring(3));
+            if (payload.length < 44) throw new IllegalArgumentException("Invalid encrypted record");
+            var buffer = java.nio.ByteBuffer.wrap(payload);
+            byte[] salt = new byte[16]; buffer.get(salt);
+            byte[] iv = new byte[12]; buffer.get(iv);
+            byte[] ciphertext = new byte[buffer.remaining()]; buffer.get(ciphertext);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, recordKey(keyMaterial(key), salt), new javax.crypto.spec.GCMParameterSpec(128, iv));
+            cipher.updateAAD("v1:".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return new String(cipher.doFinal(ciphertext), java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException("Error decrypting data", e);
         }
