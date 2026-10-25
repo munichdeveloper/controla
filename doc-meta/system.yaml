@@ -7,7 +7,7 @@ architecture:
   style: Monolithic with containerized deployment
   components:
     - name: Backend
-      technology: Spring Boot 3.2.4 (Java 17)
+      technology: Spring Boot 3.5.16 (Java 17)
       port: 8081
       responsibilities:
         - API Gateway to Agency Core
@@ -19,7 +19,7 @@ architecture:
         - Target policy for calls to customer-provided URLs (InstanceTargetPolicy, InstanceHttpClient)
 
     - name: Frontend
-      technology: Next.js 14 (TypeScript)
+      technology: Next.js 16 (TypeScript)
       port: 3000
       responsibilities:
         - User interface

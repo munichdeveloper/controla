@@ -8,10 +8,10 @@ COPY pom.xml ./..
 RUN mvn -B -f pom.xml clean package -DskipTests
 
 # --- Stufe 2: Frontend bauen ---
-FROM node:20-slim AS frontend-builder
+FROM node:24-slim AS frontend-builder
 WORKDIR /build/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY frontend ./
 # Backend-URLs für Frontend und Rewrites zur Build-Zeit setzen
 ARG NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
@@ -27,7 +27,7 @@ WORKDIR /app
 # Node.js installieren (für Frontend)
 RUN apt-get update && \
     apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

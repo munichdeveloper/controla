@@ -1,16 +1,19 @@
 # Frontend - Quick Setup
 
+Voraussetzung: Node.js 24 LTS und npm 11 (`nvm use` liest `.nvmrc`).
+Details zu Versionssprüngen: [Dependency-Update](../docs/DEPENDENCY_UPGRADE.md).
+
 ## 🚀 Schnellstart
 
 ```powershell
 # 1. Dependencies installieren
-npm install
+npm ci
 
 # 2. Dev-Server starten
 npm run dev
 ```
 
-Frontend läuft auf: **http://localhost:3000**
+Frontend läuft auf: **http://localhost:3001**
 
 ## ⚙️ Lokale Konfiguration
 
@@ -59,13 +62,13 @@ Siehe [ENV_CONFIG.md](ENV_CONFIG.md) für:
 - [x] `.env.local` vorhanden (Port 8081)
 - [x] `.env` als Template
 - [x] `.gitignore` aktualisiert
-- [ ] `npm install` ausgeführt
+- [ ] `npm ci` ausgeführt
 - [ ] Backend läuft auf Port 8081
 - [ ] Frontend startet mit `npm run dev`
 
 ## 🔗 Links
 
-- **Frontend:** http://localhost:3000
+- **Frontend:** http://localhost:3001
 - **Backend:** http://localhost:8081
 - **Backend Health:** http://localhost:8081/actuator/health
 

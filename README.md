@@ -70,7 +70,7 @@ Controla focuses on **operations, monitoring and reliability**.
 ## 🏗️ Architecture
 
 * Backend: Spring Boot (Java 17)
-* Frontend: Next.js 14 (TypeScript, Tailwind, TanStack Query)
+* Frontend: Next.js 16 (TypeScript, Tailwind, TanStack Query)
 * Database: PostgreSQL 16 (H2 for development)
 * Auth: JWT (Spring Security)
 * Deployment: Docker Compose
