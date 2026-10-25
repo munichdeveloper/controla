@@ -290,12 +290,8 @@ export async function getInstanceUptimeStats(externalId: string): Promise<Instan
   return fetchApi<InstanceUptimeStatsDto>(`/premium/instances/${externalId}/uptime`);
 }
 
-export async function getLicenseInfo(): Promise<LicenseInfo> {
-  return fetchApi<LicenseInfo>('/license');
-}
-
 // Public endpoint shared by CE and Premium; do not send a stored login token.
-export async function checkApiConnection(signal: AbortSignal): Promise<void> {
+export async function getLicenseInfo(signal?: AbortSignal): Promise<LicenseInfo> {
   const response = await fetch(`${API_BASE_URL}/license`, {
     cache: 'no-store',
     signal,
@@ -309,6 +305,7 @@ export async function checkApiConnection(signal: AbortSignal): Promise<void> {
   if (typeof license?.edition !== 'string') {
     throw new Error('Ungültige Antwort von der API');
   }
+  return license;
 }
 
 export async function exportInstanceWorkflows(id: string, workflowIds?: string[]): Promise<Blob> {

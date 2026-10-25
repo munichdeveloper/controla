@@ -3,11 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getLicenseInfo } from '../api';
 import { LicenseInfo } from '../types';
-import { useAuth } from '../auth/AuthContext';
 
 interface LicenseContextType {
   license: LicenseInfo | null;
   loading: boolean;
+  error: boolean;
   isFeatureEnabled: (feature: string) => boolean;
   isPremium: boolean;
   maxInstances: number;
@@ -18,19 +18,33 @@ const LicenseContext = createContext<LicenseContextType | undefined>(undefined);
 export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const [license, setLicense] = useState<LicenseInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    getLicenseInfo()
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    getLicenseInfo(controller.signal)
       .then((info) => {
-        setLicense(info);
+        if (active) setLicense(info);
       })
       .catch((err) => {
-        console.error('Failed to fetch license info', err);
+        if (active) {
+          setError(true);
+          console.error('Failed to fetch license info', err);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        clearTimeout(timeout);
+        if (active) setLoading(false);
       });
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -48,7 +62,7 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const maxInstances = license?.maxInstances ?? 3;
 
   return (
-    <LicenseContext.Provider value={{ license, loading, isFeatureEnabled, isPremium, maxInstances }}>
+    <LicenseContext.Provider value={{ license, loading, error, isFeatureEnabled, isPremium, maxInstances }}>
       {children}
     </LicenseContext.Provider>
   );
