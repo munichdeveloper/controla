@@ -23,7 +23,7 @@ def wait_for(check, description, timeout=120):
             result = check()
             if result:
                 return result
-        except (subprocess.CalledProcessError, urllib.error.URLError, TimeoutError):
+        except (subprocess.CalledProcessError, urllib.error.URLError, ConnectionError, TimeoutError):
             pass
         time.sleep(1)
     raise RuntimeError(f"Timed out waiting for {description}")
@@ -94,7 +94,9 @@ def main():
             assert request(asset), f"Empty asset: {asset}"
         print(f"Docker smoke passed: Node {node_version}, npm {npm_version}, PostgreSQL 16, "
               f"login, protected API, rewrite, standalone server and {len(set(assets))} static assets")
-    except Exception:
+    except Exception as error:
+        if isinstance(error, subprocess.CalledProcessError):
+            print(re.sub(r"Password: [^\r\n]+", "Password: [redacted]", error.output), file=sys.stderr)
         try:
             logs = docker("logs", app)
             print(re.sub(r"Password: [^\r\n]+", "Password: [redacted]", logs), file=sys.stderr)
