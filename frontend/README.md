@@ -30,6 +30,7 @@ frischen Checkout die in `tsconfig.json` referenzierten Routentypen erzeugt.
 nicht. Für den vollständigen Build vom Repository-Root `mvn -B clean verify`
 mit Java 17 ausführen. Die PostgreSQL-Tests benötigen einen laufenden Docker-Daemon;
 JaCoCo erzeugt den Coverage-Bericht unter `backend/target/site/jacoco`.
+Die PR-CI baut außerdem das vollständige Docker-Image aus einem frischen Checkout.
 
 ## ⚙️ Lokale Konfiguration
 

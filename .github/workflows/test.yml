@@ -83,3 +83,10 @@ jobs:
     # Next.js 14 generates route types during the build, including on a fresh checkout.
     - run: npm run build
     - run: npm run typecheck
+
+  test-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build application image from a clean checkout
+      run: docker build --tag controla:ci .
