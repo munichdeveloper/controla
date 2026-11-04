@@ -40,7 +40,7 @@ jobs:
     
     - name: Build and Test App
       working-directory: .
-      run: mvn -B clean package
+      run: mvn -B clean verify
 
     - name: Report Backend Test Failures
       if: failure()
@@ -80,3 +80,6 @@ jobs:
     - run: npm ci
     - run: npm run lint
     - run: npm test
+    # Next.js 14 generates route types during the build, including on a fresh checkout.
+    - run: npm run build
+    - run: npm run typecheck
