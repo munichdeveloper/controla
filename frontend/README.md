@@ -14,9 +14,15 @@ Frontend läuft auf: **http://localhost:3000**
 
 ## Build und Prüfungen
 
-Mit Node.js 20 und dem eingecheckten Lockfile prüfen:
+Voraussetzungen: Node.js **24.22.0** und npm **11.9.0**. `.nvmrc` und
+`packageManager` legen diese Versionen für lokale Entwicklung und CI fest.
+Der Maven-Build installiert dieselben Versionen selbst (Frontend Maven Plugin
+2.0.2, Java 17; Maven 3.9 empfohlen).
 
 ```sh
+nvm install
+nvm use
+npm install --global npm@11.9.0
 npm ci
 npm run lint
 npm test
