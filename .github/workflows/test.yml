@@ -38,9 +38,9 @@ jobs:
         </settings>
         EOF
     
-    - name: Build App
+    - name: Build and Test App
       working-directory: .
-      run: mvn clean package -DskipTests
+      run: mvn -B clean package
     
     - name: Run Backend Linting
       working-directory: .

@@ -73,6 +73,7 @@ class InstanceControllerTest {
         verify(repository).save(argThat(instance -> TENANT.equals(instance.getTenantId())
                 && "encrypted-key".equals(instance.getApiKey())));
         if (limit == -1) {
+            verify(repository, never()).lockInstanceCreation(anyString());
             verify(repository, never()).countByTenantId(anyString());
         } else {
             verify(repository).countByTenantId(TENANT);
@@ -111,6 +112,24 @@ class InstanceControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Fehler beim Erstellen der Instanz: Master key unavailable"));
 
+        verify(repository, never()).save(any(Instance.class));
+    }
+
+    @Test
+    void requestCannotOverrideTheServerLicenseOrTenant() throws Exception {
+        configureLicense("Community Edition", 3, 3);
+        String forged = REQUEST.stripTrailing().replace("}", """
+                ,"maxInstances":-1,"edition":"Hosted Ops","tenantId":"other-tenant"}
+                """);
+
+        mvc.perform(post("/api/instances").param("maxInstances", "-1").param("edition", "Hosted Ops")
+                        .header("X-Tenant-Id", "other-tenant")
+                        .contentType(MediaType.APPLICATION_JSON).content(forged))
+                .andExpect(status().isForbidden());
+
+        verify(repository).lockInstanceCreation(TENANT);
+        verify(repository).countByTenantId(TENANT);
+        verify(repository, never()).countByTenantId("other-tenant");
         verify(repository, never()).save(any(Instance.class));
     }
 

@@ -129,6 +129,16 @@ After startup:
 * Basic metrics
 * Email alerts
 
+The instance limit is enforced by the backend per tenant. Instance creation uses
+a PostgreSQL transaction and a tenant-scoped advisory lock, so concurrent requests
+and multiple backend processes cannot claim the same remaining slot. The Community
+license service returns a fixed limit of three; Hosted Ops replaces that service.
+These checks assume an unmodified backend and database. Operators with control of
+the source code or database can change or bypass them.
+
+Run backend validation with `mvn -B -pl backend verify`. The concurrency tests use
+Testcontainers with PostgreSQL 16 and require a running Docker daemon.
+
 ---
 
 ## 🐳 Docker
