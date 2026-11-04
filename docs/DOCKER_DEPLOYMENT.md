@@ -36,6 +36,32 @@ Controla uses a **single-container architecture** for the backend and frontend:
 | 8081 | Backend | Spring Boot REST API |
 | 5432 | PostgreSQL | Database (separate container) |
 
+## Node.js toolchain and image verification
+
+The frontend build and application image use Node.js **24.22.0** and npm
+**11.9.0**. The runtime copies Node and npm from the frontend builder, so the
+same Node binary runs the standalone server. The frontend builder uses the
+versioned `node:24.22.0-bookworm-slim` image; installing Node from a moving
+NodeSource repository is no longer part of the runtime build.
+
+Local Maven artifacts, `node_modules` and `.next` are excluded from the Docker
+context to preserve the Linux dependencies installed by `npm ci`.
+
+After building the image, run its integration smoke test:
+
+```sh
+docker build --tag controla:ci .
+python3 .github/scripts/smoke-docker.py controla:ci
+```
+
+The test starts a disposable PostgreSQL 16 database and the complete application
+image. It checks the Node/npm versions, login, authenticated API access through
+the Next.js rewrite, unauthenticated rejection, the standalone login page and
+its JavaScript/CSS assets. It uses the temporary database's generated admin
+credentials without printing them, then removes its containers and network.
+The PR CI runs this check after the Docker build; it does not publish an image
+or release.
+
 ## Environment Variables
 
 A complete template for Docker Compose is available in [`.env.example`](../.env.example).
