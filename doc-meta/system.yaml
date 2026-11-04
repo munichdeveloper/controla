@@ -19,7 +19,7 @@ architecture:
         - Target policy for calls to customer-provided URLs (InstanceTargetPolicy, InstanceHttpClient)
 
     - name: Frontend
-      technology: Next.js 14 (TypeScript)
+      technology: Next.js 16, React 19 (TypeScript)
       port: 3000
       responsibilities:
         - User interface

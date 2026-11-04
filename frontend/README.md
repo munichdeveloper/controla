@@ -30,13 +30,19 @@ npm run build
 npm run typecheck
 ```
 
-Der Build läuft vor dem expliziten Typecheck, damit Next.js 14 auch bei einem
+Der Build läuft vor dem expliziten Typecheck, damit Next.js 16 auch bei einem
 frischen Checkout die in `tsconfig.json` referenzierten Routentypen erzeugt.
 `npm ci` wird auch im Maven- und Docker-Build verwendet und ändert das Lockfile
 nicht. Für den vollständigen Build vom Repository-Root `mvn -B clean verify`
 mit Java 17 ausführen. Die PostgreSQL-Tests benötigen einen laufenden Docker-Daemon;
 JaCoCo erzeugt den Coverage-Bericht unter `backend/target/site/jacoco`.
 Die PR-CI baut außerdem das vollständige Docker-Image aus einem frischen Checkout.
+
+Für die Browser-Regressionstests nach dem Build
+`npx playwright install --with-deps chromium` und `npm run test:e2e` ausführen.
+Die Tests starten den Produktions-Standalone-Server selbst. Abdeckung,
+simulierte CE-/Premium-Verträge, Browser-Mindestversionen und Rollout/Rollback
+sind in [DEPENDENCY_UPGRADE.md](../docs/DEPENDENCY_UPGRADE.md) dokumentiert.
 
 ## ⚙️ Lokale Konfiguration
 

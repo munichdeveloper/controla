@@ -3,6 +3,8 @@
 **/.next
 **/target
 frontend/node
+frontend/test-results
+frontend/playwright-report
 .env
 frontend/.env
 **/.env*.local
