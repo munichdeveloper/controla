@@ -4,13 +4,33 @@
 
 ```powershell
 # 1. Dependencies installieren
-npm install
+npm ci
 
 # 2. Dev-Server starten
 npm run dev
 ```
 
 Frontend läuft auf: **http://localhost:3000**
+
+## Build und Prüfungen
+
+Mit Node.js 20 und dem eingecheckten Lockfile prüfen:
+
+```sh
+npm ci
+npm run lint
+npm test
+npm run build
+npm run typecheck
+```
+
+Der Build läuft vor dem expliziten Typecheck, damit Next.js 14 auch bei einem
+frischen Checkout die in `tsconfig.json` referenzierten Routentypen erzeugt.
+`npm ci` wird auch im Maven- und Docker-Build verwendet und ändert das Lockfile
+nicht. Für den vollständigen Build vom Repository-Root `mvn -B clean verify`
+mit Java 17 ausführen. Die PostgreSQL-Tests benötigen einen laufenden Docker-Daemon;
+JaCoCo erzeugt den Coverage-Bericht unter `backend/target/site/jacoco`.
+Die PR-CI baut außerdem das vollständige Docker-Image aus einem frischen Checkout.
 
 ## ⚙️ Lokale Konfiguration
 
@@ -59,7 +79,7 @@ Siehe [ENV_CONFIG.md](ENV_CONFIG.md) für:
 - [x] `.env.local` vorhanden (Port 8081)
 - [x] `.env` als Template
 - [x] `.gitignore` aktualisiert
-- [ ] `npm install` ausgeführt
+- [ ] `npm ci` ausgeführt
 - [ ] Backend läuft auf Port 8081
 - [ ] Frontend startet mit `npm run dev`
 

@@ -77,7 +77,7 @@ jobs:
       - name: Type-check frontend
         id: frontend_typecheck
         continue-on-error: true
-        run: npm exec tsc -- --noEmit
+        run: npm run typecheck
         working-directory: frontend
 
       - name: Collect dependency information

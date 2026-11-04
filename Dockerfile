@@ -11,7 +11,7 @@ RUN mvn -B -f pom.xml clean package -DskipTests
 FROM node:20-slim AS frontend-builder
 WORKDIR /build/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY frontend ./
 # Backend-URLs für Frontend und Rewrites zur Build-Zeit setzen
 ARG NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
