@@ -147,7 +147,7 @@ public class InstanceService {
         if (maxInstances != -1) {
             long currentCount = instanceRepository.countByTenantId(tenantId);
             if (currentCount >= maxInstances) {
-                throw new IllegalStateException("Maximale Anzahl an Instanzen (" + maxInstances + ") für " + licenseService.getEditionName() + " erreicht.");
+                throw new InstanceLimitExceededException(maxInstances, licenseService.getEditionName());
             }
         }
 
