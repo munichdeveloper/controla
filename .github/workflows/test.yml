@@ -41,6 +41,25 @@ jobs:
     - name: Build and Test App
       working-directory: .
       run: mvn -B clean package
+
+    - name: Report Backend Test Failures
+      if: failure()
+      run: |
+        python3 - <<'PY'
+        from pathlib import Path
+        import xml.etree.ElementTree as ET
+
+        def escape(value):
+            return value.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+        for report in Path('backend/target/surefire-reports').glob('TEST-*.xml'):
+            for case in ET.parse(report).getroot().iter('testcase'):
+                for failure in [*case.findall('failure'), *case.findall('error')]:
+                    detail = failure.text or failure.get('message', '')
+                    output = case.findtext('system-out', '')
+                    detail += '\n' + '\n'.join(line for line in output.splitlines() if 'Docker' in line or 'Status 400' in line)
+                    print(f"::error title={escape(case.get('classname', 'Backend test'))}::{escape(detail[:12000])}")
+        PY
     
     - name: Run Backend Linting
       working-directory: .
