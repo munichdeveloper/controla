@@ -23,7 +23,7 @@ public class InstanceController {
 
     /**
      * GET /api/instances
-     * Liefert Liste aller Instanzen (max. 3 für CE)
+     * Liefert Liste aller Instanzen des aktuellen Tenants
      */
     @GetMapping
     public ResponseEntity<List<InstanceSummaryDto>> getInstances() {
@@ -37,19 +37,15 @@ public class InstanceController {
 
     /**
      * POST /api/instances
-     * Erstellt eine neue n8n-Instanz (max. 3 für CE)
+     * Erstellt eine neue n8n-Instanz innerhalb des Limits der aktiven Lizenz
      */
     @PostMapping
     public ResponseEntity<?> createInstance(@RequestBody CreateInstanceDto createDto) {
         try {
-            // Prüfen ob bereits 3 Instanzen vorhanden (CE Limit)
-            List<InstanceSummaryDto> existing = instanceService.getInstances();
-            if (existing.size() >= 3) {
-                return ResponseEntity.status(403).body("Community Edition: Maximal 3 Instanzen erlaubt");
-            }
-
             InstanceSummaryDto created = instanceService.createInstance(createDto);
             return ResponseEntity.status(201).body(created);
+        } catch (InstanceLimitExceededException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(400).body("Fehler beim Erstellen der Instanz: " + e.getMessage());
         }

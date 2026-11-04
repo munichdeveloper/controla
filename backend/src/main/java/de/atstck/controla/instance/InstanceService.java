@@ -10,6 +10,8 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -139,15 +141,19 @@ public class InstanceService {
         return coreApiClient.getInstanceMetrics(id, type, range);
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public InstanceSummaryDto createInstance(CreateInstanceDto createDto) {
         String tenantId = TenantContext.getTenantId();
 
         // Check license limits
         int maxInstances = licenseService.getMaxInstances();
         if (maxInstances != -1) {
+            // Serialize admission across backend processes, including tenants with no instances yet.
+            // Under READ_COMMITTED, the following count sees the preceding creator's commit.
+            instanceRepository.lockInstanceCreation(tenantId);
             long currentCount = instanceRepository.countByTenantId(tenantId);
             if (currentCount >= maxInstances) {
-                throw new IllegalStateException("Maximale Anzahl an Instanzen (" + maxInstances + ") für " + licenseService.getEditionName() + " erreicht.");
+                throw new InstanceLimitExceededException(maxInstances, licenseService.getEditionName());
             }
         }
 
