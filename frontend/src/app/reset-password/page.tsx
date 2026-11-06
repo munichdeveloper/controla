@@ -98,13 +98,13 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900 py-12 px-4">
         <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-white/5 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-white/10 rounded-xl p-8 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-800 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-zinc-700 rounded-xl p-8">
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
               {error}
             </div>
             <Link
               href="/forgot-password"
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 transition-colors"
             >
               Neuen Link anfordern
             </Link>
@@ -126,7 +126,7 @@ function ResetPasswordForm() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-white/5 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-white/10 rounded-xl p-8 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-zinc-700 rounded-xl p-8">
           {success ? (
             <div className="space-y-4">
               <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 px-4 py-3 rounded-lg">
@@ -179,7 +179,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Setze Passwort...' : 'Passwort zurücksetzen'}
               </button>

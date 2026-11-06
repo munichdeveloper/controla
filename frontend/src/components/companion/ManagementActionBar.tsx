@@ -69,7 +69,7 @@ export function ManagementActionBar({ externalId, updating, onActionComplete }: 
         <button
           onClick={() => handleAction(() => startCompanionContainer(externalId), 'Start')}
           disabled={loading || updating}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Start
         </button>
@@ -100,7 +100,7 @@ export function ManagementActionBar({ externalId, updating, onActionComplete }: 
             }
           }}
           disabled={loading || updating || !versionToPin}
-          className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Version pinnen
         </button>

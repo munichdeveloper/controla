@@ -149,13 +149,13 @@ export function formatRelativeTime(dateString: string | null | undefined): strin
 export function getStatusColor(status: string): string {
   switch (status?.toLowerCase()) {
     case 'online':
-      return 'bg-green-100 text-green-800';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800';
     case 'offline':
-      return 'bg-red-100 text-red-800';
+      return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
     case 'locked':
-      return 'bg-amber-100 text-amber-800';
+      return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700';
   }
 }
 
@@ -165,13 +165,13 @@ export function getStatusColor(status: string): string {
 export function getSeverityColor(severity: string): string {
   switch (severity?.toUpperCase()) {
     case 'ERROR':
-      return 'bg-red-100 text-red-800';
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
     case 'WARNING':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-yellow-100 text-yellow-800 dark:bg-amber-900/30 dark:text-amber-300';
     case 'INFO':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 dark:bg-zinc-800 dark:text-zinc-300';
   }
 }
 

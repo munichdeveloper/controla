@@ -85,7 +85,7 @@ export default function AlertSettingsPage() {
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 max-w-2xl backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6 max-w-2xl">
           <div className="mb-6">
             <Skeleton className="h-4 w-32 mb-2" />
             <Skeleton className="h-10 w-full" />
@@ -94,7 +94,7 @@ export default function AlertSettingsPage() {
           <div className="mb-6">
             <Skeleton className="h-5 w-48" />
           </div>
-          <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-white/10">
+          <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-zinc-700">
             <Skeleton className="h-6 w-32 mb-4" />
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-start">
@@ -106,7 +106,7 @@ export default function AlertSettingsPage() {
               </div>
             ))}
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
             <Skeleton className="h-10 w-32 rounded-full" />
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function AlertSettingsPage() {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 max-w-2xl backdrop-blur-sm">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6 max-w-2xl">
         {showSuccess && (
           <div className="mb-6 bg-green-50 dark:bg-emerald-900/20 border border-green-200 dark:border-emerald-800 rounded-lg p-4">
             <p className="text-green-800 dark:text-emerald-300 font-medium">Einstellungen erfolgreich gespeichert!</p>
@@ -175,7 +175,7 @@ export default function AlertSettingsPage() {
             </label>
           </div>
 
-          <div className={`space-y-4 border-t border-gray-200 dark:border-white/10 pt-6 ${!formData.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`space-y-4 border-t border-gray-200 dark:border-zinc-700 pt-6 ${!formData.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
             <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Ereignisse</h3>
 
             <div className="flex items-start">
@@ -252,11 +252,11 @@ export default function AlertSettingsPage() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="py-2 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {mutation.isPending ? 'Speichere...' : 'Speichern'}
             </button>

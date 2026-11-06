@@ -75,11 +75,11 @@ export default function BackupSettingsPage() {
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="space-y-6">
-          <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="flex items-center justify-between p-2 border border-gray-100 dark:border-white/5 rounded">
+                <div key={i} className="flex items-center justify-between p-2 border border-gray-100 dark:border-zinc-700 rounded">
                   <div className="flex items-center space-x-3">
                     <Skeleton className="h-2 w-2 rounded-full" />
                     <Skeleton className="h-4 w-32" />
@@ -89,7 +89,7 @@ export default function BackupSettingsPage() {
               ))}
             </div>
           </div>
-          <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <Skeleton className="h-5 w-48 mb-1" />
@@ -108,7 +108,7 @@ export default function BackupSettingsPage() {
                 <Skeleton className="h-10 w-full" />
               </div>
             </div>
-            <div className="pt-4 mt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+            <div className="pt-4 mt-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
               <Skeleton className="h-10 w-32 rounded-full" />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function BackupSettingsPage() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Backup-Einstellungen</h2>
         </div>
 
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 max-w-2xl backdrop-blur-sm text-center">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-8 max-w-2xl text-center">
           <div className="mb-6 flex justify-center">
             <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-emerald-600 dark:text-emerald-400">
@@ -146,7 +146,7 @@ export default function BackupSettingsPage() {
             href="https://controla.dev/signup"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-lg"
+            className="inline-flex items-center px-6 py-3 text-base font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 rounded-lg transition-colors shadow-lg"
           >
             Jetzt upgraden
           </a>
@@ -169,7 +169,7 @@ export default function BackupSettingsPage() {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Backup-Status</h3>
 
           {!instances || instances.length === 0 ? (
@@ -179,7 +179,7 @@ export default function BackupSettingsPage() {
               {instances.map((instance) => {
                 const lastBackup = lastBackups?.[instance.id];
                 return (
-                  <div key={instance.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-white/5 rounded border border-gray-100 dark:border-white/5">
+                  <div key={instance.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-zinc-800 rounded border border-gray-100 dark:border-zinc-700">
                     <div className="flex items-center space-x-3 overflow-hidden">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lastBackup ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
                       <div className="truncate">
@@ -202,7 +202,7 @@ export default function BackupSettingsPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
           {showSuccess && (
             <div className="mb-6 bg-green-50 dark:bg-emerald-900/20 border border-green-200 dark:border-emerald-800 rounded-lg p-4">
               <p className="text-green-800 dark:text-emerald-300 font-medium">Einstellungen erfolgreich gespeichert!</p>
@@ -268,11 +268,11 @@ export default function BackupSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200 dark:border-white/10 flex justify-end">
+            <div className="pt-4 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="py-2 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {mutation.isPending ? 'Speichere...' : 'Speichern'}
               </button>

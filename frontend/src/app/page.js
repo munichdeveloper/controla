@@ -42,8 +42,8 @@ function AddInstanceModal({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-white/10 shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
         <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-4">Neue Instanz hinzufügen</h3>
 
         {error && (
@@ -106,7 +106,7 @@ function AddInstanceModal({ isOpen, onClose, onSuccess }) {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {mutation.isPending ? 'Speichern...' : 'Hinzufügen'}
             </button>
@@ -180,8 +180,8 @@ function EditInstanceModal({ isOpen, onClose, onSuccess, instance }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-white/10 shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
         <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-4">Instanz bearbeiten</h3>
 
         {error && (
@@ -241,7 +241,7 @@ function EditInstanceModal({ isOpen, onClose, onSuccess, instance }) {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 text-white dark:text-emerald-950 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </button>
@@ -306,7 +306,7 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 h-full backdrop-blur-sm">
+            <div key={i} className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6 h-full">
               <div className="flex justify-between items-start mb-4">
                 <Skeleton className="h-6 w-32" />
                 <div className="flex space-x-2">
@@ -329,7 +329,7 @@ export default function Dashboard() {
                   <Skeleton className="h-4 w-20" />
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-end">
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-zinc-700 flex justify-end">
                 <Skeleton className="h-4 w-24" />
               </div>
             </div>
@@ -378,7 +378,7 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">Instanz-Übersicht</h2>
           <p className="text-gray-600 dark:text-zinc-400 mt-2">
             {isPremium ? (
-              <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400">
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                 Hosted Ops
               </span>
             ) : (
@@ -390,7 +390,7 @@ export default function Dashboard() {
         {canAddMore && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-full hover:bg-emerald-700 font-medium shadow-sm transition-colors"
+            className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 px-4 py-2 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 font-medium shadow-sm transition-colors"
           >
             + Instanz hinzufügen
           </button>
@@ -398,7 +398,7 @@ export default function Dashboard() {
       </div>
 
       {!instances || instances.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-12 text-center backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-12 text-center">
           <p className="text-gray-500 dark:text-zinc-400 mb-6 text-lg">Keine Instanzen gefunden</p>
           <button
             onClick={() => setShowAddModal(true)}
@@ -414,7 +414,7 @@ export default function Dashboard() {
               key={instance.id}
               className="block group relative"
             >
-              <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:bg-white/10 dark:hover:border-white/20 transition-all p-6 h-full backdrop-blur-sm">
+              <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm hover:shadow-md dark:hover:bg-zinc-700/40 dark:hover:border-zinc-600 transition-all p-6 h-full">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                     <Link href={`/instances/${instance.id}`} className="focus:outline-none">
@@ -488,7 +488,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-end relative z-10">
+                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-zinc-700 flex justify-end relative z-10">
                   <Link href={`/instances/${instance.id}`} className="text-sm text-emerald-600 dark:text-emerald-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center">
                     Details anzeigen
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 ml-1">

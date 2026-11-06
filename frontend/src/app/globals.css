@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Fonts are imported in app/layout.js from npm (@fontsource), so
+   self-hosted installations never request Google Fonts at runtime. */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply font-sans text-gray-900 dark:text-zinc-100;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    @apply bg-emerald-200 text-gray-900;
+  }
+  .dark ::selection {
+    @apply bg-emerald-900 text-zinc-100;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-gray-50 dark:ring-emerald-400 dark:ring-offset-zinc-900;
+  }
+}

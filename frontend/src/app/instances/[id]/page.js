@@ -278,14 +278,14 @@ export default function InstanceDetailPage({ params }) {
             <Skeleton className="h-8 w-24 rounded-full" />
           </div>
         </div>
-        <div className="border-b border-gray-200 dark:border-white/10 mb-8">
+        <div className="border-b border-gray-200 dark:border-zinc-700 mb-8">
           <div className="flex space-x-8">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-10 w-24" />
             ))}
           </div>
         </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-8">
           <Skeleton className="h-6 w-48 mb-6" />
           <div className="grid grid-cols-2 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -358,7 +358,7 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-white/10 mb-8">
+      <div className="border-b border-gray-200 dark:border-zinc-700 mb-8">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
@@ -451,7 +451,7 @@ export default function InstanceDetailPage({ params }) {
 
       {/* Content */}
       {activeTab === 'overview' && (
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-6">Basis-Informationen</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -545,7 +545,7 @@ export default function InstanceDetailPage({ params }) {
                 <button
                   onClick={handleExportSelected}
                   disabled={isExporting}
-                  className="bg-emerald-600 text-white px-3 py-1.5 text-xs font-medium rounded-full hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-sm transition-colors"
+                  className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-sm transition-colors"
                 >
                   {isExporting ? 'Exportiere...' : `Exportieren (${selectedWorkflows.length})`}
                 </button>
@@ -611,7 +611,7 @@ export default function InstanceDetailPage({ params }) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:text-emerald-600 focus:ring-blue-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
+                      className="rounded border-gray-300 dark:border-zinc-700 text-emerald-600 dark:text-emerald-600 focus:ring-emerald-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
                       checked={filteredWorkflows.length > 0 && selectedWorkflows.length === filteredWorkflows.length}
                       onChange={handleSelectAll}
                     />
@@ -667,7 +667,7 @@ export default function InstanceDetailPage({ params }) {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="checkbox"
-                            className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:text-emerald-600 focus:ring-blue-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
+                            className="rounded border-gray-300 dark:border-zinc-700 text-emerald-600 dark:text-emerald-600 focus:ring-emerald-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
                             checked={selectedWorkflows.includes(workflow.id)}
                             onChange={() => handleSelectWorkflow(workflow.id)}
                           />
@@ -678,7 +678,7 @@ export default function InstanceDetailPage({ params }) {
                               href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${workflow.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-emerald-400 hover:underline"
+                              className="text-emerald-600 dark:text-emerald-400 hover:underline"
                             >
                               {workflow.name}
                             </a>
@@ -751,7 +751,7 @@ export default function InstanceDetailPage({ params }) {
                             href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${event.payload.workflowId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-blue-600 dark:hover:text-emerald-400 hover:underline"
+                            className="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline"
                           >
                             {event.payload.workflowName}
                           </a>
