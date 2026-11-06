@@ -23,16 +23,16 @@ Information is from current repo documentation and the open PRs listed below; "f
 | Manual workflow-definition export | Included | Included | Documented in open tariff PRs |
 | Workflow import | Not an automatic CE entitlement | Agency feature in current hosted pilot | Staged in open premium/website PRs |
 | Scheduled Google Drive exports | Not an automatic CE entitlement | Agency feature in current hosted pilot | Staged in open premium/website PRs |
-| Advanced companion/container/log/resource diagnostics | Not included | Candidate for higher operations tier | Premium code exists; **not enabled in the new Solo/Agency pilot tariffs** |
-| Incident management and uptime history | Not part of basic CE promise | Hosted operational value | Documented in Premium repo |
-| Multi-customer/agency console and operations automation | Not promised in CE | Candidate differentiator | Needs product and technical scope verification |
+| Advanced operations diagnostics | Not part of basic CE promise | Candidate commercial operating value | Scope and availability require separate verification |
+| Incident management and uptime history | Not part of basic CE promise | Candidate paid operational value | Subject to separate product decision |
+| Multi-customer operations and automation | Not promised in CE | Candidate commercial differentiator | Subject to roadmap and implementation |
 | Managed hosting and operational accountability | Not included | Core commercial value | Contract and delivery model must be established |
 
 **Existing hosted pilot proposals:** Solo EUR 29/month up to 10 instances, Agency EUR 79/month up to 30 instances. These are **hosted pilot conditions**, not a precedent for limiting CE. No Agency Max until further validation. Any proposed extension to self-hosted paid functionality needs a separate decision.
 
 ### Commercial positioning risk
 
-With unlimited CE, a hosted plan limited to 10/30 instances is coherent *only if the customer pays for hosted operation and concrete time savings*. For the current Agency tier the documented differences from Solo are import and scheduled Drive exports; do not claim premium companion diagnostics, autonomous remediation, or a customer portal in Agency until the backend entitlements and offer actually include them.
+Unlimited self-hosted CE changes the proposition for hosted plans. Users must be buying concrete operating services or capabilities. The actual contents and internal implementation status of proprietary offerings are documented and decided in the private commercial repository; this public proposal makes no claim that unshipped features are available.
 
 ## 3. License decision and explicit gate
 
@@ -62,8 +62,8 @@ References (primary texts): [Apache 2.0](https://www.apache.org/licenses/LICENSE
 ### Compatibility and rollback
 
 - `GET /api/license` contract (edition, `maxInstances`, `features`) remains stable; `-1` is the existing unlimited sentinel. Do not infer a paid capability from unlimited capacity.
-- Feature keys are enforced on the backend as well as hidden in the shared frontend. Older premium backends need compatibility testing; stale tenant entitlements must fail closed.
-- Premium's CE Maven artifact is pinned; do not rely on unpublished source changes. Plan the next CE version and downstream bump only after both builds pass.
+- Feature keys are enforced on the backend as well as hidden in the shared frontend. Older clients and changing entitlements need compatibility testing; stale authorizations must fail closed.
+- Commercial integrations may depend on versioned CE artifacts; downstream compatibility must be verified against a released version, not assumed from unreleased branches.
 - Feature rollout can be reverted by deployment/version rollbacks under the normal process. **Previously distributed open-source rights cannot be revoked by a rollback**.
 - No automatic merges, deployments, plan/billing migration or customer notification without explicit approval.
 
@@ -73,6 +73,6 @@ References (primary texts): [Apache 2.0](https://www.apache.org/licenses/LICENSE
 - [ ] Versioned license/NOTICE/SPDX/SBOM and binary redistribution process validated.
 - [ ] Actual capabilities and plan entitlements match public pricing and the `/api/license` contract.
 - [ ] CE unlimited and legacy/finite Premium limits independently tested; feature segregation verified.
-- [ ] Existing agreements/tenant mappings confirmed, including tenants without instances.
+- [ ] Commercial agreements and tenant mappings reviewed through the nonpublic launch process.
 - [ ] Self-hosted Premium is either separately specified or explicitly excluded from the offer.
 - [ ] All PRs reviewed and release approved; no unannounced licensing transition.
