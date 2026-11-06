@@ -1,6 +1,8 @@
 # Tariff frontend / CE verification
 
-6 November 2026. No merge, package publication, SQL migration or deployment. Main baseline: `344b0dc`. Framework PR #36 remains independent.
+6 November 2026. No merge, package publication, SQL migration or production change. Main baseline: `344b0dc`. Framework PR #36 remains independent.
+
+The first branch push unexpectedly triggered the pre-existing Vercel frontend integration and created preview `dpl_G7mKj2RFadoHZahfBqvX5HX85ZSy`. This was outside the no-deployment request. The preview was removed during this task; branch-specific `git.deploymentEnabled:false` rules at the repository and frontend roots prevent further automatic previews on this review branch. Other branches and production settings are unchanged. A new preview requires explicit authorization and removing the branch rule.
 
 | Check | Result |
 |---|---|
