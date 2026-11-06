@@ -29,6 +29,9 @@ RUN npm run build
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
+# License and attribution notices must accompany redistributed images.
+COPY LICENSE NOTICE /app/
+
 # Laufzeit benötigt dieselbe Node-Binärdatei und npm-Version wie der Build.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libatomic1 && \
