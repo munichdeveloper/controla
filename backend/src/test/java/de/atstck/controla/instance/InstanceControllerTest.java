@@ -2,6 +2,7 @@ package de.atstck.controla.instance;
 
 import de.atstck.controla.alerts.InstanceAlertHandler;
 import de.atstck.controla.license.LicenseService;
+import de.atstck.controla.license.CommunityLicenseService;
 import de.atstck.controla.security.CryptoService;
 import de.atstck.controla.security.TenantContext;
 import de.atstck.controla.service.CoreApiClient;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,9 +42,13 @@ class InstanceControllerTest {
     @BeforeEach
     void setUp() {
         TenantContext.setTenantId(TENANT);
+        mvc = controller(license);
+    }
+
+    private MockMvc controller(LicenseService activeLicense) {
         InstanceService service = new InstanceService(mock(CoreApiClient.class), repository, n8n,
-                crypto, license, mock(InstanceAlertHandler.class), new InstanceCredentialService(crypto));
-        mvc = MockMvcBuilders.standaloneSetup(new InstanceController(service)).build();
+                crypto, activeLicense, mock(InstanceAlertHandler.class), new InstanceCredentialService(crypto));
+        return MockMvcBuilders.standaloneSetup(new InstanceController(service)).build();
     }
 
     @AfterEach
@@ -80,6 +86,25 @@ class InstanceControllerTest {
         } else {
             verify(repository).countByTenantId(TENANT);
         }
+        verifyNoStatusRefresh();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {3, 30, 120})
+    void actualCommunityLicenseAllowsCreationBeyondOldAndHostedLimits(int existing) throws Exception {
+        when(repository.countByTenantId(TENANT)).thenReturn((long) existing);
+        SecretKey key = mock(SecretKey.class);
+        when(crypto.getMasterKey()).thenReturn(key);
+        when(crypto.encrypt("test-key", key)).thenReturn("encrypted-key");
+        when(repository.save(any(Instance.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        controller(new CommunityLicenseService())
+                .perform(post("/api/instances").contentType(MediaType.APPLICATION_JSON).content(REQUEST))
+                .andExpect(status().isCreated());
+
+        verify(repository).save(argThat(instance -> TENANT.equals(instance.getTenantId())));
+        verify(repository, never()).lockInstanceCreation(anyString());
+        verify(repository, never()).countByTenantId(anyString());
         verifyNoStatusRefresh();
     }
 

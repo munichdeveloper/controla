@@ -5,6 +5,12 @@ import type { LicenseInfo } from '../types';
 const license = (features: Record<string, boolean>, edition = 'Premium Edition'): LicenseInfo =>
   ({ edition, maxInstances: 10, features });
 describe('server entitlements and version compatibility', () => {
+  it('keeps unlimited Community capacity separate from paid feature rights', () => {
+    const community: LicenseInfo = { edition: 'Community Edition', maxInstances: -1, features: { 'diagnostics.report': true } };
+    expect(featureEnabled(community, 'diagnostics.report')).toBe(true);
+    for (const key of ['workflow.import', 'backup.scheduled', 'companion.manage', 'alert.workflow_error', 'alert.api_key_invalid'])
+      expect(featureEnabled(community, key)).toBe(false);
+  });
   it('honors explicit denial even for a premium edition', () => {
     expect(featureEnabled(license({ 'workflow.import': false }), 'workflow.import')).toBe(false);
     expect(featureEnabled(license({ 'workflow.import': true }), 'workflow.import')).toBe(true);

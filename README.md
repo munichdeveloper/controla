@@ -122,19 +122,24 @@ After startup:
 
 ---
 
-## 📋 Community Edition Limits
+## 📋 Community Edition Scope
 
-* Up to 3 n8n instances
+* Unlimited connected n8n instances on your own infrastructure
 * Basic monitoring
 * Basic metrics
 * Email alerts
 
-The instance limit is enforced by the backend per tenant. Instance creation uses
-a PostgreSQL transaction and a tenant-scoped advisory lock, so concurrent requests
-and multiple backend processes cannot claim the same remaining slot. The Community
-license service returns a fixed limit of three; Hosted Ops replaces that service.
-These checks assume an unmodified backend and database. Operators with control of
-the source code or database can change or bypass them.
+The Community license reports `maxInstances: -1` (no product-side cap). Practical
+capacity depends on your infrastructure and workload; this is not a throughput or
+support SLA. Self-hosters operate and update Controla themselves. Manual workflow
+export remains included; workflow import, scheduled Google Drive exports and
+Enterprise/Companion features are not added by removing the instance cap.
+
+Hosted Ops replaces the license service: Solo is EUR 29/month for up to 10
+instances; Agency is EUR 79/month for up to 30 and adds import and scheduled Drive
+exports. Finite extension limits remain enforced per tenant using a PostgreSQL
+transaction and tenant-scoped advisory lock, including across backend processes.
+See [the confirmed CE decision](docs/CE_LIMIT_RECOMMENDATION.md).
 
 Run backend validation with `mvn -B -pl backend verify`. The concurrency tests use
 Testcontainers with PostgreSQL 16 and require a running Docker daemon.

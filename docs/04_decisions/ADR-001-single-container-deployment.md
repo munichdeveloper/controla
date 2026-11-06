@@ -80,7 +80,7 @@ We use **a single container** with both services:
 
 ### Negative
 
-- ⚠️ **Scaling:** Backend and frontend scale together (not a problem for Community Edition with max. 3 instances)
+- ⚠️ **Scaling:** Backend and frontend scale together. CE no longer has a product-side instance cap (decision #39); operators must size their infrastructure for the workload.
 - ⚠️ **Process Management:** A crash of one service doesn't automatically stop the container
 - ⚠️ **Security:** Backend port is directly exposed (CORS and JWT still protect)
 
