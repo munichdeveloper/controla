@@ -56,7 +56,9 @@ class InstanceControllerTest {
             "Hosted Ops, -1, 12",
             "Premium Edition, -1, 3",
             "Community Edition, 3, 2",
-            "Hosted Ops, 5, 4"
+            "Hosted Ops, 5, 4",
+            "Premium Edition, 10, 9",
+            "Premium Edition, 30, 29"
     })
     void createsInstancesWithinTheLicensedLimit(String edition, int limit, int existing) throws Exception {
         configureLicense(edition, limit, existing);
@@ -87,7 +89,10 @@ class InstanceControllerTest {
             "Community Edition, 3, 4",
             "Hosted Ops, 5, 5",
             "Hosted Ops, 5, 6",
-            "Hosted Ops, 0, 0"
+            "Hosted Ops, 0, 0",
+            "Premium Edition, 10, 10",
+            "Premium Edition, 10, 30",
+            "Premium Edition, 30, 30"
     })
     void rejectsInstancesAtOrAboveTheLicensedLimit(String edition, int limit, int existing) throws Exception {
         configureLicense(edition, limit, existing);

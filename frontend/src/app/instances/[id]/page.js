@@ -117,6 +117,9 @@ export default function InstanceDetailPage({ params }) {
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const instanceId = params.id;
   const { isPremium, isFeatureEnabled } = useLicense();
+  const importEnabled = isFeatureEnabled(FEATURES.WORKFLOW_IMPORT);
+  const backupsEnabled = isFeatureEnabled(FEATURES.BACKUP_SCHEDULED);
+  const companionEnabled = isFeatureEnabled(FEATURES.COMPANION_MANAGE);
   const diagnosticsEnabled = isFeatureEnabled(FEATURES.DIAGNOSTICS_REPORT);
   const snapshotsEnabled = isFeatureEnabled(FEATURES.COMPANION_DIAG_SNAPSHOTS);
   const [openSnapshotId, setOpenSnapshotId] = useState(null);
@@ -131,7 +134,7 @@ export default function InstanceDetailPage({ params }) {
   const { data: lastBackupData } = useQuery({
     queryKey: ['instanceBackup', instanceId],
     queryFn: () => getInstanceLastBackup(instanceId),
-    enabled: isPremium && !!instanceId,
+    enabled: backupsEnabled && !!instanceId,
   });
 
   const { data: workflows, isLoading: workflowsLoading } = useQuery({
@@ -414,7 +417,7 @@ export default function InstanceDetailPage({ params }) {
           )}
            {isPremium && (
              <>
-               <button
+               {companionEnabled && <button
                  onClick={() => setActiveTab('companion')}
                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                    activeTab === 'companion'
@@ -423,7 +426,7 @@ export default function InstanceDetailPage({ params }) {
                  }`}
                >
                  Companion
-               </button>
+               </button>}
                <button
                  onClick={() => setActiveTab('incidents')}
                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -492,7 +495,7 @@ export default function InstanceDetailPage({ params }) {
               <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Erstellt am</span>
               <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg mt-1">{formatDate(instance.createdAt)}</p>
             </div>
-            {isPremium && (
+            {backupsEnabled && (
               <div>
                 <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Letztes Backup</span>
                 <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg mt-1">
@@ -520,7 +523,7 @@ export default function InstanceDetailPage({ params }) {
                 accept=".json"
                 className="hidden"
               />
-              {isPremium && (
+              {importEnabled && (
                 <button
                   onClick={handleImportClick}
                   disabled={isImporting}
@@ -995,14 +998,14 @@ export default function InstanceDetailPage({ params }) {
          </div>
        )}
 
-       {isPremium && activeTab === 'companion' && (
+       {companionEnabled && activeTab === 'companion' && (
          <CompanionSection externalId={instanceId} />
        )}
 
        {diagnosticsEnabled && activeTab === 'diagnostics' && (
          <DiagnosticsSection
            externalId={instanceId}
-           onOpenCompanionTab={isPremium ? () => setActiveTab('companion') : undefined}
+           onOpenCompanionTab={companionEnabled ? () => setActiveTab('companion') : undefined}
          />
        )}
 

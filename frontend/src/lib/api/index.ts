@@ -290,11 +290,12 @@ export async function getInstanceUptimeStats(externalId: string): Promise<Instan
   return fetchApi<InstanceUptimeStatsDto>(`/premium/instances/${externalId}/uptime`);
 }
 
-// Public endpoint shared by CE and Premium; do not send a stored login token.
-export async function getLicenseInfo(signal?: AbortSignal): Promise<LicenseInfo> {
+// Bootstrap anonymously; request tenant entitlements only after verified login.
+export async function getLicenseInfo(signal?: AbortSignal, authenticated = false): Promise<LicenseInfo> {
   const response = await fetch(`${API_BASE_URL}/license`, {
     cache: 'no-store',
     signal,
+    ...(authenticated ? { headers: getAuthHeader() } : {}),
   });
 
   if (!response.ok) {

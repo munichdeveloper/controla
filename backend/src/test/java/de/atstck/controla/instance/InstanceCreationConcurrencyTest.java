@@ -80,7 +80,7 @@ class InstanceCreationConcurrencyTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"Community Edition, 3, 2", "Hosted Ops, 1, 0"})
+    @CsvSource({"Community Edition, 3, 2", "Hosted Ops, 1, 0", "Premium Edition, 10, 9", "Premium Edition, 30, 29"})
     void concurrentCreatesCannotExceedTheLimitEvenForAnEmptyTenant(String edition, int limit, int existing)
             throws Exception {
         when(license.getEditionName()).thenReturn(edition);
