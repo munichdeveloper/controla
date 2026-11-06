@@ -23,7 +23,7 @@ export function CompanionIndicatorDot({ status, label = 'Companion' }: Companion
         className={`w-3 h-3 rounded-full ${color} animate-pulse`}
         title={tooltip}
       />
-      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <span className="text-xs text-gray-600 dark:text-zinc-400">{label}</span>
     </div>
   );
 }
@@ -57,7 +57,7 @@ export function CompanionStatusCard({ status, loading }: CompanionStatusCardProp
         ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
         : status.containerStatus === 'stopped'
           ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+          : 'bg-gray-100 text-gray-800 dark:bg-zinc-950/30 dark:text-zinc-400';
 
   return (
     <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-700">
@@ -67,7 +67,7 @@ export function CompanionStatusCard({ status, loading }: CompanionStatusCardProp
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-semibold mb-1">
             Container-Status
           </p>
           <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${containerStatusColor}`}>
@@ -76,7 +76,7 @@ export function CompanionStatusCard({ status, loading }: CompanionStatusCardProp
         </div>
 
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-semibold mb-1">
             Verbindung
           </p>
           <span
@@ -91,7 +91,7 @@ export function CompanionStatusCard({ status, loading }: CompanionStatusCardProp
         </div>
 
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-semibold mb-1">
             Gepinnte Version
           </p>
           <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
@@ -100,7 +100,7 @@ export function CompanionStatusCard({ status, loading }: CompanionStatusCardProp
         </div>
 
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-semibold mb-1">
             Laufende Version
           </p>
           <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">

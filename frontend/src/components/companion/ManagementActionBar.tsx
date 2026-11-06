@@ -53,7 +53,7 @@ export function ManagementActionBar({ externalId, updating, onActionComplete }: 
       )}
 
       {output && (
-        <div className="mb-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded font-mono text-xs overflow-auto max-h-32 text-gray-700 dark:text-gray-300">
+        <div className="mb-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded font-mono text-xs overflow-auto max-h-32 text-gray-700 dark:text-zinc-300">
           {output}
         </div>
       )}

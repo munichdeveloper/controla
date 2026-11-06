@@ -162,7 +162,7 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
               <label htmlFor="autoUpdate" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
                 Automatisch auf neueste Version aktualisieren
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
                 Auto-Update installiert immer die semantisch höchste verfügbare Version, auch wenn diese noch nicht als stable markiert ist.
               </p>
             </div>
