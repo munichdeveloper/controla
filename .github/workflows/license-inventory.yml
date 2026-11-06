@@ -15,6 +15,9 @@ on:
       - 'Dockerfile'
       - 'CONTRIBUTING.md'
       - 'LICENSE.md'
+      - 'LICENSE'
+      - 'NOTICE'
+      - 'docs/LICENSING.md'
   push:
     branches: [ main ]
     paths:
@@ -27,6 +30,9 @@ on:
       - 'Dockerfile'
       - 'CONTRIBUTING.md'
       - 'LICENSE.md'
+      - 'LICENSE'
+      - 'NOTICE'
+      - 'docs/LICENSING.md'
 
 permissions:
   contents: read
