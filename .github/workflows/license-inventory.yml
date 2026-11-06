@@ -69,6 +69,10 @@ jobs:
           print(f'Using {source}, {len(json.loads(source.read_text())["components"])} components')
           PY
 
+      - name: Summarize Maven license metadata
+        run: |
+          python3 .github/scripts/sbom_license_report.py compliance/ce-maven.cdx.json compliance/ce-maven-license-report.md
+
       - name: Record commit author candidates
         run: |
           # Names in git history are provenance leads, NOT proof of copyright ownership.
@@ -110,9 +114,14 @@ jobs:
           npm sbom --sbom-format=cyclonedx --sbom-type=application > ../compliance/ce-npm.cdx.json
           node -e 'const b=require("../compliance/ce-npm.cdx.json"); if(b.bomFormat!=="CycloneDX" || !b.components?.length) process.exit(1); console.log(b.components.length + " JS components");'
 
+      - name: Summarize npm license metadata
+        run: python3 ../.github/scripts/sbom_license_report.py ../compliance/ce-npm.cdx.json ../compliance/ce-npm-license-report.md
+
       - uses: actions/upload-artifact@v4
         with:
           name: license-inventory-npm
-          path: compliance/ce-npm.cdx.json
+          path: |
+            compliance/ce-npm.cdx.json
+            compliance/ce-npm-license-report.md
           retention-days: 30
           if-no-files-found: error
