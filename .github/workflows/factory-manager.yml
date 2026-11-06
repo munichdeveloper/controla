@@ -1,4 +1,4 @@
-# Software Factory v0.2.0; independent immutable Harness v0.3.0 pin.
+# Software Factory v0.2.1; independent immutable Harness v0.3.1 pin.
 name: Software Factory
 run-name: Factory ${{ inputs.mode || 'manager' }} ${{ inputs.execution_id }}
 on:
@@ -34,7 +34,7 @@ jobs:
       pull-requests: read
       actions: write
     steps:
-      - uses: munichdeveloper/software-factory@f986e7664bc27cf45a8de27e329233c767488666
+      - uses: munichdeveloper/software-factory@785513b4a59c7ec38db37dc851b217a1730951b8
         with:
           mode: ${{ inputs.mode || 'manager' }}
           dry-run: ${{ inputs.dry_run || false }}
@@ -46,10 +46,10 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
-    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@f986e7664bc27cf45a8de27e329233c767488666
+    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@785513b4a59c7ec38db37dc851b217a1730951b8
     with:
-      factory-ref: f986e7664bc27cf45a8de27e329233c767488666
-      harness-ref: 6150d4ce12ba67c157dca69707723bdc6510a122
+      factory-ref: 785513b4a59c7ec38db37dc851b217a1730951b8
+      harness-ref: 3541a2ba19855fd669576782f5c2dc7bd1bd8fe5
       execution-id: ${{ inputs.execution_id }}
       issue-number: ${{ inputs.issue_number }}
     secrets:
