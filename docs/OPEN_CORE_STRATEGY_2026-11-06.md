@@ -1,6 +1,6 @@
 # Controla Open Core – rollout plan (proposal, 2026-11-06)
 
-**Status:** Proposed strategy and licensing-readiness work. **No change to the effective license, pricing, customer rights, deployments, or current releases by this document.** Tracking: [#47](https://github.com/munichdeveloper/controla/issues/47).
+**Status:** Open-core direction and Apache-2.0 relicensing explicitly approved by the project owner on 2026-11-06. Implementation is in [PR #51](https://github.com/munichdeveloper/controla/pull/51). **This strategy document itself does not change any license, pricing, rights, deployment or release.** Tracking: [#47](https://github.com/munichdeveloper/controla/issues/47).
 
 ## 1. Product principles
 
@@ -36,7 +36,7 @@ Unlimited self-hosted CE changes the proposition for hosted plans. Users must be
 
 ## 3. License decision and explicit gate
 
-**Current:** AGPLv3, see `LICENSE.md`. **Candidate:** Apache License 2.0; MIT is a permissive alternative. This document **does not authorize or implement relicensing**.
+**Historical/current main before PR #51 merges:** AGPLv3, see the corresponding git versions. **Approved target:** Apache License 2.0; implemented in [PR #51](https://github.com/munichdeveloper/controla/pull/51). This document does not itself enact or publish the new license.
 
 ### Legal and provenance gate (must be completed before LICENSE changes)
 
@@ -44,9 +44,9 @@ Unlimited self-hosted CE changes the proposition for hosted plans. Users must be
 2. Audit Maven/npm transitive dependencies, frontend assets, images, vendored content and container/base images for redistribution obligations. Generate a machine-readable dependency inventory/SBOM and review third-party notices for source and binaries.
 3. Review published AGPL versions and corresponding-source obligations for existing distributions; relabeling the latest branch does not revoke recipients' rights to historical releases.
 4. Ensure proprietary distributions use code with valid commercial/relicensing permissions; check the premium backend's direct Java dependency on CE and the exact content of the shipped JAR/container.
-5. Draft Apache-2.0 `LICENSE`, copyright/SPDX headers where suitable, and applicable `NOTICE` and third-party notices **only after the legal rights decision**. Track source and binary artifacts separately. Apache-2.0 does not grant trademark rights.
+5. Draft Apache-2.0 `LICENSE`, copyright/SPDX headers where suitable, and applicable `NOTICE` and third-party notices **with the appropriate release-rights review**. Track source and binary artifacts separately. Apache-2.0 does not grant trademark rights.
 6. Review commercial EULA/support terms for any self-hosted commercial distribution and hosted service terms. Distinguish license rights, support promises, and feature/service entitlements.
-7. Have a qualified legal reviewer confirm Go/No-Go, and record the decision in a separate ADR before any public relicensing release.
+7. Have a qualified legal reviewer confirm Go/No-Go, and record the remaining copyright provenance and third-party obligations before any public relicensing release. Owner authorization alone does not transfer rights of other authors.
 
 References (primary texts): [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0), [Apache application guidance](https://www.apache.org/legal/apply-license.html), [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
