@@ -57,8 +57,124 @@ jobs:
         fi
         for artifact in "${artifacts[@]}"; do
           echo "Checking ${artifact}"
-          jar tf "${artifact}" | grep -Fx 'META-INF/LICENSE'
-          jar tf "${artifact}" | grep -Fx 'META-INF/NOTICE'
+          # Plain Maven JAR: META-INF/... ; Spring Boot executable:
+          # BOOT-INF/classes/META-INF/...
+          jar tf "${artifact}" | grep -Eq '^(META-INF|BOOT-INF/classes/META-INF)/LICENSE
+        done
+
+    - name: Report Backend Test Failures
+      if: failure()
+      run: |
+        python3 - <<'PY'
+        from pathlib import Path
+        import xml.etree.ElementTree as ET
+
+        def escape(value):
+            return value.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+        for report in Path('backend/target/surefire-reports').glob('TEST-*.xml'):
+            for case in ET.parse(report).getroot().iter('testcase'):
+                for failure in [*case.findall('failure'), *case.findall('error')]:
+                    detail = failure.text or failure.get('message', '')
+                    output = case.findtext('system-out', '')
+                    detail += '\n' + '\n'.join(line for line in output.splitlines() if 'Docker' in line or 'Status 400' in line)
+                    print(f"::error title={escape(case.get('classname', 'Backend test'))}::{escape(detail[:12000])}")
+        PY
+    
+    - name: Run Backend Linting
+      working-directory: .
+      run: mvn checkstyle:check
+      continue-on-error: true
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: frontend/.nvmrc
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - run: npm install --global npm@11.9.0
+    - run: npm ci
+    - run: npm run lint
+    - run: npm test
+    # Next.js 14 generates route types during the build, including on a fresh checkout.
+    - run: npm run build
+    - run: npm run typecheck
+
+  test-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build application image from a clean checkout
+      run: docker build --tag controla:ci .
+    - name: Verify redistributed image includes Apache license and notice
+      run: docker run --rm --entrypoint /bin/sh controla:ci -ec 'test -s /app/LICENSE && test -s /app/NOTICE'
+
+    - name: Verify image runtime, PostgreSQL, login and API rewrite
+      run: python3 .github/scripts/smoke-docker.py controla:ci
+
+          jar tf "${artifact}" | grep -Eq '^(META-INF|BOOT-INF/classes/META-INF)/NOTICE
+        done
+
+    - name: Report Backend Test Failures
+      if: failure()
+      run: |
+        python3 - <<'PY'
+        from pathlib import Path
+        import xml.etree.ElementTree as ET
+
+        def escape(value):
+            return value.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+        for report in Path('backend/target/surefire-reports').glob('TEST-*.xml'):
+            for case in ET.parse(report).getroot().iter('testcase'):
+                for failure in [*case.findall('failure'), *case.findall('error')]:
+                    detail = failure.text or failure.get('message', '')
+                    output = case.findtext('system-out', '')
+                    detail += '\n' + '\n'.join(line for line in output.splitlines() if 'Docker' in line or 'Status 400' in line)
+                    print(f"::error title={escape(case.get('classname', 'Backend test'))}::{escape(detail[:12000])}")
+        PY
+    
+    - name: Run Backend Linting
+      working-directory: .
+      run: mvn checkstyle:check
+      continue-on-error: true
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: frontend/.nvmrc
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - run: npm install --global npm@11.9.0
+    - run: npm ci
+    - run: npm run lint
+    - run: npm test
+    # Next.js 14 generates route types during the build, including on a fresh checkout.
+    - run: npm run build
+    - run: npm run typecheck
+
+  test-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build application image from a clean checkout
+      run: docker build --tag controla:ci .
+    - name: Verify redistributed image includes Apache license and notice
+      run: docker run --rm --entrypoint /bin/sh controla:ci -ec 'test -s /app/LICENSE && test -s /app/NOTICE'
+
+    - name: Verify image runtime, PostgreSQL, login and API rewrite
+      run: python3 .github/scripts/smoke-docker.py controla:ci
+
         done
 
     - name: Report Backend Test Failures
