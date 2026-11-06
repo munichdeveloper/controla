@@ -1,4 +1,4 @@
-# Software Factory v0.1.0; immutable release commit, independent Harness pin in the Action.
+# Software Factory v0.2.1; independent immutable Harness v0.3.1 pin.
 name: Software Factory
 run-name: Factory ${{ inputs.mode || 'manager' }} ${{ inputs.execution_id }}
 on:
@@ -25,18 +25,32 @@ concurrency:
   cancel-in-progress: false
 jobs:
   factory:
+    if: inputs.mode != 'worker'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     permissions:
       contents: read
       issues: write
       pull-requests: read
       actions: write
     steps:
-      - uses: munichdeveloper/software-factory@6c7eacdc1d93396f13ab33a1c187fa2c3565db43
+      - uses: munichdeveloper/software-factory@785513b4a59c7ec38db37dc851b217a1730951b8
         with:
           mode: ${{ inputs.mode || 'manager' }}
-          execution-id: ${{ inputs.execution_id || '' }}
-          issue-number: ${{ inputs.issue_number || '' }}
           dry-run: ${{ inputs.dry_run || false }}
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+  coding:
+    if: inputs.mode == 'worker' && !inputs.dry_run
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@785513b4a59c7ec38db37dc851b217a1730951b8
+    with:
+      factory-ref: 785513b4a59c7ec38db37dc851b217a1730951b8
+      harness-ref: 3541a2ba19855fd669576782f5c2dc7bd1bd8fe5
+      execution-id: ${{ inputs.execution_id }}
+      issue-number: ${{ inputs.issue_number }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
