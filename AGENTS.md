@@ -37,8 +37,11 @@ außerhalb dieses Blocks.
 
 Software Factory v0.1.0 is installed through `.github/workflows/factory-manager.yml`,
 pinned to commit `6c7eacdc1d93396f13ab33a1c187fa2c3565db43`.
-Configuration is `.github/software-factory.yml`: supervised autonomy, mock planning,
-and the non-mutating test worker. Only Issues explicitly labeled `harness:managed`
+Configuration is `.github/software-factory.yml`: autonomous policy for all supported
+actions and OpenAI planning (requires the Actions secret `OPENAI_API_KEY`). Resource
+limits remain active. SF v0.1.0 still only implements the non-mutating test worker;
+its planner model does not select a coding-agent implementation. Automatic PR
+merging is unsupported. Only Issues explicitly labeled `harness:managed`
 belong to SF. Existing pi-spec-harness/Squad tasks and labels do not enroll them.
 Do not add that opt-in label to an active run of another orchestrator unless the
 repository owner explicitly migrates it. Follow the tracking-Issue check above.
