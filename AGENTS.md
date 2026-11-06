@@ -1,50 +1,21 @@
-<!-- BEGIN pi-spec-harness managed context v1 -->
-## Harness-Kontext (verwaltet von pi-spec-harness)
+## Software Factory
 
-Dieses Repository (munichdeveloper/controla) wird teilweise von [pi-spec-harness](https://github.com/munichdeveloper/pi-spec-harness)
-orchestriert. Der Harness ändert keinen Produktcode selbst; er
-kontrolliert und beobachtet, wie ein Agent zwischen Spec, Issue, PR und
-Merge bewegt wird.
+Software Factory v0.2.0 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `f986e7664bc27cf45a8de27e329233c767488666`; the independent Codex Harness is pinned to
+`6150d4ce12ba67c157dca69707723bdc6510a122` (v0.3.0).
+Configuration is `.github/software-factory.yml`: autonomous policy for every
+supported action, including scope-expanding follow-ups; OpenAI plans tasks and
+Codex implements them using the configured coding model and reasoning effort.
+The Actions secret `OPENAI_API_KEY` authenticates both; never put credentials in
+Issues, source files or prompts. Resource budgets remain active.
 
-**Bevor du an einem Issue eigenständig arbeitest:** Prüfe zuerst, ob
-bereits ein offenes Tracking-Issue (Titel `[Harness Run] <run-id>`,
-Label `harness:run`) existiert, das auf dieses Issue verweist. Falls
-ja, enthält dessen Body den kanonischen, aktuellen Fortschrittsstand
-(Phase, offene Gates, bisherige Entscheidungen) — lies ihn, bevor du
-von vorne beginnst oder rätst, was bereits erledigt ist.
-
-**Label-Vokabular:**
-
-| Label | Bedeutung |
-|---|---|
-| `ai:allowed` | Issue darf von einem Agenten selbstständig bearbeitet werden |
-| `status:ready` | Issue ist fachlich/technisch bereit zur Bearbeitung |
-| `status:needs-human` | Ein Mensch muss entscheiden, bevor es weitergeht |
-| `harness:run` | Markiert das persistente Tracking-Issue eines Runs |
-| `harness:implementation` | Markiert ein vom Harness erzeugtes Implementierungs-Issue |
-| `harness:gate-approved` / `harness:gate-rejected` | Menschliche Entscheidung auf einem offenen Gate |
-
-Ausführliche Dokumentation zum Protokoll: `docs/human-gates.md` und
-`docs/event-driven-workflow.md` im Harness-Repository.
-
-Dieser Block wird von `harness init --install-agents-context`
-verwaltet. Änderungen innerhalb der Marker werden bei der nächsten
-Installation überschrieben; projektspezifische Regeln gehören
-außerhalb dieses Blocks.
-<!-- END pi-spec-harness managed context v1 -->
-
-## Software Factory (separate opt-in)
-
-Software Factory v0.1.0 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `6c7eacdc1d93396f13ab33a1c187fa2c3565db43`.
-Configuration is `.github/software-factory.yml`: autonomous policy for all supported
-actions and OpenAI planning (requires the Actions secret `OPENAI_API_KEY`). Resource
-limits remain active. SF v0.1.0 still only implements the non-mutating test worker;
-its planner model does not select a coding-agent implementation. Automatic PR
-merging is unsupported. Only Issues explicitly labeled `harness:managed`
-belong to SF. Existing pi-spec-harness/Squad tasks and labels do not enroll them.
-Do not add that opt-in label to an active run of another orchestrator unless the
-repository owner explicitly migrates it. Follow the tracking-Issue check above.
+Only Issues explicitly labeled `harness:managed` belong to SF. Those labels are
+SF's persisted compatibility vocabulary, independent of the retired harnesses.
+The coding worker edits and tests a checkout with read-only GitHub permissions;
+SF reauthorizes and publishes a PR in a separate job. Automatic PR merging and
+coding changes to workflow/agent configuration are unsupported. Product CI and
+repository branch rules remain authoritative. Existing pi-spec-harness/Squad
+workflows have been retired; their historical Issues and files are not a queue.
 
 ## Projektkontext: Editionen (Open Core)
 

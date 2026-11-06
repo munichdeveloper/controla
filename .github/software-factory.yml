@@ -1,7 +1,7 @@
 version: 1
 factory:
   enabled: true
-  scope: "Coordinate explicitly SF-managed Controla Community tasks only. Respect AGENTS.md, the Community/Premium boundary, feature flags and existing pi-spec-harness runs. Use only the non-mutating test worker; do not take over active tasks from other orchestrators."
+  scope: "Implement explicitly SF-managed Controla Community tasks with Codex and propose reviewable PRs. Respect AGENTS.md, the Community/Premium boundary, feature flags and backwards-compatible extension APIs. Historical tasks from retired orchestrators are not automatically enrolled."
 manager:
   workflow: factory-manager.yml
   maxActions: 10
@@ -21,7 +21,7 @@ autonomy:
     retry_worker: allow
     cancel_worker: allow
     expand_scope: allow
-    merge_pr: deny # Not implemented in SF v0.1.0; repository rules remain authoritative.
+    merge_pr: deny # Not implemented in SF v0.2.0; repository rules remain authoritative.
 execution:
   dryRun: false
   maxParallelWorkers: 1
@@ -38,9 +38,14 @@ llm:
   maxCalls: 1
 workers:
   test:
-    enabled: true
+    enabled: false
     operation: sha256
-  coding: false
+  coding:
+    enabled: true
+    agent: codex
+    model: gpt-6.1-sol
+    reasoningEffort: high
+    validationWorkflow: test.yml
   review: false
 reporting:
   persistDecisions: true
