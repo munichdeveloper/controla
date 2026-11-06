@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getBackupSettings, updateBackupSettings, getInstances, getAllLastBackups } from '@/lib/api';
+import { FEATURES } from '@/lib/license/features';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -11,7 +12,8 @@ import { Skeleton } from '@/components/Skeleton';
 
 export default function BackupSettingsPage() {
   const queryClient = useQueryClient();
-  const { isPremium, loading: licenseLoading } = useLicense();
+  const { isFeatureEnabled, loading: licenseLoading } = useLicense();
+  const backupsEnabled = isFeatureEnabled(FEATURES.BACKUP_SCHEDULED);
 
   const [formData, setFormData] = useState({
     enabled: false,
@@ -23,19 +25,19 @@ export default function BackupSettingsPage() {
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['backupSettings'],
     queryFn: getBackupSettings,
-    enabled: isPremium,
+    enabled: backupsEnabled,
   });
 
   const { data: instances } = useQuery({
     queryKey: ['instances'],
     queryFn: getInstances,
-    enabled: isPremium,
+    enabled: backupsEnabled,
   });
 
   const { data: lastBackups } = useQuery({
     queryKey: ['lastBackups'],
     queryFn: getAllLastBackups,
-    enabled: isPremium,
+    enabled: backupsEnabled,
   });
 
   const mutation = useMutation({
@@ -66,7 +68,7 @@ export default function BackupSettingsPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (licenseLoading || (isPremium && settingsLoading)) {
+  if (licenseLoading || (backupsEnabled && settingsLoading)) {
     return (
       <div>
         <div className="mb-6">
@@ -117,7 +119,7 @@ export default function BackupSettingsPage() {
     );
   }
 
-  if (!isPremium) {
+  if (!backupsEnabled) {
     // ... existing non-premium code ...
     return (
       <div>
@@ -140,10 +142,10 @@ export default function BackupSettingsPage() {
             Automatische Backups
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Sichere deine Workflows automatisch auf Google Drive. Diese Funktion ist exklusiv in der Hosted Ops verfügbar.
+            Sichere deine Workflows automatisch auf Google Drive. Geplante Workflow-Exporte sind im Agency-Tarif enthalten.
           </p>
           <a
-            href="https://controla.dev/signup"
+            href="https://www.controla.dev/pricing"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-lg"

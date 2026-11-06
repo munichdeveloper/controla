@@ -4,6 +4,9 @@
  * means the UI must not render the control.
  */
 export const FEATURES = {
+  WORKFLOW_IMPORT: 'workflow.import',
+  BACKUP_SCHEDULED: 'backup.scheduled',
+  COMPANION_MANAGE: 'companion.manage',
   /** Community: GET /instances/{id}/diagnostics */
   DIAGNOSTICS_REPORT: 'diagnostics.report',
   /** Premium: companion diagnostics – services + container details */

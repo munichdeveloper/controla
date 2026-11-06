@@ -4,6 +4,7 @@ import de.atstck.controla.alerts.InstanceAlertHandler;
 import de.atstck.controla.dto.CreateInstanceDto;
 import de.atstck.controla.dto.InstanceSummaryDto;
 import de.atstck.controla.license.LicenseService;
+import de.atstck.controla.license.CommunityLicenseService;
 import de.atstck.controla.security.CryptoService;
 import de.atstck.controla.security.TenantContext;
 import de.atstck.controla.service.CoreApiClient;
@@ -80,7 +81,7 @@ class InstanceCreationConcurrencyTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"Community Edition, 3, 2", "Hosted Ops, 1, 0"})
+    @CsvSource({"Community Edition, 3, 2", "Hosted Ops, 1, 0", "Premium Edition, 10, 9", "Premium Edition, 30, 29"})
     void concurrentCreatesCannotExceedTheLimitEvenForAnEmptyTenant(String edition, int limit, int existing)
             throws Exception {
         when(license.getEditionName()).thenReturn(edition);
@@ -152,6 +153,16 @@ class InstanceCreationConcurrencyTest {
     }
 
     @Test
+    void actualCommunityLicensePersistsMoreThanThirtyInstancesAcrossApplicationContexts() {
+        String tenant = UUID.randomUUID().toString();
+        try (AnnotationConfigApplicationContext communityFirst = context(new CommunityLicenseService());
+             AnnotationConfigApplicationContext communitySecond = context(new CommunityLicenseService())) {
+            for (int i = 0; i < 31; i++) create(i % 2 == 0 ? communityFirst : communitySecond, tenant);
+            assertThat(repository(communityFirst).countByTenantId(tenant)).isEqualTo(31);
+        }
+    }
+
+    @Test
     void hostedOpsStillAllowsMoreThanThreeInstances() {
         when(license.getMaxInstances()).thenReturn(-1);
         String tenant = UUID.randomUUID().toString();
@@ -193,6 +204,10 @@ class InstanceCreationConcurrencyTest {
     }
 
     private AnnotationConfigApplicationContext context() {
+        return context(license);
+    }
+
+    private AnnotationConfigApplicationContext context(LicenseService activeLicense) {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         context.registerBean(DataSource.class, () -> new DriverManagerDataSource(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
@@ -210,7 +225,7 @@ class InstanceCreationConcurrencyTest {
         context.registerBean(CoreApiClient.class, () -> mock(CoreApiClient.class));
         context.registerBean(N8nApiClient.class, () -> n8n);
         context.registerBean(CryptoService.class, () -> crypto);
-        context.registerBean(LicenseService.class, () -> license);
+        context.registerBean(LicenseService.class, () -> activeLicense);
         context.registerBean(InstanceAlertHandler.class, () -> mock(InstanceAlertHandler.class));
         context.registerBean(InstanceCredentialService.class, () -> new InstanceCredentialService(crypto));
         context.register(Persistence.class, InstanceService.class);

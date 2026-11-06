@@ -2,6 +2,7 @@ package de.atstck.controla.instance;
 
 import de.atstck.controla.alerts.InstanceAlertHandler;
 import de.atstck.controla.license.LicenseService;
+import de.atstck.controla.license.CommunityLicenseService;
 import de.atstck.controla.security.CryptoService;
 import de.atstck.controla.security.TenantContext;
 import de.atstck.controla.service.CoreApiClient;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,9 +42,13 @@ class InstanceControllerTest {
     @BeforeEach
     void setUp() {
         TenantContext.setTenantId(TENANT);
+        mvc = controller(license);
+    }
+
+    private MockMvc controller(LicenseService activeLicense) {
         InstanceService service = new InstanceService(mock(CoreApiClient.class), repository, n8n,
-                crypto, license, mock(InstanceAlertHandler.class), new InstanceCredentialService(crypto));
-        mvc = MockMvcBuilders.standaloneSetup(new InstanceController(service)).build();
+                crypto, activeLicense, mock(InstanceAlertHandler.class), new InstanceCredentialService(crypto));
+        return MockMvcBuilders.standaloneSetup(new InstanceController(service)).build();
     }
 
     @AfterEach
@@ -56,7 +62,9 @@ class InstanceControllerTest {
             "Hosted Ops, -1, 12",
             "Premium Edition, -1, 3",
             "Community Edition, 3, 2",
-            "Hosted Ops, 5, 4"
+            "Hosted Ops, 5, 4",
+            "Premium Edition, 10, 9",
+            "Premium Edition, 30, 29"
     })
     void createsInstancesWithinTheLicensedLimit(String edition, int limit, int existing) throws Exception {
         configureLicense(edition, limit, existing);
@@ -81,13 +89,35 @@ class InstanceControllerTest {
         verifyNoStatusRefresh();
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {3, 30, 120})
+    void actualCommunityLicenseAllowsCreationBeyondOldAndHostedLimits(int existing) throws Exception {
+        when(repository.countByTenantId(TENANT)).thenReturn((long) existing);
+        SecretKey key = mock(SecretKey.class);
+        when(crypto.getMasterKey()).thenReturn(key);
+        when(crypto.encrypt("test-key", key)).thenReturn("encrypted-key");
+        when(repository.save(any(Instance.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        controller(new CommunityLicenseService())
+                .perform(post("/api/instances").contentType(MediaType.APPLICATION_JSON).content(REQUEST))
+                .andExpect(status().isCreated());
+
+        verify(repository).save(argThat(instance -> TENANT.equals(instance.getTenantId())));
+        verify(repository, never()).lockInstanceCreation(anyString());
+        verify(repository, never()).countByTenantId(anyString());
+        verifyNoStatusRefresh();
+    }
+
     @ParameterizedTest(name = "{0}: limit={1}, existing={2}")
     @CsvSource({
             "Community Edition, 3, 3",
             "Community Edition, 3, 4",
             "Hosted Ops, 5, 5",
             "Hosted Ops, 5, 6",
-            "Hosted Ops, 0, 0"
+            "Hosted Ops, 0, 0",
+            "Premium Edition, 10, 10",
+            "Premium Edition, 10, 30",
+            "Premium Edition, 30, 30"
     })
     void rejectsInstancesAtOrAboveTheLicensedLimit(String edition, int limit, int existing) throws Exception {
         configureLicense(edition, limit, existing);
