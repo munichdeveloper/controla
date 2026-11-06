@@ -1,6 +1,6 @@
 # License inventory and relicensing readiness
 
-**State: evidence collection only (2026-11-06).** The effective Controla CE license remains **AGPLv3** (`LICENSE.md`). The investigation of Apache-2.0 as an alternative is tracked in [#47](https://github.com/munichdeveloper/controla/issues/47) and [#49](https://github.com/munichdeveloper/controla/issues/49).
+**State: evidence collection only (2026-11-06).** The current Controla CE license is **Apache-2.0** (`LICENSE`); historic releases stay under their original AGPLv3. The license transition and provenance review are tracked in [#47](https://github.com/munichdeveloper/controla/issues/47) and [#49](https://github.com/munichdeveloper/controla/issues/49).
 
 The [License inventory workflow](../.github/workflows/license-inventory.yml) generates two downloadable CI artifacts when manually triggered or when dependency / license files change:
 
@@ -31,10 +31,10 @@ npm sbom --sbom-format=cyclonedx --sbom-type=application > ../ce-npm.cdx.json
 - **Commit names are not a copyright-clearance result.** Check original author rights, outside contributions, co-authored material, copy/pasted snippets, and the specific terms accepted with each contribution. Confirm the scope of the current `CONTRIBUTING.md` license grant through legal review.
 - **Build-time dependency metadata is not the entire distribution.** Inspect the built executable JAR, the Next.js standalone bundle and its included packages, npm optional/native dependencies, and both the Linux and JVM/Node runtime base images.
 - **Inventory non-package assets:** fonts, icons, images, documentation quotations and any vendored files. They may be governed by independent licenses, regardless of Maven/npm metadata.
-- **Historical releases:** any already-distributed AGPLv3 version stays subject to its valid license. A future license switch does not revoke existing downstream rights.
+- **Historical releases:** any already-distributed AGPLv3 version stays subject to its valid license. The license switch does not revoke existing downstream rights.
 - **Proprietary packages:** the CE library integrated into a private executable must have a sufficient, documented independent rights grant before proprietary redistribution. A private repository by itself does not provide such rights.
 - **Brand:** Apache-2.0/MIT licensing of code would not automatically license the Controla trademark.
-- **No license switch until an explicit, recorded decision and legal Go/No-Go.**
+- **The project owner's Apache-2.0 authorization is recorded.** Maintain independent provenance and third-party obligations; project-owner approval cannot replace consent from unrelated rights holders.
 
 Recommended follow-up: produce a human-reviewable table for every distribution component (component name, version, declared license(s), evidence URL, intended usage, obligations, reviewer, decision), then record unresolved items as issues. For generated artifact manifests, retain the run URL and commit SHA in the review record.
 
