@@ -1,0 +1,118 @@
+name: License inventory (advisory)
+
+# This workflow produces evidence for a human license review. It does not
+# approve a license change or assert that a dependency is legally compliant.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/license-inventory.yml'
+      - 'pom.xml'
+      - 'backend/pom.xml'
+      - 'frontend/pom.xml'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - 'Dockerfile'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE.md'
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/license-inventory.yml'
+      - 'pom.xml'
+      - 'backend/pom.xml'
+      - 'frontend/pom.xml'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - 'Dockerfile'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE.md'
+
+permissions:
+  contents: read
+
+jobs:
+  maven-sbom:
+    name: Java dependency inventory and author metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Generate aggregate Maven SBOM (CycloneDX)
+        run: |
+          mvn -B -ntp org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom -Dcyclonedx.outputFormat=json
+          mkdir -p compliance
+          python3 - <<'PY'
+          import json
+          import shutil
+          from pathlib import Path
+
+          candidates = [Path('target/bom.json'), Path('backend/target/bom.json')]
+          valid = []
+          for candidate in candidates:
+              if candidate.is_file():
+                  bom = json.loads(candidate.read_text())
+                  if bom.get('bomFormat') == 'CycloneDX' and bom.get('components'):
+                      valid.append((len(bom['components']), candidate))
+          if not valid:
+              raise SystemExit('CycloneDX Maven output missing or empty')
+          _, source = max(valid)
+          shutil.copyfile(source, Path('compliance/ce-maven.cdx.json'))
+          print(f'Using {source}, {len(json.loads(source.read_text())["components"])} components')
+          PY
+
+      - name: Record commit author candidates
+        run: |
+          # Names in git history are provenance leads, NOT proof of copyright ownership.
+          mkdir -p compliance
+          git log --all --format='%aN' | LC_ALL=C sort -u > compliance/commit-author-names.txt
+          git log --all --format='%B' | grep -i '^Co-authored-by:' | LC_ALL=C sort -u > compliance/coauthor-trailers.txt || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: license-inventory-maven-and-authors
+          path: compliance/
+          retention-days: 30
+          if-no-files-found: error
+
+  npm-sbom:
+    name: JavaScript dependency inventory
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Pin npm CLI
+        run: npm install --global npm@11.9.0
+
+      - name: Install dependency graph without executing dependency scripts
+        run: npm ci --ignore-scripts
+
+      - name: Generate npm SBOM (CycloneDX)
+        run: |
+          mkdir -p ../compliance
+          npm sbom --sbom-format=cyclonedx --sbom-type=application > ../compliance/ce-npm.cdx.json
+          node -e 'const b=require("../compliance/ce-npm.cdx.json"); if(b.bomFormat!=="CycloneDX" || !b.components?.length) process.exit(1); console.log(b.components.length + " JS components");'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: license-inventory-npm
+          path: compliance/ce-npm.cdx.json
+          retention-days: 30
+          if-no-files-found: error
