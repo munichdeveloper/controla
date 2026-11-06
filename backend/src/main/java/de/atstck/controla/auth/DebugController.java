@@ -15,6 +15,7 @@ import java.util.Map;
  * DEBUG CONTROLLER - NUR FÜR ENTWICKLUNG!
  * Entfernen vor Production Deployment
  */
+@org.springframework.context.annotation.Profile("dev")
 @RestController
 @RequestMapping("/api/debug")
 @CrossOrigin(origins = "*")

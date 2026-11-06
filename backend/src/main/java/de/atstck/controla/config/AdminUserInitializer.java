@@ -15,6 +15,9 @@ import java.util.UUID;
 @Slf4j
 public class AdminUserInitializer {
 
+    @org.springframework.beans.factory.annotation.Value("${CONTROLA_ADMIN_PASSWORD:}")
+    private String initialAdminPassword;
+
     @Bean
     public CommandLineRunner initAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder, CryptoService cryptoService) {
         return args -> {
@@ -23,7 +26,10 @@ public class AdminUserInitializer {
             if (userRepository.findByUsername("admin").isEmpty()) {
                 log.info("=== AdminUserInitializer: Admin user does not exist, creating... ===");
 
-                String password = UUID.randomUUID().toString().substring(0, 8);
+                if (initialAdminPassword == null || initialAdminPassword.isBlank()) {
+                    throw new IllegalStateException("CONTROLA_ADMIN_PASSWORD must be set to create the initial admin");
+                }
+                String password = initialAdminPassword;
 
                 User admin = new User();
                 admin.setUsername("admin");
@@ -40,7 +46,6 @@ public class AdminUserInitializer {
                 log.info("=================================================");
                 log.info("Admin user created successfully.");
                 log.info("Username: admin");
-                log.info("Password: {}", password);
                 log.info("=================================================");
                 log.info("\n\n");
             } else {
