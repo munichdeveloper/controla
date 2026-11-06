@@ -75,11 +75,11 @@ export default function BackupSettingsPage() {
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="space-y-6">
-          <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="flex items-center justify-between p-2 border border-gray-100 dark:border-white/5 rounded">
+                <div key={i} className="flex items-center justify-between p-2 border border-gray-100 dark:border-zinc-700 rounded">
                   <div className="flex items-center space-x-3">
                     <Skeleton className="h-2 w-2 rounded-full" />
                     <Skeleton className="h-4 w-32" />
@@ -89,7 +89,7 @@ export default function BackupSettingsPage() {
               ))}
             </div>
           </div>
-          <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <Skeleton className="h-5 w-48 mb-1" />
@@ -108,7 +108,7 @@ export default function BackupSettingsPage() {
                 <Skeleton className="h-10 w-full" />
               </div>
             </div>
-            <div className="pt-4 mt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+            <div className="pt-4 mt-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
               <Skeleton className="h-10 w-32 rounded-full" />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function BackupSettingsPage() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Backup-Einstellungen</h2>
         </div>
 
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 max-w-2xl backdrop-blur-sm text-center">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-8 max-w-2xl text-center">
           <div className="mb-6 flex justify-center">
             <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-emerald-600 dark:text-emerald-400">
@@ -139,14 +139,14 @@ export default function BackupSettingsPage() {
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             Automatische Backups
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-gray-600 dark:text-zinc-400 mb-6">
             Sichere deine Workflows automatisch auf Google Drive. Diese Funktion ist exklusiv in der Hosted Ops verfügbar.
           </p>
           <a
             href="https://controla.dev/signup"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-lg"
+            className="inline-flex items-center px-6 py-3 text-base font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 rounded-lg transition-colors shadow-lg"
           >
             Jetzt upgraden
           </a>
@@ -163,31 +163,31 @@ export default function BackupSettingsPage() {
           ← Zurück zur Übersicht
         </Link>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Backup-Einstellungen</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-gray-600 dark:text-zinc-400 mt-2">
           Konfiguriere automatische Backups deiner Workflows auf Google Drive
         </p>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Backup-Status</h3>
 
           {!instances || instances.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Keine Instanzen gefunden.</p>
+            <p className="text-gray-500 dark:text-zinc-400 text-sm">Keine Instanzen gefunden.</p>
           ) : (
             <div className="space-y-2">
               {instances.map((instance) => {
                 const lastBackup = lastBackups?.[instance.id];
                 return (
-                  <div key={instance.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-white/5 rounded border border-gray-100 dark:border-white/5">
+                  <div key={instance.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-zinc-800 rounded border border-gray-100 dark:border-zinc-700">
                     <div className="flex items-center space-x-3 overflow-hidden">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lastBackup ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lastBackup ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-zinc-600'}`}></div>
                       <div className="truncate">
                         <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{instance.name}</div>
                       </div>
                     </div>
                     <div className="text-right whitespace-nowrap ml-4">
-                      <div className={`text-xs ${lastBackup ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                      <div className={`text-xs ${lastBackup ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-zinc-500'}`}>
                         {lastBackup ? (
                           formatDistanceToNow(new Date(lastBackup), { addSuffix: true, locale: de })
                         ) : (
@@ -202,7 +202,7 @@ export default function BackupSettingsPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-6">
           {showSuccess && (
             <div className="mb-6 bg-green-50 dark:bg-emerald-900/20 border border-green-200 dark:border-emerald-800 rounded-lg p-4">
               <p className="text-green-800 dark:text-emerald-300 font-medium">Einstellungen erfolgreich gespeichert!</p>
@@ -215,7 +215,7 @@ export default function BackupSettingsPage() {
                 <label htmlFor="enabled" className="text-base font-medium text-gray-900 dark:text-white">
                   Automatische Backups aktivieren
                 </label>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-zinc-400">
                   Workflows werden regelmäßig exportiert und gesichert
                 </p>
               </div>
@@ -227,13 +227,13 @@ export default function BackupSettingsPage() {
                   checked={formData.enabled}
                   onChange={(e) => handleChange('enabled', e.target.checked)}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
             <div className={`space-y-6 transition-opacity duration-200 ${formData.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
               <div>
-                <label htmlFor="googleDriveFolderId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="googleDriveFolderId" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   Google Drive Folder ID
                 </label>
                 <input
@@ -245,13 +245,13 @@ export default function BackupSettingsPage() {
                   placeholder="z.B. 1A2B3C4D5E6F7G8H9I0J"
                   required={formData.enabled}
                 />
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
                   Die ID des Ordners in Google Drive, in dem die Backups gespeichert werden sollen.
                 </p>
               </div>
 
               <div>
-                <label htmlFor="intervalHours" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="intervalHours" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   Backup-Intervall (Stunden)
                 </label>
                 <select
@@ -268,11 +268,11 @@ export default function BackupSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200 dark:border-white/10 flex justify-end">
+            <div className="pt-4 border-t border-gray-200 dark:border-zinc-700 flex justify-end">
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="py-2 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {mutation.isPending ? 'Speichere...' : 'Speichern'}
               </button>

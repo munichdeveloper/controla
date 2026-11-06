@@ -46,7 +46,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
 
   if (history.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-center text-gray-500 dark:text-zinc-400">
         Noch keine Updates durchgeführt.
       </div>
     );
@@ -61,7 +61,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
       case 'IN_PROGRESS':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800 dark:bg-zinc-950/30 dark:text-zinc-400';
     }
   };
 
@@ -74,7 +74,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
       case 'SCHEDULED':
         return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800 dark:bg-zinc-950/30 dark:text-zinc-400';
     }
   };
 
@@ -83,11 +83,11 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
       <table className="w-full">
         <thead className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Datum</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Von</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Nach</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Auslöser</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-zinc-300">Datum</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-zinc-300">Von</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-zinc-300">Nach</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-zinc-300">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-zinc-300">Auslöser</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
@@ -96,10 +96,10 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                 {new Date(entry.executedAt).toLocaleString('de-DE')}
               </td>
-              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
+              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-zinc-300">
                 {entry.fromVersion}
               </td>
-              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
+              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-zinc-300">
                 {entry.toVersion}
               </td>
               <td className="px-4 py-3 text-sm">
@@ -116,7 +116,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
                 <td className="px-4 py-3 text-center">
                   <button
                     onClick={() => setExpandedError(expandedError === entry.id ? null : entry.id)}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300"
                   >
                     {expandedError === entry.id ? '▼' : '▶'}
                   </button>
@@ -130,7 +130,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
       {/* Error Details (expandable) */}
       {expandedError !== null && (
         <div className="border-t border-gray-200 dark:border-zinc-700 bg-red-50 dark:bg-red-900/10 p-4">
-          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Fehlermeldung:</p>
+          <p className="text-xs text-gray-600 dark:text-zinc-400 font-semibold mb-1">Fehlermeldung:</p>
           <p className="text-xs text-red-700 dark:text-red-400 font-mono">
             {history.find((h) => h.id === expandedError)?.errorMessage}
           </p>

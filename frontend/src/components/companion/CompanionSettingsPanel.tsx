@@ -132,7 +132,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
             Host
           </label>
           <input
@@ -146,7 +146,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
             Port
           </label>
           <input
@@ -159,7 +159,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
             API-Key
           </label>
           <div className="relative">
@@ -173,13 +173,13 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
             <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-3 top-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="absolute right-3 top-2 text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300"
             >
               {showApiKey ? '👁️' : '👁️‍🗨️'}
             </button>
           </div>
           {config && !formData.apiKeyChanged && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
               Aktueller Key: {config.apiKey}
             </p>
           )}
@@ -189,7 +189,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Speichert...' : 'Speichern'}
           </button>

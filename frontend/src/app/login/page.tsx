@@ -1,5 +1,6 @@
 'use client';
 
+import BrandMark from '@/components/BrandMark';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useLicense } from '@/lib/license/LicenseContext';
@@ -43,22 +44,21 @@ export default function LoginPage() {
       <ApiConnectionToast />
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-            Controla
+          <h2 className="mt-6 flex items-center justify-center gap-3 text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <BrandMark className="w-9 h-9" />
+            controla
           </h2>
-          <div className="mt-2 text-center text-sm text-gray-600 dark:text-zinc-400 flex justify-center">
+          <div className="mt-3 text-center font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-400 flex justify-center">
             {licenseLoading ? (
               <Skeleton className="h-5 w-32" />
             ) : isPremium ? (
-              <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400">
-                Hosted Ops
-              </span>
+              <span>Hosted Ops</span>
             ) : (
               license?.edition || 'Community Edition'
             )}
           </div>
         </div>
-        <div className="bg-white dark:bg-white/5 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-white/10 rounded-xl p-8 backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-800 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-zinc-700 rounded-xl p-8">
           <div className="mb-6 text-center">
             <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Anmelden</h3>
           </div>
@@ -114,7 +114,7 @@ export default function LoginPage() {
               <button
                 type={licenseReady ? 'submit' : 'button'}
                 disabled={loading || !licenseReady}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Lade...' : 'Anmelden'}
               </button>

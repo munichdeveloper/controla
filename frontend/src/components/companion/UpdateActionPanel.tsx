@@ -162,7 +162,7 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
               <label htmlFor="autoUpdate" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
                 Automatisch auf neueste Version aktualisieren
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
                 Auto-Update installiert immer die semantisch höchste verfügbare Version, auch wenn diese noch nicht als stable markiert ist.
               </p>
             </div>
@@ -189,7 +189,7 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
             <button
               onClick={handleManualUpdate}
               disabled={saving || updating}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-emerald-950 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Wird…' : 'Jetzt'}
             </button>

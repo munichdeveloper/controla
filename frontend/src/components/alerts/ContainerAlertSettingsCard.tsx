@@ -46,7 +46,7 @@ export function ContainerAlertSettingsCard() {
   if (!enabled) return null;
 
   return (
-    <div className="mt-8 bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8">
+    <div className="mt-8 bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm p-8">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-1">Container-Ereignisse</h3>
       <p className="text-sm text-gray-500 dark:text-zinc-400 mb-6">
         Erkannt über den n8n Companion der jeweiligen Instanz. Benachrichtigt wird über die oben eingerichteten Kanäle.
@@ -83,7 +83,7 @@ export function ContainerAlertSettingsCard() {
         <button
           onClick={() => mutation.mutate(form)}
           disabled={!data || mutation.isPending}
-          className="py-2 px-6 rounded-full text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+          className="py-2 px-6 rounded-lg text-sm font-medium text-white dark:text-emerald-950 bg-emerald-600 dark:bg-emerald-400 hover:bg-emerald-700 dark:hover:bg-emerald-300 disabled:opacity-50"
         >
           {mutation.isPending ? 'Speichere...' : 'Speichern'}
         </button>
