@@ -8,6 +8,8 @@ COPY backend/pom.xml ./pom.xml
 COPY backend/src ./src
 # pom.xml des Root-Projekts kopieren, um die Parent-Beziehung aufzulösen
 COPY pom.xml ./..
+# Maven packaging embeds LICENSE/NOTICE in both library and runnable JARs.
+COPY LICENSE NOTICE /build/
 RUN mvn -B -f pom.xml clean package -DskipTests
 
 # --- Stufe 2: Frontend bauen ---
