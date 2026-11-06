@@ -26,7 +26,8 @@ npm sbom --sbom-format=cyclonedx --sbom-type=application > ../ce-npm.cdx.json
 
 ### Important limitations and required manual checks
 
-- **Metadata reports are leads, not legal opinions.** Reports group declared license labels and identify dependencies with missing license metadata; they do not independently verify the license texts or determine compatibility.\n- **An SBOM is not a legal opinion.** Missing, conflicting or inaccurate license metadata requires review; the job does not classify a license as approved or relicense any code.
+- **Metadata reports are leads, not legal opinions.** Reports group declared license labels and identify dependencies with missing license metadata; they do not independently verify the license texts or determine compatibility.
+- **An SBOM is not a legal opinion.** Missing, conflicting or inaccurate license metadata requires review; the job does not classify a license as approved or relicense any code.
 - **Commit names are not a copyright-clearance result.** Check original author rights, outside contributions, co-authored material, copy/pasted snippets, and the specific terms accepted with each contribution. Confirm the scope of the current `CONTRIBUTING.md` license grant through legal review.
 - **Build-time dependency metadata is not the entire distribution.** Inspect the built executable JAR, the Next.js standalone bundle and its included packages, npm optional/native dependencies, and both the Linux and JVM/Node runtime base images.
 - **Inventory non-package assets:** fonts, icons, images, documentation quotations and any vendored files. They may be governed by independent licenses, regardless of Maven/npm metadata.
