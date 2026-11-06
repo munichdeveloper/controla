@@ -33,6 +33,16 @@ Installation überschrieben; projektspezifische Regeln gehören
 außerhalb dieses Blocks.
 <!-- END pi-spec-harness managed context v1 -->
 
+## Software Factory (separate opt-in)
+
+Software Factory v0.1.0 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `6c7eacdc1d93396f13ab33a1c187fa2c3565db43`.
+Configuration is `.github/software-factory.yml`: supervised autonomy, mock planning,
+and the non-mutating test worker. Only Issues explicitly labeled `harness:managed`
+belong to SF. Existing pi-spec-harness/Squad tasks and labels do not enroll them.
+Do not add that opt-in label to an active run of another orchestrator unless the
+repository owner explicitly migrates it. Follow the tracking-Issue check above.
+
 ## Projektkontext: Editionen (Open Core)
 
 Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
