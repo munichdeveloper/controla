@@ -1,4 +1,4 @@
-# Software Factory v0.4.2; independent immutable Harness v0.3.2 pin.
+# Software Factory v0.4.3; independent immutable Harness v0.3.2 pin.
 name: Software Factory
 run-name: Factory ${{ (github.event_name == 'push' || github.event_name == 'workflow_run') && 'notify' || inputs.mode || 'manager' }} ${{ inputs.execution_id }}
 on:
@@ -38,7 +38,7 @@ jobs:
       pull-requests: read
       actions: write
     steps:
-      - uses: munichdeveloper/software-factory@5617ed380606378193c24a90a665dc0318367e3d
+      - uses: munichdeveloper/software-factory@aebbcffb00077db9628c4c197e98c17abf198d11
         with:
           mode: ${{ (github.event_name == 'push' || github.event_name == 'workflow_run' || inputs.mode == 'merge') && 'notify' || inputs.mode || 'manager' }}
           dry-run: ${{ inputs.dry_run || false }}
@@ -51,9 +51,9 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
-    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@5617ed380606378193c24a90a665dc0318367e3d
+    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@aebbcffb00077db9628c4c197e98c17abf198d11
     with:
-      factory-ref: 5617ed380606378193c24a90a665dc0318367e3d
+      factory-ref: aebbcffb00077db9628c4c197e98c17abf198d11
       harness-ref: 8f1732c05c351af32bd25a6306a92f3bb06c1bad
       execution-id: ${{ inputs.execution_id }}
       issue-number: ${{ inputs.issue_number }}
@@ -72,7 +72,7 @@ jobs:
       statuses: read
       actions: write
     steps:
-      - uses: munichdeveloper/software-factory@5617ed380606378193c24a90a665dc0318367e3d
+      - uses: munichdeveloper/software-factory@aebbcffb00077db9628c4c197e98c17abf198d11
         with:
           mode: merge
           dry-run: ${{ inputs.dry_run || false }}
@@ -88,7 +88,7 @@ jobs:
       issues: write
       actions: read
     steps:
-      - uses: munichdeveloper/software-factory@5617ed380606378193c24a90a665dc0318367e3d
+      - uses: munichdeveloper/software-factory@aebbcffb00077db9628c4c197e98c17abf198d11
         with:
           mode: notify
           dry-run: ${{ inputs.dry_run || false }}
