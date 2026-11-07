@@ -8,6 +8,8 @@ COPY backend/pom.xml ./pom.xml
 COPY backend/src ./src
 # pom.xml des Root-Projekts kopieren, um die Parent-Beziehung aufzulösen
 COPY pom.xml ./..
+# Maven packaging embeds LICENSE/NOTICE in both library and runnable JARs.
+COPY LICENSE NOTICE /build/
 RUN mvn -B -f pom.xml clean package -DskipTests
 
 # --- Stufe 2: Frontend bauen ---
@@ -28,6 +30,9 @@ RUN npm run build
 # --- Stufe 3: Finale Anwendung zusammenstellen ---
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
+
+# License and attribution notices must accompany redistributed images.
+COPY LICENSE NOTICE /app/
 
 # Laufzeit benötigt dieselbe Node-Binärdatei und npm-Version wie der Build.
 RUN apt-get update && \

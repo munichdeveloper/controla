@@ -197,7 +197,7 @@ See `.env.example` for all configuration options.
 
 ## 📦 License
 
-Controla Community Edition is licensed under AGPLv3.
+Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md). Previous releases remain under their originally published license (including AGPLv3).
 
 ---
 

@@ -1,0 +1,51 @@
+version: 1
+factory:
+  enabled: true
+  scope: "Implement explicitly SF-managed Controla Community tasks with Codex and propose reviewable PRs. Respect AGENTS.md, the Community/Premium boundary, feature flags and backwards-compatible extension APIs. Historical tasks from retired orchestrators are not automatically enrolled."
+manager:
+  workflow: factory-manager.yml
+  maxActions: 10
+  timeoutMinutes: 15
+  maxContextTasks: 20
+  maxContextChars: 20000
+  trustedActors: ["github-actions[bot]"]
+autonomy:
+  profile: autonomous
+  overrides:
+    transition: allow
+    close_issue: allow
+    create_followup: allow
+    prioritize: allow
+    approve_task: allow
+    start_worker: allow
+    retry_worker: allow
+    cancel_worker: allow
+    expand_scope: allow
+    merge_pr: deny # Not implemented in SF v0.2.0; repository rules remain authoritative.
+execution:
+  dryRun: false
+  maxParallelWorkers: 1
+  maxRetries: 2
+  maxNewIssues: 3
+  workerTimeoutMinutes: 30
+  dispatchGraceMinutes: 10
+llm:
+  provider: openai
+  model: gpt-4.1-mini
+  reasoningEffort: null
+  maxOutputTokens: 4000
+  timeoutSeconds: 60
+  maxCalls: 1
+workers:
+  test:
+    enabled: false
+    operation: sha256
+  coding:
+    enabled: true
+    agent: codex
+    model: gpt-6.1-sol
+    reasoningEffort: high
+    validationWorkflow: test.yml
+  review: false
+reporting:
+  persistDecisions: true

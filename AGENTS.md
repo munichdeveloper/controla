@@ -1,46 +1,32 @@
-<!-- BEGIN pi-spec-harness managed context v1 -->
-## Harness-Kontext (verwaltet von pi-spec-harness)
+## Software Factory
 
-Dieses Repository (munichdeveloper/controla) wird teilweise von [pi-spec-harness](https://github.com/munichdeveloper/pi-spec-harness)
-orchestriert. Der Harness ändert keinen Produktcode selbst; er
-kontrolliert und beobachtet, wie ein Agent zwischen Spec, Issue, PR und
-Merge bewegt wird.
+Software Factory v0.2.2 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `5b9e785bcb396c51f717476273bf5f37a9cc46e7`; the independent Codex Harness is pinned to
+`8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
+Configuration is `.github/software-factory.yml`: autonomous policy for every
+supported action, including scope-expanding follow-ups; OpenAI plans tasks and
+Codex implements them using the configured coding model and reasoning effort.
+The Actions secret `OPENAI_API_KEY` authenticates both; never put credentials in
+Issues, source files or prompts. Resource budgets remain active.
 
-**Bevor du an einem Issue eigenständig arbeitest:** Prüfe zuerst, ob
-bereits ein offenes Tracking-Issue (Titel `[Harness Run] <run-id>`,
-Label `harness:run`) existiert, das auf dieses Issue verweist. Falls
-ja, enthält dessen Body den kanonischen, aktuellen Fortschrittsstand
-(Phase, offene Gates, bisherige Entscheidungen) — lies ihn, bevor du
-von vorne beginnst oder rätst, was bereits erledigt ist.
-
-**Label-Vokabular:**
-
-| Label | Bedeutung |
-|---|---|
-| `ai:allowed` | Issue darf von einem Agenten selbstständig bearbeitet werden |
-| `status:ready` | Issue ist fachlich/technisch bereit zur Bearbeitung |
-| `status:needs-human` | Ein Mensch muss entscheiden, bevor es weitergeht |
-| `harness:run` | Markiert das persistente Tracking-Issue eines Runs |
-| `harness:implementation` | Markiert ein vom Harness erzeugtes Implementierungs-Issue |
-| `harness:gate-approved` / `harness:gate-rejected` | Menschliche Entscheidung auf einem offenen Gate |
-
-Ausführliche Dokumentation zum Protokoll: `docs/human-gates.md` und
-`docs/event-driven-workflow.md` im Harness-Repository.
-
-Dieser Block wird von `harness init --install-agents-context`
-verwaltet. Änderungen innerhalb der Marker werden bei der nächsten
-Installation überschrieben; projektspezifische Regeln gehören
-außerhalb dieses Blocks.
-<!-- END pi-spec-harness managed context v1 -->
+Only Issues explicitly labeled `harness:managed` belong to SF. Those labels are
+SF's persisted compatibility vocabulary, independent of the retired harnesses.
+The coding worker edits and tests a checkout with read-only GitHub permissions;
+SF reauthorizes and publishes a PR in a separate job. Automatic PR merging and
+coding changes to workflow/agent configuration are unsupported. Product CI and
+repository branch rules remain authoritative. Existing pi-spec-harness/Squad
+workflows have been retired; their historical Issues and files are not a queue.
 
 ## Projektkontext: Editionen (Open Core)
+
+Die CE ist ab der Apache-2.0-Relizenzierung permissiv lizenziert. `LICENSE` und `NOTICE` für Source-/Binary-Distribution beibehalten; vorhandene ältere AGPL-Releases bleiben unter AGPL nutzbar. Lizenzrechte und entgeltliche Feature-/Service-Berechtigungen sind getrennte Konzepte.
 
 Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 | Komponente | Ort | Lizenz | Rolle |
 |---|---|---|---|
-| Community-Backend | `backend/` (dieses Repo) | AGPLv3, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
-| Frontend | `frontend/` (dieses Repo) | AGPLv3, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
+| Community-Backend | `backend/` (dieses Repo) | Apache-2.0, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
+| Frontend | `frontend/` (dieses Repo) | Apache-2.0, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
 | Premium-Backend | separates, privates Repo | Closed Source, nur als SaaS betrieben | Bindet das Community-Backend als Maven-Bibliothek ein und ergänzt Paid- und Enterprise-Features |
 | n8n-companion | separates Repo | – | Agent neben n8n auf dem Docker-Host; wird vom Premium-Backend angesprochen |
 
