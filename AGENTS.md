@@ -1,7 +1,7 @@
 ## Software Factory
 
-Software Factory v0.3.0 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `f85c87741f63270906745114c88b6004c5499986`; the independent Codex Harness is pinned to
+Software Factory v0.4.0 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `200d8ca44315647a7f5cd1b5b76587366ccffa73`; the independent Codex Harness is pinned to
 `8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
 Configuration is `.github/software-factory.yml`: autonomous policy for every
 supported action, including scope-expanding follow-ups; OpenAI plans tasks and
@@ -12,8 +12,12 @@ Issues, source files or prompts. Resource budgets remain active.
 Only Issues explicitly labeled `harness:managed` belong to SF. Those labels are
 SF's persisted compatibility vocabulary, independent of the retired harnesses.
 The coding worker edits and tests a checkout with read-only GitHub permissions;
-SF reauthorizes and publishes a PR in a separate job. Automatic PR merging and
-coding changes to workflow/agent configuration are unsupported. Product CI and
+SF reauthorizes and publishes a PR in a separate job. A separate mandatory AI
+reviewer may conditionally merge exact reviewed commits after fresh CI and GitHub
+review/branch gates. Green CI alone never approves a merge. Other same-repository
+PRs enter this process only with the `sf:automerge` label; `sf:blocked` stops it.
+AI decisions and reasons are recorded on the PR. The coding worker cannot edit
+workflow/agent configuration. Product CI and
 repository branch rules remain authoritative. Existing pi-spec-harness/Squad
 workflows have been retired; their historical Issues and files are not a queue.
 
