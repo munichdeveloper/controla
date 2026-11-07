@@ -1,7 +1,7 @@
 ## Software Factory
 
-Software Factory v0.4.1 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `7697d642f6b6606bad92dceaf726367231cbcf4b`; the independent Codex Harness is pinned to
+Software Factory v0.4.2 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `5617ed380606378193c24a90a665dc0318367e3d`; the independent Codex Harness is pinned to
 `8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
 Configuration is `.github/software-factory.yml`: autonomous policy for every
 supported action, including scope-expanding follow-ups; OpenAI plans tasks and
