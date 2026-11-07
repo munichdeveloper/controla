@@ -6,3 +6,7 @@ frontend/node
 .env
 frontend/.env
 **/.env*.local
+
+.env.*
+!*.example
+**/__pycache__

@@ -1,0 +1,48 @@
+name: Publish Docker image
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          docker build --tag "$IMAGE:sha-$GITHUB_SHA" .
+      - name: Validate Hostinger configuration
+        run: python3 .github/scripts/check-hostinger.py
+      - name: Test image before publishing
+        run: python3 .github/scripts/smoke-docker.py "$IMAGE:sha-$GITHUB_SHA"
+      - name: Test Hostinger stack and HTTPS routing
+        run: python3 .github/scripts/smoke-hostinger.py "$IMAGE:sha-$GITHUB_SHA"
+      - name: Sign in and publish tested image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:main"
+            docker push "$IMAGE:main"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/v}"
+            docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:$TAG"
+            docker push "$IMAGE:$TAG"
+          fi

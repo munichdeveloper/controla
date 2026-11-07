@@ -2,7 +2,6 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: controla-postgres
     restart: unless-stopped
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -21,11 +20,12 @@ services:
       - controla-network
   # controla Backend & Frontend (combined in one container)
   controla:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-/api}
         BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
     ports:
       - "3000:3000"
@@ -54,7 +54,7 @@ services:
       PASSWORD_RESET_TOKEN_VALIDITY_HOURS: ${PASSWORD_RESET_TOKEN_VALIDITY_HOURS:-24}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
-      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-/api}
     depends_on:
       postgres:
         condition: service_healthy
