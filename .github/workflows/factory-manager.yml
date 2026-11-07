@@ -1,14 +1,15 @@
-# Software Factory v0.2.2; independent immutable Harness v0.3.2 pin.
+# Software Factory v0.3.0; independent immutable Harness v0.3.2 pin.
 name: Software Factory
-run-name: Factory ${{ inputs.mode || 'manager' }} ${{ inputs.execution_id }}
+run-name: Factory ${{ github.event_name == 'push' && 'notify' || inputs.mode || 'manager' }} ${{ inputs.execution_id }}
 on:
+  push:
   schedule:
     - cron: '17 */2 * * *'
   workflow_dispatch:
     inputs:
       mode:
         type: choice
-        options: [manager, bootstrap, worker]
+        options: [manager, notify, check-slack, bootstrap, worker]
         default: manager
       execution_id:
         type: string
@@ -25,7 +26,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   factory:
-    if: inputs.mode != 'worker'
+    if: inputs.mode != 'worker' && (github.event_name != 'push' || github.ref_name == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -34,11 +35,12 @@ jobs:
       pull-requests: read
       actions: write
     steps:
-      - uses: munichdeveloper/software-factory@5b9e785bcb396c51f717476273bf5f37a9cc46e7
+      - uses: munichdeveloper/software-factory@f85c87741f63270906745114c88b6004c5499986
         with:
-          mode: ${{ inputs.mode || 'manager' }}
+          mode: ${{ github.event_name == 'push' && 'notify' || inputs.mode || 'manager' }}
           dry-run: ${{ inputs.dry_run || false }}
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
   coding:
     if: inputs.mode == 'worker' && !inputs.dry_run
     permissions:
@@ -46,9 +48,9 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
-    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@5b9e785bcb396c51f717476273bf5f37a9cc46e7
+    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@f85c87741f63270906745114c88b6004c5499986
     with:
-      factory-ref: 5b9e785bcb396c51f717476273bf5f37a9cc46e7
+      factory-ref: f85c87741f63270906745114c88b6004c5499986
       harness-ref: 8f1732c05c351af32bd25a6306a92f3bb06c1bad
       execution-id: ${{ inputs.execution_id }}
       issue-number: ${{ inputs.issue_number }}
