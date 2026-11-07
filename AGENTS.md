@@ -1,7 +1,7 @@
 ## Software Factory
 
-Software Factory v0.2.2 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `5b9e785bcb396c51f717476273bf5f37a9cc46e7`; the independent Codex Harness is pinned to
+Software Factory v0.3.0 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `f85c87741f63270906745114c88b6004c5499986`; the independent Codex Harness is pinned to
 `8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
 Configuration is `.github/software-factory.yml`: autonomous policy for every
 supported action, including scope-expanding follow-ups; OpenAI plans tasks and
@@ -16,6 +16,11 @@ SF reauthorizes and publishes a PR in a separate job. Automatic PR merging and
 coding changes to workflow/agent configuration are unsupported. Product CI and
 repository branch rules remain authoritative. Existing pi-spec-harness/Squad
 workflows have been retired; their historical Issues and files are not a queue.
+
+Slack notifications use the Actions secret `SLACK_BOT_TOKEN` and channel
+`C0CGJKK3EKS` (#ki-notification). Only SF-created Issues and bot-performed
+merges of SF PRs notify; human merges are excluded. Notification-only runs do
+not invoke a planner or worker. Do not put the Slack token in config or prompts.
 
 ## Projektkontext: Editionen (Open Core)
 
