@@ -104,7 +104,7 @@ Der Workflow bindet unveränderliche Commits ein:
 
 - [Software Factory v0.2.2](https://github.com/munichdeveloper/software-factory/releases/tag/v0.2.2):
   `5b9e785bcb396c51f717476273bf5f37a9cc46e7`.
-- [Codex Harness v0.3.2](https://github.com/munichdeveloper/codex-harness/releases/tag/v0.3.2):
+- [Codex Harness v0.3.2](https://github.com/munichdeveloper/dev-agent-harness/releases/tag/v0.3.2):
   `8f1732c05c351af32bd25a6306a92f3bb06c1bad`.
 
 ## Community/Premium-Grenze
