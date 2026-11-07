@@ -1,7 +1,7 @@
 ## Software Factory
 
-Software Factory v0.4.2 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `5617ed380606378193c24a90a665dc0318367e3d`; the independent Codex Harness is pinned to
+Software Factory v0.4.3 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `aebbcffb00077db9628c4c197e98c17abf198d11`; the independent Codex Harness is pinned to
 `8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
 Configuration is `.github/software-factory.yml`: autonomous policy for every
 supported action, including scope-expanding follow-ups; OpenAI plans tasks and
@@ -17,7 +17,10 @@ reviewer may conditionally merge exact reviewed commits after fresh CI and GitHu
 review/branch gates. Green CI alone never approves a merge. Other same-repository
 PRs enter this process only with the `sf:automerge` label; `sf:blocked` stops it.
 AI decisions and reasons are recorded on the PR. The coding worker cannot edit
-workflow/agent configuration. Product CI and
+workflow/agent configuration. GitHub may require a maintainer to select
+`Approve workflows to run` after a bot updates a PR. SF explains that gate and
+never grants or bypasses it. Separately dispatched tests do not replace the
+native PR required checks. Product CI and
 repository branch rules remain authoritative. Existing pi-spec-harness/Squad
 workflows have been retired; their historical Issues and files are not a queue.
 
