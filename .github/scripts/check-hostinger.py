@@ -42,6 +42,7 @@ def main():
             assert "build" not in app
             assert app["restart"] == "unless-stopped"
             settings = app["environment"]
+            assert settings["CONTROLA_DEBUG_ENABLED"] == "false"
             assert settings["NEXT_PUBLIC_BACKEND_BASE_URL"] == "/api"
             assert settings["BACKEND_URL"] == "http://localhost:8081/api"
             assert settings["FRONTEND_URL"] == settings["CORS_ALLOWED_ORIGINS"] == "https://controla.example.test"

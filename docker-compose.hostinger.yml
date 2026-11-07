@@ -25,6 +25,7 @@ services:
       - host.docker.internal:host-gateway
     environment:
       SERVER_PORT: "8081"
+      CONTROLA_DEBUG_ENABLED: "false"
       PORT: "3000"
       NEXT_PUBLIC_BACKEND_BASE_URL: /api
       BACKEND_URL: http://localhost:8081/api

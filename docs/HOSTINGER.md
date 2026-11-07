@@ -88,8 +88,33 @@ docker compose --env-file .env.hostinger -f docker-compose.hostinger.yml up -d
 ```
 
 Open `https://<CONTROLA_HOST>/login`. Retrieve the initial `admin` password privately
-from application logs and change it after login. Check `/api/license` returns JSON,
+from application logs. Complete the rotation procedure below before adding instances.
+Check `/api/license` returns JSON,
 the app becomes healthy, and TLS is trusted. Container startup alone is insufficient.
+
+### Set up admin email and rotate the bootstrap password
+
+There is currently no change-password action in the account UI. The bootstrap
+account has the placeholder address `admin@controla.local`, so SMTP configuration
+alone does not make password reset usable. Configure working SMTP, then assign
+your actual deliverable email address using PostgreSQL. From a VPS checkout,
+replace `you@example.com` before running:
+
+```bash
+docker compose --env-file .env.hostinger -f docker-compose.hostinger.yml exec postgres \
+  psql -U controla_user -d controla \
+  -c "UPDATE users SET email = 'you@example.com', updated_at = CURRENT_TIMESTAMP WHERE username = 'admin';"
+```
+
+In Docker Manager the same SQL can be run in the PostgreSQL terminal. Expect
+`UPDATE 1`. Open `https://<CONTROLA_HOST>/forgot-password`, enter that address,
+follow the emailed link, set a strong password, and verify a fresh login.
+Do this before storing instance credentials. Keep the bootstrap password private
+until rotation is verified; do not enable debug endpoints to change passwords.
+
+Development debug endpoints are disabled by default and explicitly disabled in
+the Hostinger file. Local developers may opt in using `CONTROLA_DEBUG_ENABLED=true`;
+they still require an authenticated administrator. Never enable them publicly.
 
 ## Images and button rollout
 

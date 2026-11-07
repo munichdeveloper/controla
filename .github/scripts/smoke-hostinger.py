@@ -79,6 +79,18 @@ def main():
             login = json.loads(request("/api/auth/login", {"username": "admin", "password": password}))
             token = login["token"]
             assert json.loads(request("/api/auth/me", token=token))["username"] == "admin"
+            for path, data in (("/api/debug/user/admin", None),
+                               ("/api/debug/verify-password", {"username": "admin", "password": password}),
+                               ("/api/debug/generate-hash", {"password": password})):
+                for auth in (None, token):
+                    try:
+                        request(path, data=data, token=auth)
+                    except urllib.error.HTTPError as error:
+                        # Spring Security may protect the /error dispatch of an
+                        # unmapped route, returning 403 rather than 404.
+                        assert error.code in (401, 403, 404), error.code
+                    else:
+                        raise AssertionError("Development debug endpoint exposed over HTTPS")
             # Recreate only the app: existing users and JWT signing key must survive.
             compose("up", "--detach", "--force-recreate", "--no-deps", "controla")
             app = compose("ps", "-q", "controla")
