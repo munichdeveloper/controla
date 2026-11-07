@@ -34,3 +34,7 @@ buildNumber.properties
 /quality-report.md
 /quality-inputs/
 /.quality-cache/
+
+# Hostinger deployment credentials
+/.env.hostinger
+__pycache__/

@@ -107,6 +107,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Validate Hostinger configuration
+      run: python3 .github/scripts/check-hostinger.py
     - name: Build application image from a clean checkout
       run: docker build --tag controla:ci .
     - name: Verify image includes LICENSE and NOTICE
@@ -114,3 +116,5 @@ jobs:
 
     - name: Verify image runtime, PostgreSQL, login and API rewrite
       run: python3 .github/scripts/smoke-docker.py controla:ci
+    - name: Verify Hostinger stack and HTTPS routing
+      run: python3 .github/scripts/smoke-hostinger.py controla:ci

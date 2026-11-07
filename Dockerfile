@@ -21,7 +21,7 @@ COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend ./
 # Backend-URLs für Frontend und Rewrites zur Build-Zeit setzen
-ARG NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+ARG NEXT_PUBLIC_BACKEND_BASE_URL=/api
 ARG BACKEND_URL=http://localhost:8081/api
 ENV NEXT_PUBLIC_BACKEND_BASE_URL=${NEXT_PUBLIC_BACKEND_BASE_URL}
 ENV BACKEND_URL=${BACKEND_URL}
@@ -30,6 +30,8 @@ RUN npm run build
 # --- Stufe 3: Finale Anwendung zusammenstellen ---
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
+LABEL org.opencontainers.image.source="https://github.com/munichdeveloper/controla" \
+      org.opencontainers.image.licenses="Apache-2.0"
 
 # License and attribution notices must accompany redistributed images.
 COPY LICENSE NOTICE /app/
@@ -52,32 +54,20 @@ COPY --from=frontend-builder /build/frontend/.next/static ./frontend/.next/stati
 
 # Umgebungsvariablen für Agency Core API
 ENV CORE_BASE_URL=http://host.docker.internal:8081
-ENV CORE_API_TOKEN=dev-apikey-123
 ENV CORE_TENANT_ID=123e4567-e89b-12d3-a456-426614174000
 
 # URLs für Frontend- und Backend-Kommunikation
 ENV BACKEND_URL=http://localhost:8081/api
-ENV NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api
+ENV NEXT_PUBLIC_BACKEND_BASE_URL=/api
 ENV FRONTEND_URL=http://localhost:3000
 
 # Ports freigeben
 EXPOSE 8081
 EXPOSE 3000
 
-# Start-Script erstellen
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'echo "Starting Backend..."' >> /app/start.sh && \
-    echo 'java -jar /app/backend.jar &' >> /app/start.sh && \
-    echo 'BACKEND_PID=$!' >> /app/start.sh && \
-    echo 'echo "Backend started with PID: $BACKEND_PID"' >> /app/start.sh && \
-    echo '' >> /app/start.sh && \
-    echo 'echo "Starting Frontend..."' >> /app/start.sh && \
-    echo 'cd /app/frontend && node server.js &' >> /app/start.sh && \
-    echo 'FRONTEND_PID=$!' >> /app/start.sh && \
-    echo 'echo "Frontend started with PID: $FRONTEND_PID"' >> /app/start.sh && \
-    echo '' >> /app/start.sh && \
-    echo 'wait $BACKEND_PID $FRONTEND_PID' >> /app/start.sh && \
-    chmod +x /app/start.sh
-
-# Start-Skript ausführen
+# Supervise both processes and check the same-origin UI/API path.
+COPY --chmod=755 deploy/start.sh /app/start.sh
+COPY deploy/healthcheck.mjs /app/healthcheck.mjs
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD ["node", "/app/healthcheck.mjs"]
 CMD ["/app/start.sh"]
