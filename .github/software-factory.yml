@@ -49,3 +49,18 @@ workers:
   review: false
 reporting:
   persistDecisions: true
+
+notifications:
+  slack:
+    enabled: true
+    channel: C0CGJKK3EKS # ki-notification
+    maxPerRun: 20
+    since: '2026-11-07T00:54:52Z' # Do not backfill earlier actions.
+    events:
+      issue_created:
+        enabled: true
+        channel: null
+      pr_merged:
+        enabled: true
+        channel: null
+        actors: [] # Native Bot accounts only; human merges never match.
