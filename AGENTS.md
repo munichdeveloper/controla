@@ -19,12 +19,14 @@ workflows have been retired; their historical Issues and files are not a queue.
 
 ## Projektkontext: Editionen (Open Core)
 
+Die CE ist ab der Apache-2.0-Relizenzierung permissiv lizenziert. `LICENSE` und `NOTICE` für Source-/Binary-Distribution beibehalten; vorhandene ältere AGPL-Releases bleiben unter AGPL nutzbar. Lizenzrechte und entgeltliche Feature-/Service-Berechtigungen sind getrennte Konzepte.
+
 Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 | Komponente | Ort | Lizenz | Rolle |
 |---|---|---|---|
-| Community-Backend | `backend/` (dieses Repo) | AGPLv3, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
-| Frontend | `frontend/` (dieses Repo) | AGPLv3, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
+| Community-Backend | `backend/` (dieses Repo) | Apache-2.0, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
+| Frontend | `frontend/` (dieses Repo) | Apache-2.0, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
 | Premium-Backend | separates, privates Repo | Closed Source, nur als SaaS betrieben | Bindet das Community-Backend als Maven-Bibliothek ein und ergänzt Paid- und Enterprise-Features |
 | n8n-companion | separates Repo | – | Agent neben n8n auf dem Docker-Host; wird vom Premium-Backend angesprochen |
 
