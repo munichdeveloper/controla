@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { login as apiLogin, register as apiRegister, getCurrentUser, LoginResponse } from '@/lib/api';
 
 interface AuthContextType {
@@ -15,6 +17,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const [user, setUser] = useState<LoginResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,6 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     const response = await apiLogin(username, password);
     localStorage.setItem('token', response.token);
+    // Client navigation keeps providers alive across sessions. Drop private
+    // cached data before rendering the newly authenticated account.
+    queryClient.clear();
     setUser(response);
   };
 
@@ -49,7 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('token');
+    queryClient.clear();
     setUser(null);
+    router.replace('/login');
   };
 
   return (

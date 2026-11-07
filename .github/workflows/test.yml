@@ -99,9 +99,20 @@ jobs:
     - run: npm ci
     - run: npm run lint
     - run: npm test
-    # Next.js 14 generates route types during the build, including on a fresh checkout.
+    # Next.js generates route types during the build, including on a fresh checkout.
     - run: npm run build
     - run: npm run typecheck
+    - name: Install browser for framework regression tests
+      run: npx playwright install --with-deps chromium
+    - run: npm run test:e2e
+    - name: Upload browser failure traces
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-browser-failures
+        path: frontend/test-results
+        retention-days: 7
+        if-no-files-found: ignore
 
   test-docker:
     runs-on: ubuntu-latest
