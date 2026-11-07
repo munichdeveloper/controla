@@ -1,7 +1,7 @@
 version: 1
 factory:
   enabled: true
-  scope: "Implement explicitly SF-managed Controla Community tasks with Codex and propose reviewable PRs. Respect AGENTS.md, the Community/Premium boundary, feature flags and backwards-compatible extension APIs. Historical tasks from retired orchestrators are not automatically enrolled."
+  scope: "Implement explicitly SF-managed Controla Community tasks with Codex. Independently review and conditionally merge Factory PRs and PRs explicitly enrolled with sf:automerge. Respect AGENTS.md, the Community/Premium boundary, feature flags and backwards-compatible extension APIs. Historical tasks from retired orchestrators are not automatically enrolled."
 manager:
   workflow: factory-manager.yml
   maxActions: 10
@@ -21,7 +21,7 @@ autonomy:
     retry_worker: allow
     cancel_worker: allow
     expand_scope: allow
-    merge_pr: deny # Not implemented in SF v0.2.0; repository rules remain authoritative.
+    merge_pr: allow # Mandatory independent AI review and native GitHub gates still apply.
 execution:
   dryRun: false
   maxParallelWorkers: 1
@@ -64,3 +64,22 @@ notifications:
         enabled: true
         channel: null
         actors: [] # Native Bot accounts only; human merges never match.
+
+merge:
+  enabled: true
+  includeFactoryPRs: true
+  adoptLabel: sf:automerge
+  method: squash
+  updateBranch: true
+  requiredChecks: [test-backend, test-frontend, test-docker]
+  validationWorkflow: test.yml
+  maxReviewsPerRun: 1
+  maxActionsPerRun: 1
+  review:
+    model: gpt-6.1-sol
+    reasoningEffort: high
+    timeoutSeconds: 120
+    maxOutputTokens: 12000
+    maxFiles: 60
+    maxContextBytes: 250000
+  postMergeWorkflows: [docker-publish.yml]
