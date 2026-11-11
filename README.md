@@ -95,7 +95,16 @@ This data is normalized and stored for:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Hostinger VPS
+
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/docker-hosting?compose_url=https%3A%2F%2Fraw.githubusercontent.com%2Fmunichdeveloper%2Fcontrola%2Frefs%2Fheads%2Fmain%2Fdocker-compose.hostinger.yml)
+
+The button loads the production Compose file. A configured Traefik proxy, DNS
+hostname and unique installation secrets are required. Follow the
+[Hostinger deployment guide](docs/HOSTINGER.md) before deploying; maintainers must
+publish the public container image once before the button is ready for use.
+
+### Local prerequisites
 
 * Docker & Docker Compose
 
@@ -152,7 +161,7 @@ Testcontainers with PostgreSQL 16 and require a running Docker daemon.
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api \
+  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=/api \
   --build-arg BACKEND_URL=http://localhost:8081/api \
   -t controla .
 ```
@@ -202,7 +211,7 @@ See `.env.example` for all configuration options.
 
 ## 📦 License
 
-Controla Community Edition is licensed under AGPLv3.
+Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md). Previous releases remain under their originally published license (including AGPLv3).
 
 ---
 

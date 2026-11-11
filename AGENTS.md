@@ -1,46 +1,47 @@
-<!-- BEGIN pi-spec-harness managed context v1 -->
-## Harness-Kontext (verwaltet von pi-spec-harness)
+## Software Factory
 
-Dieses Repository (munichdeveloper/controla) wird teilweise von [pi-spec-harness](https://github.com/munichdeveloper/pi-spec-harness)
-orchestriert. Der Harness ändert keinen Produktcode selbst; er
-kontrolliert und beobachtet, wie ein Agent zwischen Spec, Issue, PR und
-Merge bewegt wird.
+Software Factory v0.4.4 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `4e6c3a2895e4e060062db4b9369a719bce2fe32d`; the independent Codex Harness is pinned to
+`8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
+Configuration is `.github/software-factory.yml`: autonomous policy for every
+supported action, including scope-expanding follow-ups; OpenAI plans tasks and
+Codex implements them using the configured coding model and reasoning effort.
+The Actions secret `OPENAI_API_KEY` authenticates both; never put credentials in
+Issues, source files or prompts. Resource budgets remain active.
 
-**Bevor du an einem Issue eigenständig arbeitest:** Prüfe zuerst, ob
-bereits ein offenes Tracking-Issue (Titel `[Harness Run] <run-id>`,
-Label `harness:run`) existiert, das auf dieses Issue verweist. Falls
-ja, enthält dessen Body den kanonischen, aktuellen Fortschrittsstand
-(Phase, offene Gates, bisherige Entscheidungen) — lies ihn, bevor du
-von vorne beginnst oder rätst, was bereits erledigt ist.
+Only Issues explicitly labeled `harness:managed` belong to SF. Those labels are
+SF's persisted compatibility vocabulary, independent of the retired harnesses.
+The coding worker edits and tests a checkout with read-only GitHub permissions;
+SF reauthorizes and publishes a PR in a separate job. A separate mandatory AI
+reviewer may conditionally merge exact reviewed commits after fresh CI and GitHub
+review/branch gates. Green CI alone never approves a merge. Other same-repository
+PRs enter this process only with the `sf:automerge` label; `sf:blocked` stops it.
+AI decisions and reasons are recorded on the PR. The coding worker cannot edit
+workflow/agent configuration. GitHub may require a maintainer to select
+`Approve workflows to run` after a bot updates a PR. SF explains that gate and
+never grants or bypasses it. Separately dispatched tests do not replace the
+native PR required checks. Product CI and
+repository branch rules remain authoritative. Existing pi-spec-harness/Squad
+workflows have been retired; their historical Issues and files are not a queue.
 
-**Label-Vokabular:**
-
-| Label | Bedeutung |
-|---|---|
-| `ai:allowed` | Issue darf von einem Agenten selbstständig bearbeitet werden |
-| `status:ready` | Issue ist fachlich/technisch bereit zur Bearbeitung |
-| `status:needs-human` | Ein Mensch muss entscheiden, bevor es weitergeht |
-| `harness:run` | Markiert das persistente Tracking-Issue eines Runs |
-| `harness:implementation` | Markiert ein vom Harness erzeugtes Implementierungs-Issue |
-| `harness:gate-approved` / `harness:gate-rejected` | Menschliche Entscheidung auf einem offenen Gate |
-
-Ausführliche Dokumentation zum Protokoll: `docs/human-gates.md` und
-`docs/event-driven-workflow.md` im Harness-Repository.
-
-Dieser Block wird von `harness init --install-agents-context`
-verwaltet. Änderungen innerhalb der Marker werden bei der nächsten
-Installation überschrieben; projektspezifische Regeln gehören
-außerhalb dieses Blocks.
-<!-- END pi-spec-harness managed context v1 -->
+Slack notifications use the Actions secret `SLACK_BOT_TOKEN` and channel
+`C0CGJKK3EKS` (#ki-notification). Only SF-created Issues and bot-performed
+merges of SF PRs notify; human merges are excluded. Notification-only runs do
+not invoke a planner or worker. Do not put the Slack token in config or prompts.
+Both notification-capable jobs need PR write permission to persist receipts on
+adopted PRs. SF journals attempts before sending; ambiguous delivery or receipt
+failures block automatic resends until an operator reconciles actual Slack delivery.
 
 ## Projektkontext: Editionen (Open Core)
+
+Die CE ist ab der Apache-2.0-Relizenzierung permissiv lizenziert. `LICENSE` und `NOTICE` für Source-/Binary-Distribution beibehalten; vorhandene ältere AGPL-Releases bleiben unter AGPL nutzbar. Lizenzrechte und entgeltliche Feature-/Service-Berechtigungen sind getrennte Konzepte.
 
 Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 | Komponente | Ort | Lizenz | Rolle |
 |---|---|---|---|
-| Community-Backend | `backend/` (dieses Repo) | AGPLv3, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
-| Frontend | `frontend/` (dieses Repo) | AGPLv3, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
+| Community-Backend | `backend/` (dieses Repo) | Apache-2.0, Open Source | Technische Grundlage und Basisfunktionen; bietet die **Erweiterungspunkte**, an denen Premium andockt |
+| Frontend | `frontend/` (dieses Repo) | Apache-2.0, Open Source | Eine UI für beide Backends; schaltet Funktionen per **Feature Flag** |
 | Premium-Backend | separates, privates Repo | Closed Source, nur als SaaS betrieben | Bindet das Community-Backend als Maven-Bibliothek ein und ergänzt Paid- und Enterprise-Features |
 | n8n-companion | separates Repo | – | Agent neben n8n auf dem Docker-Host; wird vom Premium-Backend angesprochen |
 

@@ -1,99 +1,47 @@
-# Contributor Policy – Controla Community Edition
+# Contributing to Controla Community Edition
 
-This Contributor Policy governs all contributions (“Contributions”) to the **Controla Community Edition** and ensures legal clarity, project sustainability, and long-term commercial viability.
+Controla follows an **open-core** model. The Community Edition is published
+under **Apache License 2.0**. Separate commercial and hosted Controla offerings
+can contain additional proprietary software and services.
 
----
+## 1. License of contributions
 
-## 1. Purpose of This Policy
+Unless a separate written agreement explicitly says otherwise, contributions
+accepted into the Community Edition are licensed under
+[Apache License 2.0](LICENSE). When submitting a pull request, you confirm
+that you have the necessary rights to license the submitted material under
+Apache-2.0, including permission from your employer when applicable.
 
-Controla follows an **open-core model**:
+Please do not submit code or assets copied from third parties unless their
+license and attribution requirements have been identified and are compatible
+with this repository's distribution. Disclose vendored source, generated output
+and changes based on external projects in the pull request.
 
-* The **Community Edition (CE)** is released as Open Source (AGPLv3).
-* Separate **commercial / proprietary editions** exist (e.g. Hosted, Paid, Enterprise).
+Contributors retain their own copyrights. Apache-2.0 permits commercial
+redistribution and proprietary derivatives in accordance with its terms.
+The project does **not** require copyright assignment.
 
-This policy exists to:
+## 2. Provenance and attribution
 
-* protect the openness of the Community Edition
-* avoid legal ambiguity around contributions
-* allow the project maintainer to build and monetize Controla sustainably
+- Explain what you changed, and identify any external source material or assets.
+- Keep required copyright, patent, attribution and license notices intact.
+- Call out any license exceptions or special obligations for dependencies.
+- The maintainers may request an explicit additional contributor agreement if
+  separate rights are necessary; it must be accepted independently.
+- Do not include customer data, credentials or third-party proprietary code.
 
----
+## 3. Scope and review
 
-## 2. License of Contributions
+Contributions should focus on reusable monitoring, diagnostics, reliability,
+APIs, deployment, tests, security or documentation. Commercial extensions are
+developed separately. Maintainers may reject contributions or request changes;
+submitting a PR does not guarantee acceptance or compensation.
 
-* All Contributions to the Controla Community Edition are submitted under the **AGPLv3** license.
-* You confirm that you have the legal right to submit the contribution and that it does not contain third-party proprietary or restricted code.
+## 4. Prior versions and contributions
 
-By submitting a contribution, you agree that:
+Earlier versions of the Community Edition were released under **AGPLv3**.
+Recipients retain the rights granted under those historical licenses.
+The change in contribution policy does not retroactively alter earlier
+agreements or independently authorize relicensing third-party materials.
 
-* your contribution becomes part of the AGPLv3-licensed Community Edition
-* your contribution may be used, modified, and redistributed by others under the terms of the AGPLv3
-
----
-
-## 3. Contributor License Grant (No CLA, but Explicit Rights Grant)
-
-By submitting a contribution, you grant the Controla project owner a **perpetual, worldwide, royalty-free, irrevocable license** to:
-
-* use, modify, and further develop your contribution
-* use your contribution **outside of the Community Edition**
-* relicense your contribution as part of **commercial or proprietary Controla offerings**
-
-**Important:**
-You retain your copyright, but you grant all necessary usage rights to enable commercial operation of Controla.
-
-Without this explicit grant, an open-core business model would not be legally viable.
-
----
-
-## 4. No Compensation or Governance Rights
-
-* Contributions are made **voluntarily and without compensation**
-* Contributors have **no entitlement** to:
-
-    * revenue sharing
-    * payment or royalties
-    * influence over roadmap, pricing, licensing, or product strategy
-
-Feedback is welcome; final decisions rest with the maintainer.
-
----
-
-## 5. Scope of the Community Edition
-
-Contributions to the Community Edition should:
-
-* be generic, experimental, or infrastructure-focused
-* avoid customer-specific or proprietary requirements
-* not intentionally implement features designated as **Paid / Enterprise features**
-
-The maintainer reserves the right to:
-
-* reject contributions
-* modify or partially adopt contributions
-* move or adapt features into other Controla editions
-
----
-
-## 6. No Guarantee of Acceptance
-
-Submitting a Pull Request:
-
-* does **not** guarantee inclusion
-* may be rejected for technical, strategic, or commercial reasons
-
-Code quality, maintainability, and product direction take priority.
-
----
-
-## 7. Responsibility and Liability
-
-* You are responsible for ensuring your contribution does not violate third-party rights
-* Contributions are accepted “as is,” without warranties of any kind
-* The maintainer assumes no liability for damages arising from contributions
-
----
-
-## 8. Acceptance of This Policy
-
-By creating a Pull Request or otherwise contributing to Controla, you acknowledge and accept this Contributor Policy.
+See [docs/LICENSING.md](docs/LICENSING.md) for licensing and distribution notes.
