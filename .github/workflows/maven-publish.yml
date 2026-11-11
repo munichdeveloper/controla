@@ -20,6 +20,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: write
 
     steps:
     - uses: actions/checkout@v4
@@ -76,14 +77,27 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
-    - name: Commit updated POM versions to main
+    # main only accepts pull requests, so the version bump is proposed as one.
+    - name: Open pull request with updated POM versions
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VERSION: ${{ steps.get_version.outputs.version }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add pom.xml */pom.xml
         if git diff --cached --quiet; then
           echo "No changes to commit"
+          exit 0
+        fi
+        BRANCH="chore/bump-version-$VERSION"
+        git checkout -b "$BRANCH"
+        git commit -m "chore: bump version to $VERSION"
+        git push --force origin "HEAD:refs/heads/$BRANCH"
+        if [ -n "$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[].number')" ]; then
+          echo "Pull request for $BRANCH already exists"
         else
-          git commit -m "chore: bump version to ${{ steps.get_version.outputs.version }} [skip ci]"
-          git push origin HEAD:main
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore: bump version to $VERSION" \
+            --body "Version $VERSION was published to GitHub Packages. This aligns the POM versions on main with the release."
         fi
