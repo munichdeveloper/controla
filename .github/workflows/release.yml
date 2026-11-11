@@ -1,0 +1,139 @@
+# Publishes a Community Edition release. Artifacts are built, tested and
+# published first; the tag and the GitHub release are created last, so a
+# release never exists without its artifacts. See docs/RELEASE.md.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without leading v (e.g. 1.3.1)'
+        required: true
+        type: string
+      maven_already_published:
+        description: 'Recovery only: skip the Maven upload because this version is already in GitHub Packages'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: write
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+    - name: Require the main branch
+      if: github.ref != 'refs/heads/main'
+      run: |
+        echo "::error::Releases are cut from main, not from $GITHUB_REF."
+        exit 1
+
+    - uses: actions/checkout@v4
+
+    - name: Validate version and tag
+      run: |
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+          echo "::error::Invalid version '$VERSION'. Expected a semantic version such as 1.3.1 or 1.3.1-beta."
+          exit 1
+        fi
+        if [ -n "$(git ls-remote --tags origin "refs/tags/v$VERSION")" ]; then
+          echo "::error::Tag v$VERSION already exists."
+          exit 1
+        fi
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: frontend/.nvmrc
+
+    - name: Set up npm 11
+      run: npm install --global npm@11.9.0
+
+    - name: Update POM versions
+      run: mvn -B versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+
+    - name: Build and test with Maven
+      run: mvn -B package --file pom.xml
+
+    - name: Build image
+      run: |
+        IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+        echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+        docker build --tag "$IMAGE:sha-$GITHUB_SHA" .
+
+    - name: Validate Hostinger configuration
+      run: python3 .github/scripts/check-hostinger.py
+
+    - name: Test image before publishing
+      run: python3 .github/scripts/smoke-docker.py "$IMAGE:sha-$GITHUB_SHA"
+
+    - name: Test Hostinger stack and HTTPS routing
+      run: python3 .github/scripts/smoke-hostinger.py "$IMAGE:sha-$GITHUB_SHA"
+
+    # Everything above only builds and tests. Publishing starts here; the image
+    # push can be repeated, the Maven upload cannot, so the image goes first.
+    - name: Publish tested image
+      run: |
+        printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+        docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:$VERSION"
+        docker push "$IMAGE:$VERSION"
+
+    - name: Publish to GitHub Packages
+      if: ${{ !inputs.maven_already_published }}
+      run: mvn -B deploy -DskipTests -s "$GITHUB_WORKSPACE/settings.xml"
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Create tag and GitHub release
+      run: |
+        gh release create "v$VERSION" backend/target/*-exec.jar \
+          --target "$GITHUB_SHA" \
+          --title "v$VERSION" \
+          --generate-notes
+
+    # main only accepts pull requests, so the version bump is proposed as one.
+    - name: Open pull request with updated POM versions
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add pom.xml */pom.xml
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+        BRANCH="chore/bump-version-$VERSION"
+        git checkout -b "$BRANCH"
+        git commit -m "chore: bump version to $VERSION"
+        git push --force origin "HEAD:refs/heads/$BRANCH"
+        if [ -n "$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[].number')" ]; then
+          echo "Pull request for $BRANCH already exists"
+        else
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore: bump version to $VERSION" \
+            --body "Version $VERSION was released. This aligns the POM versions on main with the release."
+        fi
+        # Pushes made with GITHUB_TOKEN start no workflows, but main requires test-backend.
+        gh workflow run test.yml --ref "$BRANCH"
