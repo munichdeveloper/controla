@@ -21,6 +21,7 @@ jobs:
       contents: write
       packages: write
       pull-requests: write
+      actions: write
 
     steps:
     - uses: actions/checkout@v4
@@ -101,3 +102,5 @@ jobs:
             --title "chore: bump version to $VERSION" \
             --body "Version $VERSION was published to GitHub Packages. This aligns the POM versions on main with the release."
         fi
+        # Pushes made with GITHUB_TOKEN start no workflows, but main requires test-backend.
+        gh workflow run test.yml --ref "$BRANCH"
