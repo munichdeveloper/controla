@@ -7,7 +7,7 @@ terms:
 
   - term: Instance
     definition: A monitored n8n installation with unique API credentials
-    context: Community edition supports up to 3 instances
+    context: Community Edition has no product-side instance cap; capacity depends on self-hosted infrastructure
 
   - term: Tenant
     definition: Isolated data context for a user or organization

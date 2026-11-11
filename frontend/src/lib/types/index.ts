@@ -70,6 +70,9 @@ export interface BackupSettings {
 }
 
 export interface LicenseInfo {
+  /** Modern hosted bootstrap describes capabilities, not tenant permissions. */
+  tenantBound?: boolean;
+  plan?: string;
   edition: string;
   maxInstances: number;
   features: {
