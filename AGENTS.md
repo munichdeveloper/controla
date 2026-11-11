@@ -62,7 +62,7 @@ Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 ### Kopplung an Premium (Gotchas)
 
-- Premium bindet eine **feste CE-Version** aus GitHub Packages (`.github/workflows/maven-publish.yml`). CE-Änderungen kommen dort erst nach Release und Versions-Bump an.
+- Premium bindet eine **feste CE-Version** aus GitHub Packages (`.github/workflows/release.yml`, Ablauf in `docs/RELEASE.md`). CE-Änderungen kommen dort erst nach Release und Versions-Bump an.
 - Premium scannt CE-Pakete über eine **explizite Paketliste** (`@ComponentScan`, `@EnableJpaRepositories`, `@EntityScan`). Ein neues Paket unter `de.atstck.controla.*` bleibt in Premium unsichtbar, bis es dort ergänzt wird – plane das Premium-Update mit ein.
 - Flyway: CE-Migrationen nutzen `V1`–`V99`, Premium beginnt bei `V100`.
 - Aufrufe an vom Kunden eingetragene URLs (n8n-Basis-URL, Companion) laufen über `service/InstanceHttpClient`; dort greift die `InstanceTargetPolicy` auf die aufgelöste IP, auch bei Redirects; Redirects folgt der Client nur auf denselben Host, damit Credential-Header nicht weitergereicht werden. Interne Dienste nutzen das reguläre `restTemplate`.
