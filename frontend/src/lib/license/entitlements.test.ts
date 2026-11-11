@@ -27,4 +27,11 @@ describe('server entitlements and version compatibility', () => {
     expect(featureEnabled(license({}, 'Community Edition'), 'workflow.import')).toBe(false);
     expect(featureEnabled(license({ 'backup.scheduled': false }), 'workflow.import')).toBe(false);
   });
+  it('does not apply the legacy fallback to modern tenant-bound responses', () => {
+    const solo: LicenseInfo = { ...license({ 'diagnostics.report': true }), tenantBound: true, plan: 'solo' };
+    for (const key of ['workflow.import', 'backup.scheduled', 'companion.manage'])
+      expect(featureEnabled(solo, key)).toBe(false);
+    expect(featureEnabled({ ...license({}), plan: 'agency' }, 'workflow.import')).toBe(false);
+    expect(featureEnabled(solo, 'diagnostics.report')).toBe(true);
+  });
 });

@@ -254,7 +254,7 @@ function EditInstanceModal({ isOpen, onClose, onSuccess, instance }) {
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { license, maxInstances, isPremium } = useLicense();
+  const { license, maxInstances, isPremium, loading: licenseLoading, error: licenseError } = useLicense();
   const router = useRouter();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingInstance, setEditingInstance] = useState(null);
@@ -348,7 +348,9 @@ export default function Dashboard() {
     );
   }
 
-  const canAddMore = !instances || maxInstances === -1 || instances.length < maxInstances;
+  // Without a loaded license the limit is unknown, not zero: keep creation disabled and say why.
+  const licenseKnown = !!license;
+  const canAddMore = licenseKnown && (!instances || maxInstances === -1 || instances.length < maxInstances);
   const hasLockedInstances = instances?.some(i => i.status === 'locked');
 
   return (
@@ -384,7 +386,9 @@ export default function Dashboard() {
             ) : (
               license?.edition || 'Community Edition'
             )}
-            : {maxInstances === -1 ? 'Beliebig viele Instanzen überwachen' : `Bis zu ${maxInstances} n8n-Instanzen überwachen`}
+            : {!licenseKnown
+              ? (licenseLoading ? 'Lizenz wird geladen …' : licenseError ? 'Lizenz konnte nicht geladen werden. Bitte Seite neu laden.' : 'Lizenz nicht verfügbar.')
+              : maxInstances === -1 ? 'Beliebig viele Instanzen überwachen' : `Bis zu ${maxInstances} n8n-Instanzen überwachen`}
           </p>
         </div>
         {canAddMore && (

@@ -7,7 +7,9 @@ export function featureEnabled(license: LicenseInfo | null, key: string): boolea
   if (!license) return false;
   if (license.tenantBound === false) return false;
   if (Object.prototype.hasOwnProperty.call(license.features, key)) return license.features[key] === true;
-  const legacyPremium = ['Hosted Ops', 'Premium Edition'].includes(license.edition);
+  // tenantBound/plan only exist on entitlement-aware backends; there an omitted key means denied.
+  const modernResponse = license.tenantBound !== undefined || license.plan !== undefined;
+  const legacyPremium = !modernResponse && ['Hosted Ops', 'Premium Edition'].includes(license.edition);
   return legacyPremium && legacyKeys.includes(key)
     && legacyKeys.every((known) => !Object.prototype.hasOwnProperty.call(license.features, known));
 }
