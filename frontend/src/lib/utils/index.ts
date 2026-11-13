@@ -149,13 +149,13 @@ export function formatRelativeTime(dateString: string | null | undefined): strin
 export function getStatusColor(status: string): string {
   switch (status?.toLowerCase()) {
     case 'online':
-      return 'bg-green-100 text-green-800';
+      return 'bg-primary/10 text-primary';
     case 'offline':
-      return 'bg-red-100 text-red-800';
+      return 'bg-danger/10 text-danger';
     case 'locked':
-      return 'bg-amber-100 text-amber-800';
+      return 'bg-warning/10 text-warning';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-soft text-foreground';
   }
 }
 
@@ -165,13 +165,13 @@ export function getStatusColor(status: string): string {
 export function getSeverityColor(severity: string): string {
   switch (severity?.toUpperCase()) {
     case 'ERROR':
-      return 'bg-red-100 text-red-800';
+      return 'bg-danger/10 text-danger';
     case 'WARNING':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-warning/10 text-warning';
     case 'INFO':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-soft text-foreground';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-soft text-foreground';
   }
 }
 

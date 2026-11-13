@@ -91,39 +91,39 @@ export function ContainerLogViewer({ externalId, service }: Props) {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-2">Logs konnten nicht geladen werden: {(error as Error).message}</p>}
-      {downloadError && <p className="text-sm text-red-600 dark:text-red-400 mb-2">{downloadError}</p>}
+      {error && <p className="text-sm text-danger mb-2">Logs konnten nicht geladen werden: {(error as Error).message}</p>}
+      {downloadError && <p className="text-sm text-danger mb-2">{downloadError}</p>}
 
       {data && data.findings.length > 0 && (
         <div className="mb-3 space-y-2">
           {data.findings.slice(0, 5).map((f) => (
-            <div key={`${f.patternId}-${f.line}`} className={`p-3 rounded text-sm ${f.severity === 'FAIL' ? 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300' : 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'}`}>
+            <div key={`${f.patternId}-${f.line}`} className={`p-3 rounded text-sm ${f.severity === 'FAIL' ? 'bg-danger/5 text-danger' : 'bg-warning/5 text-warning'}`}>
               <span className="font-semibold">{f.title}</span> – {f.hint}
             </div>
           ))}
         </div>
       )}
 
-      <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs max-h-[28rem] overflow-auto">
-        {data && visible.length === 0 && <p className="text-gray-400">Keine Logzeilen{filter ? ' für diesen Filter' : ''}.</p>}
+      <div className="bg-terminal text-terminal-fg rounded-lg p-3 font-mono text-xs max-h-[28rem] overflow-auto">
+        {data && visible.length === 0 && <p className="text-terminal-muted">Keine Logzeilen{filter ? ' für diesen Filter' : ''}.</p>}
         {visible.map(({ line, index }) => (
           <div
             key={index}
             title={findingsByLine.get(index)}
-            className={`whitespace-pre-wrap ${findingsByLine.has(index) ? 'bg-red-900/40 text-red-200' : line.stream === 'stderr' ? 'text-amber-300' : 'text-green-300'}`}
+            className={`whitespace-pre-wrap ${findingsByLine.has(index) ? 'bg-terminal-err/15 text-terminal-err' : line.stream === 'stderr' ? 'text-terminal-warn' : 'text-terminal-fg'}`}
           >
-            <span className="text-gray-500">{line.ts ? line.ts.replace('T', ' ').slice(0, 23) : ''} </span>
+            <span className="text-terminal-muted">{line.ts ? line.ts.replace('T', ' ').slice(0, 23) : ''} </span>
             {line.message}
           </div>
         ))}
       </div>
       {data && (
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-2">
+        <p className="text-xs text-muted mt-2">
           {data.lines.length} Zeilen{data.truncated ? ' (gekürzt)' : ''}
           {data.redacted ? (
             ' · Werte geheimer Variablen sind maskiert.'
           ) : (
-            <span className="text-amber-700 dark:text-amber-400"> · Achtung: Diese Logs wurden nicht maskiert und können Secrets enthalten.</span>
+            <span className="text-warning"> · Achtung: Diese Logs wurden nicht maskiert und können Secrets enthalten.</span>
           )}
         </p>
       )}

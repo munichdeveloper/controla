@@ -35,10 +35,10 @@ export function CompanionPrerequisiteNotice({ state, companionVersion, onOpenCom
   if (!text) return null;
   return (
     <div className={CARD}>
-      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">{text.title}</h3>
-      <p className="text-sm text-gray-600 dark:text-zinc-400">{text.body(companionVersion)}</p>
+      <h3 className="text-base font-semibold text-foreground mb-1">{text.title}</h3>
+      <p className="text-sm text-muted">{text.body(companionVersion)}</p>
       {onOpenCompanionTab && (state === 'needs-setup' || state === 'unreachable') && (
-        <button onClick={onOpenCompanionTab} className="mt-3 text-sm text-emerald-600 dark:text-emerald-400 hover:underline">
+        <button onClick={onOpenCompanionTab} className="mt-3 text-sm text-primary hover:underline">
           Zum Companion-Tab
         </button>
       )}

@@ -72,13 +72,13 @@ export function CompanionDiagnosticsSection({ externalId, onOpenCompanionTab }: 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Container-Diagnose (Companion)</h3>
+        <h3 className="text-lg font-semibold text-foreground">Container-Diagnose (Companion)</h3>
         {states.bundle === 'ready' && <SupportBundleButton externalId={externalId} />}
       </div>
 
       {statusError && !status && (
         <div className={CARD}>
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p className="text-sm text-danger">
             Companion-Status konnte nicht geladen werden: {(statusError as Error).message}
           </p>
           <button onClick={() => refetchStatus()} disabled={statusFetching} className={`${BUTTON_SECONDARY} mt-3`}>
@@ -92,13 +92,13 @@ export function CompanionDiagnosticsSection({ externalId, onOpenCompanionTab }: 
       )}
 
       {servicesError && (
-        <p className="text-sm text-red-600 dark:text-red-400">Services konnten nicht geladen werden: {(servicesError as Error).message}</p>
+        <p className="text-sm text-danger">Services konnten nicht geladen werden: {(servicesError as Error).message}</p>
       )}
       {states.container === 'ready' && services && (
         <ContainerDetailsCard externalId={externalId} service={service} services={serviceList} onServiceChange={setService} />
       )}
       {states.container !== 'ready' && servicesNeeded && serviceList.length > 1 && (
-        <select value={service} onChange={(e) => setService(e.target.value)} className="px-2 py-1.5 text-sm border rounded-md dark:bg-zinc-800 dark:text-white dark:border-zinc-600" aria-label="Service">
+        <select value={service} onChange={(e) => setService(e.target.value)} className="px-2 py-1.5 text-sm border rounded-md" aria-label="Service">
           {serviceList.map((s) => (
             <option key={s.service} value={s.service}>
               {s.service}

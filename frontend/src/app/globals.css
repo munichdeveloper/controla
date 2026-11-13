@@ -1,3 +1,100 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Design tokens of controla.dev (nim-landing-page, app/globals.css).
+ * Values are RGB channels so Tailwind opacity modifiers work (bg-danger/5).
+ * Keep both files in sync when the website palette changes.
+ * All text/background pairs keep >= 4.5:1 contrast in both themes.
+ */
+:root {
+  color-scheme: light;
+  --background: 245 246 243; /* #f5f6f3 */
+  --foreground: 13 18 21; /* #0d1215 */
+  --card: 255 255 255; /* #ffffff */
+  --soft: 237 240 236; /* #edf0ec */
+  --border: 217 222 216; /* #d9ded8 */
+  --muted: 79 91 99; /* #4f5b63 */
+  --primary: 12 122 82; /* #0c7a52 */
+  --primary-hover: 9 97 63; /* #09613f */
+  --on-primary: 255 255 255; /* #ffffff */
+  --danger: 184 53 43; /* #b8352b */
+  --warning: 146 86 0; /* #925600 */
+  --shadow: 13 18 21; /* #0d1215 */
+  --terminal: 13 18 21; /* #0d1215 */
+  --terminal-fg: 223 231 227; /* #dfe7e3 */
+  --terminal-muted: 139 151 159; /* #8b979f */
+  --terminal-warn: 242 177 68; /* #f2b144 */
+  --terminal-err: 255 122 112; /* #ff7a70 */
+}
+
+:root.dark {
+  color-scheme: dark;
+  --background: 10 13 16; /* #0a0d10 */
+  --foreground: 232 237 241; /* #e8edf1 */
+  --card: 17 22 27; /* #11161b */
+  --soft: 23 29 35; /* #171d23 */
+  --border: 37 46 56; /* #252e38 */
+  --muted: 151 164 176; /* #97a4b0 */
+  --primary: 61 220 151; /* #3ddc97 */
+  --primary-hover: 107 230 176; /* #6be6b0 */
+  --on-primary: 4 20 12; /* #04140c */
+  --danger: 255 122 112; /* #ff7a70 */
+  --warning: 242 177 68; /* #f2b144 */
+  --shadow: 0 0 0; /* #000000 */
+  --terminal: 5 7 10; /* #05070a */
+  --terminal-fg: 223 231 227; /* #dfe7e3 */
+  --terminal-muted: 139 151 159; /* #8b979f */
+  --terminal-warn: 242 177 68; /* #f2b144 */
+  --terminal-err: 255 122 112; /* #ff7a70 */
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-space), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  input,
+  textarea,
+  select {
+    background-color: rgb(var(--card));
+    color: rgb(var(--foreground));
+    accent-color: rgb(var(--primary));
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--muted) / 0.7);
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--primary));
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: rgb(var(--primary) / 0.2);
+  }
+  button,
+  summary {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
