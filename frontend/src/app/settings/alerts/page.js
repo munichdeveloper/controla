@@ -211,7 +211,7 @@ export default function AlertSettingsPage() {
               </div>
               {!workflowErrorEnabled && (
                 <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-foreground text-background text-xs rounded-md shadow-lg z-50">
-                  Diese Funktion ist nur in der Hosted Ops verfügbar
+                  Nur im Managed Hosting verfügbar (Solo und Agency)
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
               )}
@@ -238,7 +238,7 @@ export default function AlertSettingsPage() {
               </div>
               {!invalidApiKeyEnabled && (
                 <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-foreground text-background text-xs rounded-md shadow-lg z-50">
-                  Diese Funktion ist nur in der Hosted Ops verfügbar
+                  Nur im Managed Hosting verfügbar (Solo und Agency)
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
               )}

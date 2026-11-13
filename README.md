@@ -144,7 +144,7 @@ support SLA. Self-hosters operate and update Controla themselves. Manual workflo
 export remains included; workflow import, scheduled Google Drive exports and
 Enterprise/Companion features are not added by removing the instance cap.
 
-Hosted Ops replaces the license service: Solo is EUR 29/month for up to 10
+The hosted offer (Managed Hosting) replaces the license service: Solo is EUR 29/month for up to 10
 instances; Agency is EUR 79/month for up to 30 and adds import and scheduled Drive
 exports. Finite extension limits remain enforced per tenant using a PostgreSQL
 transaction and tenant-scoped advisory lock, including across backend processes.

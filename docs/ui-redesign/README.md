@@ -1,6 +1,6 @@
 # App-Design nach controla.dev
 
-Die App (CE und Hosted Ops teilen sich `frontend/`) übernimmt das Designsystem der Website controla.dev (Repo `nim-landing-page`, `app/globals.css`, `components/Brand.tsx`, `components/InstancePreview.tsx`).
+Die App (CE und Managed Hosting teilen sich `frontend/`) übernimmt das Designsystem der Website controla.dev (Repo `nim-landing-page`, `app/globals.css`, `components/Brand.tsx`, `components/InstancePreview.tsx`).
 
 ## Tokens
 
@@ -17,4 +17,4 @@ Die App (CE und Hosted Ops teilen sich `frontend/`) übernimmt das Designsystem 
 
 ## Screenshots
 
-Vorher/Nachher mit Beispieldaten (lokaler Dev-Server, API per Playwright gemockt): `dashboard-light.png`, `dashboard-dark.png`, `instance-light.png` (Hosted Ops), `alerts-light.png`, `backups-dark.png`, `login-light.png`, `dashboard-mobile.png`, `instance-tabs-*.png`.
+Vorher/Nachher mit Beispieldaten (lokaler Dev-Server, API per Playwright gemockt): `dashboard-light.png`, `dashboard-dark.png`, `instance-light.png` (Managed Hosting), `alerts-light.png`, `backups-dark.png`, `login-light.png`, `dashboard-mobile.png`, `instance-tabs-*.png`.

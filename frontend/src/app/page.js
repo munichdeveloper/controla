@@ -6,6 +6,7 @@ import { summarizeErrorPatterns, formatErrorCount, pickLatestError } from '@/lib
 import { formatRelativeTime, getVersionUpdateState } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useLicense } from '@/lib/license/LicenseContext';
+import { editionLabel } from '@/lib/license/edition';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -493,7 +494,7 @@ export default function Dashboard() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-primary">
-            {isPremium ? 'Hosted Ops' : license?.edition || 'Community Edition'}
+            {editionLabel(license, isPremium)}
           </p>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">Instanzübersicht</h1>
           <p className="text-muted mt-2">

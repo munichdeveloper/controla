@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { ThemeProvider } from '@/lib/theme/ThemeContext';
 import { LicenseProvider, useLicense } from '@/lib/license/LicenseContext';
+import { editionLabel, HOSTED_OFFER_NAME } from '@/lib/license/edition';
 import { getVersion } from '@/lib/api';
 import { Brand } from '@/components/Brand';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -32,7 +33,7 @@ export function EditionChip() {
         isPremium ? 'border-primary/30 text-primary' : 'border-border text-muted'
       }`}
     >
-      {isPremium ? 'Hosted Ops' : license.edition || 'Community Edition'}
+      {editionLabel(license, isPremium)}
     </span>
   );
 }
@@ -160,7 +161,7 @@ function Footer() {
   return (
     <footer className="mt-auto border-t border-border py-5">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 text-xs text-muted sm:px-8">
-        <span>Controla · Hosted Ops</span>
+        <span>Controla · {HOSTED_OFFER_NAME}</span>
         {version ? (
           <span className="font-mono">v{version}</span>
         ) : (
