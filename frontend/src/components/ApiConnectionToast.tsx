@@ -11,7 +11,7 @@ export function ApiConnectionToast() {
     return (
       <div
         role="status"
-        className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-gray-700 dark:text-zinc-300 shadow-lg"
+        className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted shadow-lg"
       >
         Lizenz wird abgerufen...
       </div>
@@ -23,14 +23,14 @@ export function ApiConnectionToast() {
   return (
     <div
       role="alert"
-      className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 flex items-start gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-zinc-900 px-4 py-3 text-sm text-red-700 dark:text-red-400 shadow-lg"
+      className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 flex items-start gap-3 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm text-danger shadow-lg"
     >
       <p>Keine Verbindung zur API möglich. Bitte versuche es später erneut.</p>
       <button
         type="button"
         onClick={() => setDismissed(true)}
         aria-label="Fehlermeldung schließen"
-        className="shrink-0 rounded px-1 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+        className="shrink-0 rounded px-1 font-semibold hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
       >
         <span aria-hidden="true">×</span>
       </button>

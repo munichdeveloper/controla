@@ -5,6 +5,7 @@ import { getAlertSettings, updateAlertSettings } from '@/lib/api';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/Skeleton';
 import { ContainerAlertSettingsCard } from '@/components/alerts/ContainerAlertSettingsCard';
 
@@ -85,7 +86,7 @@ export default function AlertSettingsPage() {
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 max-w-2xl backdrop-blur-sm">
+        <div className="bg-card rounded-xl border border-border p-6 max-w-2xl">
           <div className="mb-6">
             <Skeleton className="h-4 w-32 mb-2" />
             <Skeleton className="h-10 w-full" />
@@ -94,7 +95,7 @@ export default function AlertSettingsPage() {
           <div className="mb-6">
             <Skeleton className="h-5 w-48" />
           </div>
-          <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-white/10">
+          <div className="space-y-4 pt-6 border-t border-border">
             <Skeleton className="h-6 w-32 mb-4" />
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-start">
@@ -106,7 +107,7 @@ export default function AlertSettingsPage() {
               </div>
             ))}
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-border flex justify-end">
             <Skeleton className="h-10 w-32 rounded-full" />
           </div>
         </div>
@@ -116,26 +117,18 @@ export default function AlertSettingsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href="/" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-emerald-400 text-sm mb-2 inline-block transition-colors">
-          ← Zurück zur Übersicht
-        </Link>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Alert-Einstellungen</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Konfiguriere E-Mail-Benachrichtigungen für wichtige Ereignisse
-        </p>
-      </div>
+      <PageHeader eyebrow="Einstellungen" title="Alerts" description="Konfiguriere E-Mail-Benachrichtigungen für wichtige Ereignisse." />
 
-      <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-6 max-w-2xl backdrop-blur-sm">
+      <div className="bg-card rounded-xl border border-border p-6 max-w-2xl">
         {showSuccess && (
-          <div className="mb-6 bg-green-50 dark:bg-emerald-900/20 border border-green-200 dark:border-emerald-800 rounded-lg p-4">
-            <p className="text-green-800 dark:text-emerald-300 font-medium">Einstellungen erfolgreich gespeichert!</p>
+          <div className="mb-6 bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <p className="text-primary font-medium">Einstellungen erfolgreich gespeichert!</p>
           </div>
         )}
 
         {mutation.isError && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <p className="text-red-800 dark:text-red-300 font-medium">
+          <div className="mb-6 bg-danger/5 border border-danger/20 rounded-lg p-4">
+            <p className="text-danger font-medium">
               Fehler beim Speichern: {mutation.error?.message}
             </p>
           </div>
@@ -144,7 +137,7 @@ export default function AlertSettingsPage() {
         <form onSubmit={handleSubmit}>
           {/* E-Mail */}
           <div className="mb-6">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-muted mb-2">
               E-Mail-Adresse
             </label>
             <input
@@ -152,11 +145,11 @@ export default function AlertSettingsPage() {
               id="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-primary/40 focus:border-primary transition-colors"
               placeholder="alerts@example.com"
               required
             />
-            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               An diese E-Mail-Adresse werden Benachrichtigungen gesendet
             </p>
           </div>
@@ -168,15 +161,15 @@ export default function AlertSettingsPage() {
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => handleChange('enabled', e.target.checked)}
-              className="h-4 w-4 text-emerald-600 dark:text-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500 border-gray-300 dark:border-zinc-700 rounded dark:bg-zinc-800 dark:checked:bg-emerald-500"
+              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="enabled" className="ml-2 block text-sm text-gray-900 dark:text-zinc-100 font-medium">
+            <label htmlFor="enabled" className="ml-2 block text-sm text-foreground font-medium">
               Benachrichtigungen aktivieren
             </label>
           </div>
 
-          <div className={`space-y-4 border-t border-gray-200 dark:border-white/10 pt-6 ${!formData.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Ereignisse</h3>
+          <div className={`space-y-4 border-t border-border pt-6 ${!formData.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+            <h3 className="text-lg font-medium text-foreground">Ereignisse</h3>
 
             <div className="flex items-start">
               <div className="flex items-center h-5">
@@ -186,14 +179,14 @@ export default function AlertSettingsPage() {
                   checked={formData.notifyOnInstanceOffline}
                   onChange={(e) => handleChange('notifyOnInstanceOffline', e.target.checked)}
                   disabled={!formData.enabled}
-                  className="h-4 w-4 text-emerald-600 dark:text-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500 border-gray-300 dark:border-zinc-700 rounded dark:bg-zinc-800 dark:checked:bg-emerald-500"
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                 />
               </div>
               <div className="ml-3 text-sm">
-                <label htmlFor="notifyOnInstanceOffline" className="font-medium text-gray-700 dark:text-zinc-300">
+                <label htmlFor="notifyOnInstanceOffline" className="font-medium text-muted">
                   Instanz Offline
                 </label>
-                <p className="text-gray-500 dark:text-zinc-400">Benachrichtigung, wenn eine Instanz nicht mehr erreichbar ist</p>
+                <p className="text-muted">Benachrichtigung, wenn eine Instanz nicht mehr erreichbar ist</p>
               </div>
             </div>
 
@@ -206,18 +199,18 @@ export default function AlertSettingsPage() {
                     checked={formData.notifyOnWorkflowError}
                     onChange={(e) => handleChange('notifyOnWorkflowError', e.target.checked)}
                     disabled={!formData.enabled || !workflowErrorEnabled}
-                    className={`h-4 w-4 ${!workflowErrorEnabled ? 'text-gray-400 bg-gray-100 dark:bg-zinc-800 cursor-not-allowed' : 'text-emerald-600 dark:text-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-500'} border-gray-300 dark:border-zinc-700 rounded`}
+                    className={`h-4 w-4 ${!workflowErrorEnabled ? 'text-muted bg-soft cursor-not-allowed' : 'text-primary focus:ring-primary'} border-border rounded`}
                   />
                 </div>
                 <div className="ml-3 text-sm">
-                  <label htmlFor="notifyOnWorkflowError" className={`font-medium text-gray-700 dark:text-zinc-300 ${!workflowErrorEnabled ? 'cursor-not-allowed' : ''}`}>
+                  <label htmlFor="notifyOnWorkflowError" className={`font-medium text-muted ${!workflowErrorEnabled ? 'cursor-not-allowed' : ''}`}>
                     Workflow Fehler
                   </label>
-                  <p className="text-gray-500 dark:text-zinc-400">Benachrichtigung bei fehlgeschlagenen Workflow-Ausführungen</p>
+                  <p className="text-muted">Benachrichtigung bei fehlgeschlagenen Workflow-Ausführungen</p>
                 </div>
               </div>
               {!workflowErrorEnabled && (
-                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md shadow-lg z-50">
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-foreground text-background text-xs rounded-md shadow-lg z-50">
                   Diese Funktion ist nur in der Hosted Ops verfügbar
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
@@ -233,18 +226,18 @@ export default function AlertSettingsPage() {
                     checked={formData.notifyOnInvalidApiKey}
                     onChange={(e) => handleChange('notifyOnInvalidApiKey', e.target.checked)}
                     disabled={!formData.enabled || !invalidApiKeyEnabled}
-                    className={`h-4 w-4 ${!invalidApiKeyEnabled ? 'text-gray-400 bg-gray-100 dark:bg-zinc-800 cursor-not-allowed' : 'text-emerald-600 dark:text-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-500'} border-gray-300 dark:border-zinc-700 rounded`}
+                    className={`h-4 w-4 ${!invalidApiKeyEnabled ? 'text-muted bg-soft cursor-not-allowed' : 'text-primary focus:ring-primary'} border-border rounded`}
                   />
                 </div>
                 <div className="ml-3 text-sm">
-                  <label htmlFor="notifyOnInvalidApiKey" className={`font-medium text-gray-700 dark:text-zinc-300 ${!invalidApiKeyEnabled ? 'cursor-not-allowed' : ''}`}>
+                  <label htmlFor="notifyOnInvalidApiKey" className={`font-medium text-muted ${!invalidApiKeyEnabled ? 'cursor-not-allowed' : ''}`}>
                     Ungültiger API Key
                   </label>
-                  <p className="text-gray-500 dark:text-zinc-400">Benachrichtigung, wenn der API Key einer Instanz abgelehnt wird</p>
+                  <p className="text-muted">Benachrichtigung, wenn der API Key einer Instanz abgelehnt wird</p>
                 </div>
               </div>
               {!invalidApiKeyEnabled && (
-                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md shadow-lg z-50">
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-max px-3 py-1.5 bg-foreground text-background text-xs rounded-md shadow-lg z-50">
                   Diese Funktion ist nur in der Hosted Ops verfügbar
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
@@ -252,11 +245,11 @@ export default function AlertSettingsPage() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-border flex justify-end">
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="py-2 px-6 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="py-2 px-6 border border-transparent rounded-lg text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {mutation.isPending ? 'Speichere...' : 'Speichern'}
             </button>

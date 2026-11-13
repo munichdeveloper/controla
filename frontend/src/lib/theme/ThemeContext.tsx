@@ -9,27 +9,27 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
+// Shared with the inline script in app/layout.js, which applies the stored
+// theme (else the system preference) before first paint.
+export const THEME_STORAGE_KEY = 'theme';
+
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // Check local storage or system preference on mount
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
-      document.documentElement.classList.add('dark');
-    }
+    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      // Storage can be unavailable (private mode); the switch still works for this page view.
+    }
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
@@ -47,4 +47,3 @@ export function useTheme() {
   }
   return context;
 }
-

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Brand } from '@/components/Brand';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || '/api';
 
@@ -85,10 +86,10 @@ function ResetPasswordForm() {
 
   if (validating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-zinc-400">Validiere Token...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted">Validiere Token...</p>
         </div>
       </div>
     );
@@ -96,15 +97,15 @@ function ResetPasswordForm() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900 py-12 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4">
         <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-white/5 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-white/10 rounded-xl p-8 backdrop-blur-sm">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-card shadow-panel border border-border rounded-2xl p-8">
+            <div className="bg-danger/5 border border-danger/20 text-danger px-4 py-3 rounded-lg mb-4">
               {error}
             </div>
             <Link
               href="/forgot-password"
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover transition-colors"
             >
               Neuen Link anfordern
             </Link>
@@ -115,21 +116,24 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+          <div className="flex justify-center">
+            <Brand className="text-2xl" />
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-semibold text-foreground tracking-tight">
             Neues Passwort setzen
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-zinc-400">
+          <p className="mt-2 text-center text-sm text-muted">
             Geben Sie Ihr neues Passwort ein
           </p>
         </div>
 
-        <div className="bg-white dark:bg-white/5 shadow-xl dark:shadow-2xl border border-gray-200 dark:border-white/10 rounded-xl p-8 backdrop-blur-sm">
+        <div className="bg-card shadow-panel border border-border rounded-2xl p-8">
           {success ? (
             <div className="space-y-4">
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 px-4 py-3 rounded-lg">
+              <div className="bg-primary/5 border border-primary/20 text-primary px-4 py-3 rounded-lg">
                 <p className="font-medium">✓ Passwort erfolgreich zurückgesetzt</p>
                 <p className="text-sm mt-1">
                   Sie werden in wenigen Sekunden zur Anmeldeseite weitergeleitet...
@@ -139,13 +143,13 @@ function ResetPasswordForm() {
           ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-danger/5 border border-danger/20 text-danger px-4 py-3 rounded-lg text-sm">
                   {error}
                 </div>
               )}
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-muted mb-1">
                   Neues Passwort
                 </label>
                 <input
@@ -155,13 +159,13 @@ function ResetPasswordForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors sm:text-sm"
                   placeholder="Mindestens 6 Zeichen"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-muted mb-1">
                   Passwort bestätigen
                 </label>
                 <input
@@ -171,7 +175,7 @@ function ResetPasswordForm() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-500/50 focus:border-emerald-500 dark:focus:border-emerald-500 dark:bg-zinc-950 dark:text-zinc-100 transition-colors sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors sm:text-sm"
                   placeholder="Passwort wiederholen"
                 />
               </div>
@@ -179,7 +183,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Setze Passwort...' : 'Passwort zurücksetzen'}
               </button>
@@ -187,7 +191,7 @@ function ResetPasswordForm() {
               <div className="text-center">
                 <Link
                   href="/login"
-                  className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors"
+                  className="text-sm text-primary hover:text-primary transition-colors"
                 >
                   ← Zurück zur Anmeldung
                 </Link>
@@ -203,10 +207,10 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-zinc-400">Lade...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted">Lade...</p>
         </div>
       </div>
     }>

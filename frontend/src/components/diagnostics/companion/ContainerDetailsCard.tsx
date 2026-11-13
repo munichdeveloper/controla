@@ -7,9 +7,9 @@ import type { CompanionServiceSummary } from '@/lib/types';
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex justify-between gap-4 py-1.5 text-sm border-b border-gray-50 dark:border-zinc-800 last:border-0">
-      <span className="text-gray-500 dark:text-zinc-400">{label}</span>
-      <span className="font-mono text-gray-900 dark:text-zinc-100 text-right break-all">{children}</span>
+    <div className="flex justify-between gap-4 py-1.5 text-sm border-b border-border last:border-0">
+      <span className="text-muted">{label}</span>
+      <span className="font-mono text-foreground text-right break-all">{children}</span>
     </div>
   );
 }
@@ -42,7 +42,7 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
       <div className="mb-6 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-500">
+            <tr className="text-left font-mono text-[10px] uppercase tracking-wide text-muted">
               <th className="py-2 pr-4">Service</th>
               <th className="py-2 pr-4">Zustand</th>
               <th className="py-2 pr-4">Health</th>
@@ -55,11 +55,11 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
               <tr
                 key={s.service}
                 onClick={() => onServiceChange(s.service)}
-                className={`cursor-pointer border-t border-gray-100 dark:border-zinc-800 ${
-                  s.service === service ? 'bg-emerald-50/60 dark:bg-emerald-900/10' : 'hover:bg-gray-50 dark:hover:bg-zinc-800/50'
+                className={`cursor-pointer border-t border-border ${
+                  s.service === service ? 'bg-primary/20' : 'hover:bg-background'
                 }`}
               >
-                <td className="py-2 pr-4 font-medium text-gray-900 dark:text-zinc-100">
+                <td className="py-2 pr-4 font-medium text-foreground">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -67,30 +67,30 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
                       onServiceChange(s.service);
                     }}
                     aria-pressed={s.service === service}
-                    className="text-left hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+                    className="text-left hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                   >
                     {s.service}
                   </button>
                 </td>
-                <td className={`py-2 pr-4 ${s.state === 'running' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                <td className={`py-2 pr-4 ${s.state === 'running' ? 'text-primary' : 'text-danger'}`}>
                   {s.state ?? 'kein Container'}
                 </td>
-                <td className="py-2 pr-4 text-gray-700 dark:text-zinc-300">{s.health ?? '–'}</td>
-                <td className="py-2 pr-4 text-gray-700 dark:text-zinc-300">{s.state && s.state !== 'running' ? s.exitCode ?? '–' : '–'}</td>
-                <td className="py-2 font-mono text-xs text-gray-600 dark:text-zinc-400">{s.image ?? '–'}</td>
+                <td className="py-2 pr-4 text-muted">{s.health ?? '–'}</td>
+                <td className="py-2 pr-4 text-muted">{s.state && s.state !== 'running' ? s.exitCode ?? '–' : '–'}</td>
+                <td className="py-2 font-mono text-xs text-muted">{s.image ?? '–'}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {!hasContainer && <p className="text-sm text-gray-500 dark:text-zinc-400">Für „{service}“ existiert kein Container.</p>}
-      {error && <p className="text-sm text-red-600 dark:text-red-400">Details konnten nicht geladen werden: {(error as Error).message}</p>}
+      {!hasContainer && <p className="text-sm text-muted">Für „{service}“ existiert kein Container.</p>}
+      {error && <p className="text-sm text-danger">Details konnten nicht geladen werden: {(error as Error).message}</p>}
 
       {data && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Zustand von {data.name}</h4>
+            <h4 className="text-sm font-semibold text-muted mb-2">Zustand von {data.name}</h4>
             <Row label="Status">{data.state.status ?? 'unbekannt'}</Row>
             <Row label="Exit-Code">{data.state.exitCode ?? '–'}</Row>
             <Row label="Durch OOM beendet">{data.state.oomKilled ? 'ja' : 'nein'}</Row>
@@ -107,7 +107,7 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
             <Row label="Image">{data.image ?? '–'}</Row>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Konfiguration</h4>
+            <h4 className="text-sm font-semibold text-muted mb-2">Konfiguration</h4>
             <Row label="Ports">
               {data.ports.length === 0 ? '–' : data.ports.map((p) => `${p.hostPort ? `${p.hostPort}→` : ''}${p.containerPort}`).join(', ')}
             </Row>
@@ -115,14 +115,14 @@ export function ContainerDetailsCard({ externalId, service, services, onServiceC
             <Row label="Volumes">{data.mounts.map((m) => `${m.source ?? '?'} → ${m.destination ?? '?'}${m.rw ? '' : ' (ro)'}`).join(', ') || '–'}</Row>
             {data.state.health && data.state.health.lastChecks.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs text-gray-500 dark:text-zinc-400 mb-1">Letzte Healthchecks</p>
-                <pre className="p-2 bg-gray-50 dark:bg-zinc-800 rounded text-xs font-mono overflow-auto max-h-32 text-gray-700 dark:text-zinc-300">
+                <p className="text-xs text-muted mb-1">Letzte Healthchecks</p>
+                <pre className="p-2 bg-background rounded text-xs font-mono overflow-auto max-h-32 text-muted">
                   {data.state.health.lastChecks.map((c) => `${c.start ?? ''} exit=${c.exitCode ?? '?'} ${c.output}`).join('\n')}
                 </pre>
               </div>
             )}
             <details className="mt-3">
-              <summary className="text-xs text-emerald-600 dark:text-emerald-400 cursor-pointer">
+              <summary className="text-xs text-primary cursor-pointer">
                 Umgebungsvariablen ({data.env.length}, Werte geheimer Variablen maskiert)
               </summary>
               <div className="mt-2 max-h-48 overflow-auto">

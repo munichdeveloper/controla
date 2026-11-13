@@ -16,6 +16,7 @@ import {
 import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor, getVersionUpdateState } from '@/lib/utils';
 import { useState, useMemo, Fragment, useRef } from 'react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/PageHeader';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -30,7 +31,7 @@ function VersionBadge({ version, latestVersion }) {
 
   if (updateState === 'up-to-date') {
     return (
-      <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+      <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
         aktuell
       </span>
     );
@@ -41,7 +42,7 @@ function VersionBadge({ version, latestVersion }) {
   }
 
   return (
-    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning">
       Update verfügbar: {latestVersion}
     </span>
   );
@@ -50,13 +51,13 @@ function VersionBadge({ version, latestVersion }) {
 function LockedState() {
   return (
     <div className="p-12 text-center">
-      <div className="inline-flex items-center justify-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-full mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8 text-amber-600 dark:text-amber-400">
+      <div className="inline-flex items-center justify-center p-4 bg-warning/5 rounded-full mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8 text-warning">
           <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100 mb-2">Instanz ist gesperrt</h3>
-      <p className="text-gray-500 dark:text-zinc-400 max-w-md mx-auto">
+      <h3 className="text-lg font-medium text-foreground mb-2">Instanz ist gesperrt</h3>
+      <p className="text-muted max-w-md mx-auto">
         Daten können nicht angezeigt werden, da der API Key nicht entschlüsselt werden konnte. Bitte melde dich erneut an.
       </p>
     </div>
@@ -106,6 +107,8 @@ const uptimeFields = [
   { key: 'last6Months', label: 'Letzte 6 Monate' },
   { key: 'last12Months', label: 'Letzte 12 Monate' },
 ];
+
+const STATUS_TEXT = { online: 'Online', offline: 'Nicht erreichbar', locked: 'Gesperrt', unknown: 'Unbekannt' };
 
 export default function InstanceDetailPage({ params }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -281,14 +284,14 @@ export default function InstanceDetailPage({ params }) {
             <Skeleton className="h-8 w-24 rounded-full" />
           </div>
         </div>
-        <div className="border-b border-gray-200 dark:border-white/10 mb-8">
+        <div className="border-b border-border mb-8">
           <div className="flex space-x-8">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-10 w-24" />
             ))}
           </div>
         </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 backdrop-blur-sm">
+        <div className="bg-card rounded-xl border border-border p-8">
           <Skeleton className="h-6 w-48 mb-6" />
           <div className="grid grid-cols-2 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -305,8 +308,8 @@ export default function InstanceDetailPage({ params }) {
 
   if (!instance) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 className="text-red-800 font-semibold">Instanz nicht gefunden</h3>
+      <div className="bg-danger/5 border border-danger/20 rounded-lg p-4">
+        <h3 className="text-danger font-semibold">Instanz nicht gefunden</h3>
       </div>
     );
   }
@@ -316,8 +319,8 @@ export default function InstanceDetailPage({ params }) {
 
   if (instanceNotFound || premiumNotFound) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 className="text-red-800 font-semibold">Instanz nicht gefunden</h3>
+      <div className="bg-danger/5 border border-danger/20 rounded-lg p-4">
+        <h3 className="text-danger font-semibold">Instanz nicht gefunden</h3>
       </div>
     );
   }
@@ -325,35 +328,32 @@ export default function InstanceDetailPage({ params }) {
   return (
     <div>
        {/* Header */}
-       <div className="mb-8">
-         <Link href="/" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-emerald-400 text-sm mb-4 inline-flex items-center font-medium transition-colors">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
-             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-           </svg>
-           Zurück zur Übersicht
-         </Link>
-         <div className="flex justify-between items-start">
-           <div>
-             <div className="flex items-center gap-3">
-               <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">{instance.name}</h2>
-               <CompanionIndicator externalId={instanceId} />
-             </div>
-             <p className="text-gray-600 dark:text-zinc-400 text-sm mt-1 font-mono">{instance.baseUrl}</p>
-           </div>
-           <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(instance.status)}`}>
-             {instance.status}
-           </span>
-         </div>
-       </div>
+      <PageHeader
+        back={{ href: '/', label: 'Alle Instanzen' }}
+        eyebrow="Instanz"
+        title={
+          <span className="inline-flex flex-wrap items-center gap-3">
+            {instance.name}
+            <CompanionIndicator externalId={instanceId} />
+          </span>
+        }
+        description={<span className="font-mono text-sm">{instance.baseUrl}</span>}
+        actions={
+          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${getStatusColor(instance.status)}`}>
+            <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+            {STATUS_TEXT[instance.status] || instance.status}
+          </span>
+        }
+      />
 
       {instance.status === 'locked' && (
-        <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-amber-600 dark:text-amber-400 mr-3">
+        <div className="mb-6 bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-warning mr-3">
             <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
           </svg>
           <div>
-            <p className="text-amber-800 dark:text-amber-200 font-medium">Instanz ist gesperrt</p>
-            <p className="text-amber-700 dark:text-amber-300 text-sm">
+            <p className="text-warning font-medium">Instanz ist gesperrt</p>
+            <p className="text-warning text-sm">
               Der API Key konnte nicht entschlüsselt werden. Bitte melde dich erneut an, um den Zugriff wiederherzustellen.
             </p>
           </div>
@@ -361,14 +361,14 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-white/10 mb-8">
+      <div className="border-b border-border mb-8">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'overview'
-                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground hover:border-border'
             }`}
           >
             Übersicht
@@ -377,8 +377,8 @@ export default function InstanceDetailPage({ params }) {
             onClick={() => setActiveTab('workflows')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'workflows'
-                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground hover:border-border'
             }`}
           >
             Workflows
@@ -387,8 +387,8 @@ export default function InstanceDetailPage({ params }) {
             onClick={() => setActiveTab('errors')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'errors'
-                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground hover:border-border'
             }`}
           >
             Fehler
@@ -397,8 +397,8 @@ export default function InstanceDetailPage({ params }) {
             onClick={() => setActiveTab('patterns')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'patterns'
-                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground hover:border-border'
             }`}
           >
             Fehlermuster
@@ -408,8 +408,8 @@ export default function InstanceDetailPage({ params }) {
               onClick={() => setActiveTab('diagnostics')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'diagnostics'
-                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                  : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted hover:text-foreground hover:border-border'
               }`}
             >
               Diagnose
@@ -421,8 +421,8 @@ export default function InstanceDetailPage({ params }) {
                  onClick={() => setActiveTab('companion')}
                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                    activeTab === 'companion'
-                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                     ? 'border-primary text-primary'
+                     : 'border-transparent text-muted hover:text-foreground hover:border-border'
                  }`}
                >
                  Companion
@@ -431,8 +431,8 @@ export default function InstanceDetailPage({ params }) {
                  onClick={() => setActiveTab('incidents')}
                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                    activeTab === 'incidents'
-                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                     ? 'border-primary text-primary'
+                     : 'border-transparent text-muted hover:text-foreground hover:border-border'
                  }`}
                >
                  Incidents
@@ -441,8 +441,8 @@ export default function InstanceDetailPage({ params }) {
                  onClick={() => setActiveTab('uptime')}
                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                    activeTab === 'uptime'
-                     ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                     : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700'
+                     ? 'border-primary text-primary'
+                     : 'border-transparent text-muted hover:text-foreground hover:border-border'
                  }`}
                >
                  Uptime
@@ -454,13 +454,13 @@ export default function InstanceDetailPage({ params }) {
 
       {/* Content */}
       {activeTab === 'overview' && (
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-6">Basis-Informationen</h3>
+        <div className="bg-card rounded-xl border border-border p-8">
+          <h3 className="text-lg font-semibold text-foreground mb-6">Basis-Informationen</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Version</span>
+              <span className="font-mono text-xs text-muted uppercase tracking-wide">Version</span>
               <div className="flex items-center mt-1">
-                <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg">{instance.version}</p>
+                <p className="text-foreground font-medium text-lg">{instance.version}</p>
                 <VersionBadge
                   version={instance.version}
                   latestVersion={instance.latestVersion}
@@ -468,7 +468,7 @@ export default function InstanceDetailPage({ params }) {
               </div>
             </div>
             <div>
-              <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Status</span>
+              <span className="font-mono text-xs text-muted uppercase tracking-wide">Status</span>
               <div className="mt-1">
                 <span className={`px-2.5 py-0.5 rounded-full text-sm font-medium border ${getStatusColor(instance.status)} capitalize`}>
                   {instance.status}
@@ -476,29 +476,29 @@ export default function InstanceDetailPage({ params }) {
               </div>
             </div>
             <div>
-              <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">URL</span>
+              <span className="font-mono text-xs text-muted uppercase tracking-wide">URL</span>
               <a
                 href={instance.baseUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-emerald-600 dark:text-emerald-400 font-medium text-lg mt-1 hover:underline block truncate"
+                className="text-primary font-medium text-lg mt-1 hover:underline block truncate"
               >
                 {instance.baseUrl}
               </a>
             </div>
             <div>
-              <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Zuletzt gesehen</span>
-              <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg mt-1">{formatRelativeTime(instance.lastSeenAt)}</p>
-              <p className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">{formatDate(instance.lastSeenAt)}</p>
+              <span className="font-mono text-xs text-muted uppercase tracking-wide">Zuletzt gesehen</span>
+              <p className="text-foreground font-medium text-lg mt-1">{formatRelativeTime(instance.lastSeenAt)}</p>
+              <p className="text-xs text-muted mt-0.5">{formatDate(instance.lastSeenAt)}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Erstellt am</span>
-              <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg mt-1">{formatDate(instance.createdAt)}</p>
+              <span className="font-mono text-xs text-muted uppercase tracking-wide">Erstellt am</span>
+              <p className="text-foreground font-medium text-lg mt-1">{formatDate(instance.createdAt)}</p>
             </div>
             {backupsEnabled && (
               <div>
-                <span className="text-sm text-gray-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Letztes Backup</span>
-                <p className="text-gray-900 dark:text-zinc-100 font-medium text-lg mt-1">
+                <span className="font-mono text-xs text-muted uppercase tracking-wide">Letztes Backup</span>
+                <p className="text-foreground font-medium text-lg mt-1">
                   {lastBackupData?.lastBackupAt ? (
                     formatDistanceToNow(new Date(lastBackupData.lastBackupAt), { addSuffix: true, locale: de })
                   ) : (
@@ -512,10 +512,10 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {activeTab === 'workflows' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-900/50">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="p-4 border-b border-border flex justify-between items-center bg-background/50">
             <div className="flex items-center space-x-3">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Workflows</h3>
+              <h3 className="text-lg font-medium text-foreground">Workflows</h3>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -528,7 +528,7 @@ export default function InstanceDetailPage({ params }) {
                   onClick={handleImportClick}
                   disabled={isImporting}
                   title="Workflow importieren"
-                  className="p-1.5 rounded-md text-gray-400 hover:text-emerald-600 dark:text-zinc-500 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isImporting ? (
                     <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -548,7 +548,7 @@ export default function InstanceDetailPage({ params }) {
                 <button
                   onClick={handleExportSelected}
                   disabled={isExporting}
-                  className="bg-emerald-600 text-white px-3 py-1.5 text-xs font-medium rounded-full hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-sm transition-colors"
+                  className="bg-primary text-on-primary px-3 py-1.5 text-xs font-medium rounded-full hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
                 >
                   {isExporting ? 'Exportiere...' : `Exportieren (${selectedWorkflows.length})`}
                 </button>
@@ -558,8 +558,8 @@ export default function InstanceDetailPage({ params }) {
                   onClick={() => setWorkflowFilter('active')}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
                     workflowFilter === 'active'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-soft text-muted hover:bg-soft'
                   }`}
                 >
                   Aktiv
@@ -568,8 +568,8 @@ export default function InstanceDetailPage({ params }) {
                   onClick={() => setWorkflowFilter('inactive')}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
                     workflowFilter === 'inactive'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-soft text-muted hover:bg-soft'
                   }`}
                 >
                   Inaktiv
@@ -578,8 +578,8 @@ export default function InstanceDetailPage({ params }) {
                   onClick={() => setWorkflowFilter('all')}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
                     workflowFilter === 'all'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-soft text-muted hover:bg-soft'
                   }`}
                 >
                   Alle
@@ -606,45 +606,45 @@ export default function InstanceDetailPage({ params }) {
           ) : instance.status === 'locked' ? (
             <LockedState />
           ) : !filteredWorkflows || filteredWorkflows.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Workflows gefunden</div>
+            <div className="p-12 text-center text-muted">Keine Workflows gefunden</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
-              <thead className="bg-gray-50 dark:bg-zinc-950/50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider w-10">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:text-emerald-600 focus:ring-blue-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
+                      className="rounded border-border text-foreground focus:ring-primary/40"
                       checked={filteredWorkflows.length > 0 && selectedWorkflows.length === filteredWorkflows.length}
                       onChange={handleSelectAll}
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Letzter Lauf
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Letzter Fehler
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
+              <tbody className="bg-card divide-y divide-border">
                 {Object.entries(groupedWorkflows).map(([groupKey, workflows]) => (
                   <Fragment key={groupKey}>
                     <tr>
-                      <td colSpan={5} className="px-6 py-2 bg-gray-50 dark:bg-zinc-950/30 border-b border-gray-100 dark:border-zinc-800/50">
+                      <td colSpan={5} className="px-6 py-2 bg-background border-b border-border">
                         <button
                           onClick={() => toggleGroup(groupKey)}
                           className="flex items-center text-left w-full focus:outline-none group"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className={`h-5 w-5 mr-2 text-gray-400 dark:text-zinc-600 group-hover:text-gray-600 dark:group-hover:text-zinc-400 transition-transform duration-200 ${
+                            className={`h-5 w-5 mr-2 text-muted group-hover:text-muted transition-transform duration-200 ${
                               collapsedGroups[groupKey] ? '' : 'rotate-90'
                             }`}
                             viewBox="0 0 20 20"
@@ -656,51 +656,51 @@ export default function InstanceDetailPage({ params }) {
                               clipRule="evenodd"
                             />
                           </svg>
-                          <span className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+                          <span className="text-sm font-semibold text-muted">
                             {groupKey === '#' ? 'Sonstige' : groupKey}
                           </span>
-                          <span className="ml-2 text-xs text-gray-500 dark:text-zinc-500 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700">
+                          <span className="ml-2 text-xs text-muted bg-card px-2 py-0.5 rounded-full border border-border">
                             {workflows.length}
                           </span>
                         </button>
                       </td>
                     </tr>
                     {!collapsedGroups[groupKey] && workflows.map((workflow) => (
-                      <tr key={workflow.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <tr key={workflow.id} className="hover:bg-background transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="checkbox"
-                            className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:text-emerald-600 focus:ring-blue-500 dark:focus:ring-emerald-500 dark:bg-zinc-800 dark:checked:bg-emerald-600"
+                            className="rounded border-border text-foreground focus:ring-primary/40"
                             checked={selectedWorkflows.includes(workflow.id)}
                             onChange={() => handleSelectWorkflow(workflow.id)}
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                          <div className="text-sm font-medium text-foreground">
                             <a
                               href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${workflow.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-emerald-400 hover:underline"
+                              className="text-foreground hover:underline"
                             >
                               {workflow.name}
                             </a>
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-zinc-500 font-mono mt-0.5">{workflow.id}</div>
+                          <div className="text-xs text-muted font-mono mt-0.5">{workflow.id}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${
                             workflow.active
-                              ? 'bg-green-50 text-green-700 border-green-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30'
-                              : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
+                              ? 'bg-primary/5 text-primary border-primary/20'
+                              : 'bg-background text-muted border-border'
                           }`}>
                             {workflow.active ? 'Aktiv' : 'Inaktiv'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                           {workflow.lastRunAt ? formatRelativeTime(workflow.lastRunAt) : 'Nie'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                           {workflow.lastErrorAt ? formatRelativeTime(workflow.lastErrorAt) : 'Kein Fehler'}
                         </td>
                       </tr>
@@ -714,9 +714,9 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {activeTab === 'errors' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           {eventsLoading ? (
-            <div className="divide-y divide-gray-200 dark:divide-zinc-800">
+            <div className="divide-y divide-border">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="p-6">
                   <div className="flex justify-between items-start mb-2">
@@ -735,26 +735,26 @@ export default function InstanceDetailPage({ params }) {
           ) : instance.status === 'locked' ? (
             <LockedState />
           ) : !events || events.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Fehler gefunden</div>
+            <div className="p-12 text-center text-muted">Keine Fehler gefunden</div>
           ) : (
-            <div className="divide-y divide-gray-200 dark:divide-zinc-800">
+            <div className="divide-y divide-border">
               {events.map((event) => (
-                <div key={event.id} className="p-6 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div key={event.id} className="p-6 hover:bg-background transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getSeverityColor(event.severity)}`}>
                           {event.severity}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-zinc-500">{formatRelativeTime(event.occurredAt)}</span>
+                        <span className="text-sm text-muted">{formatRelativeTime(event.occurredAt)}</span>
                       </div>
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                      <h4 className="text-sm font-semibold text-foreground">
                         {event.payload?.workflowName ? (
                           <a
                             href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${event.payload.workflowId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-blue-600 dark:hover:text-emerald-400 hover:underline"
+                            className="hover:text-foreground hover:underline"
                           >
                             {event.payload.workflowName}
                           </a>
@@ -764,12 +764,12 @@ export default function InstanceDetailPage({ params }) {
                       </h4>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-zinc-300 mb-2 font-mono bg-gray-50 dark:bg-zinc-950/50 p-2 rounded border border-gray-100 dark:border-zinc-800">
+                  <p className="text-sm text-muted mb-2 font-mono bg-background p-2 rounded border border-border">
                     {event.payload?.errorMessage || 'Keine Fehlermeldung verfügbar'}
                   </p>
                   {event.payload?.node && (
-                    <p className="text-xs text-gray-500 dark:text-zinc-500">
-                      Node: <span className="font-medium text-gray-700 dark:text-zinc-300">{event.payload.node}</span>
+                    <p className="text-xs text-muted">
+                      Node: <span className="font-medium text-muted">{event.payload.node}</span>
                     </p>
                   )}
                 </div>
@@ -780,9 +780,9 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {activeTab === 'patterns' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-900/50">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Häufigste Fehler</h3>
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="p-4 border-b border-border flex justify-between items-center bg-background/50">
+            <h3 className="text-lg font-medium text-foreground">Häufigste Fehler</h3>
             <div className="flex space-x-2">
               {['1d', '14d', '1m', '6m', '12m'].map((range) => (
                 <button
@@ -790,8 +790,8 @@ export default function InstanceDetailPage({ params }) {
                   onClick={() => setPatternRange(range)}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
                     patternRange === range
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-soft text-muted hover:bg-soft'
                   }`}
                 >
                   {range}
@@ -817,48 +817,48 @@ export default function InstanceDetailPage({ params }) {
           ) : instance.status === 'locked' ? (
             <LockedState />
           ) : !patterns || patterns.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Fehlermuster gefunden</div>
+            <div className="p-12 text-center text-muted">Keine Fehlermuster gefunden</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
-              <thead className="bg-gray-50 dark:bg-zinc-950/50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Fehlermeldung
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Anzahl
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Zuletzt aufgetreten
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">
                     Betroffene Workflows
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
+              <tbody className="bg-card divide-y divide-border">
                 {patterns.map((pattern, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-zinc-100 font-medium font-mono">
+                  <tr key={idx} className="hover:bg-background transition-colors">
+                    <td className="px-6 py-4 text-sm text-foreground font-medium font-mono">
                       {pattern.errorMessage}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
-                      <span className="px-2.5 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300 rounded-full text-xs font-bold border border-red-200 dark:border-red-900/30">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
+                      <span className="px-2.5 py-0.5 bg-danger/10 text-danger rounded-full text-xs font-semibold border border-danger/20">
                         {pattern.count}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                       {formatRelativeTime(pattern.lastOccurred)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-zinc-400">
+                    <td className="px-6 py-4 text-sm text-muted">
                       <div className="flex flex-wrap gap-1">
                         {pattern.affectedWorkflows.slice(0, 3).map((wf, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-xs border border-gray-200 dark:border-zinc-700">
+                          <span key={i} className="px-2 py-0.5 bg-soft rounded text-xs border border-border">
                             {wf}
                           </span>
                         ))}
                         {pattern.affectedWorkflows.length > 3 && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-xs text-gray-500 dark:text-zinc-500 border border-gray-200 dark:border-zinc-700">
+                          <span className="px-2 py-0.5 bg-soft rounded text-xs text-muted border border-border">
                             +{pattern.affectedWorkflows.length - 3} weitere
                           </span>
                         )}
@@ -873,9 +873,9 @@ export default function InstanceDetailPage({ params }) {
       )}
 
       {isPremium && activeTab === 'incidents' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Incidents</h3>
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="p-4 border-b border-border bg-background/50">
+            <h3 className="text-lg font-medium text-foreground">Incidents</h3>
           </div>
 
           {incidentsLoading ? (
@@ -894,59 +894,59 @@ export default function InstanceDetailPage({ params }) {
             <LockedState />
           ) : incidentsError ? (
             <div className="p-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="text-red-800 font-semibold mb-1">Incidents konnten nicht geladen werden</h4>
-                <p className="text-red-700 text-sm">{incidentsError.message || 'Bitte versuche es erneut.'}</p>
+              <div className="bg-danger/5 border border-danger/20 rounded-lg p-4">
+                <h4 className="text-danger font-semibold mb-1">Incidents konnten nicht geladen werden</h4>
+                <p className="text-danger text-sm">{incidentsError.message || 'Bitte versuche es erneut.'}</p>
               </div>
             </div>
           ) : sortedIncidents.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Incidents gefunden</div>
+            <div className="p-12 text-center text-muted">Keine Incidents gefunden</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
-              <thead className="bg-gray-50 dark:bg-zinc-950/50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Start</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Ende</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Dauer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Message</th>
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Start</th>
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Ende</th>
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Dauer</th>
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Status</th>
+                  <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Message</th>
                   {snapshotsEnabled && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Diagnose</th>
+                    <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide">Diagnose</th>
                   )}
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
+              <tbody className="bg-card divide-y divide-border">
                 {sortedIncidents.map((incident) => {
                   const isOpen = !incident.resolved && !incident.resolvedAt;
 
                   return (
-                    <tr key={incident.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-zinc-100">{formatDate(incident.startedAt)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
+                    <tr key={incident.id} className="hover:bg-background transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(incident.startedAt)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {incident.resolvedAt ? formatDate(incident.resolvedAt) : 'offen'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">{formatDowntime(incident.downtimeSeconds)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">{formatDowntime(incident.downtimeSeconds)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${
                           isOpen
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/30'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/30'
+                            ? 'bg-warning/5 text-warning border-warning/20'
+                            : 'bg-primary/5 text-primary border-primary/20'
                         }`}>
                           {isOpen ? 'Offen' : 'Resolved'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-zinc-300">{incident.message || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-muted">{incident.message || '-'}</td>
                       {snapshotsEnabled && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {incident.diagnosticSnapshotId ? (
                             <button
                               onClick={() => setOpenSnapshotId(incident.diagnosticSnapshotId)}
-                              className="text-emerald-600 dark:text-emerald-400 hover:underline"
+                              className="text-primary hover:underline"
                             >
                               Snapshot anzeigen
                             </button>
                           ) : (
-                            <span className="text-gray-400 dark:text-zinc-600">–</span>
+                            <span className="text-muted">–</span>
                           )}
                         </td>
                       )}
@@ -960,15 +960,15 @@ export default function InstanceDetailPage({ params }) {
       )}
 
        {isPremium && activeTab === 'uptime' && (
-         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-           <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
-             <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Uptime</h3>
+         <div className="bg-card rounded-xl border border-border overflow-hidden">
+           <div className="p-4 border-b border-border bg-background/50">
+             <h3 className="text-lg font-medium text-foreground">Uptime</h3>
            </div>
 
            {uptimeLoading ? (
              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                {uptimeFields.map((field) => (
-                 <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
+                 <div key={field.key} className="rounded-lg border border-border p-4">
                    <Skeleton className="h-4 w-28 mb-2" />
                    <Skeleton className="h-7 w-20" />
                  </div>
@@ -978,19 +978,19 @@ export default function InstanceDetailPage({ params }) {
              <LockedState />
            ) : uptimeError ? (
              <div className="p-6">
-               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                 <h4 className="text-red-800 font-semibold mb-1">Uptime konnte nicht geladen werden</h4>
-                 <p className="text-red-700 text-sm">{uptimeError.message || 'Bitte versuche es erneut.'}</p>
+               <div className="bg-danger/5 border border-danger/20 rounded-lg p-4">
+                 <h4 className="text-danger font-semibold mb-1">Uptime konnte nicht geladen werden</h4>
+                 <p className="text-danger text-sm">{uptimeError.message || 'Bitte versuche es erneut.'}</p>
                </div>
              </div>
            ) : !uptimeStats ? (
-             <div className="p-12 text-center text-gray-500 dark:text-zinc-500">Keine Uptime-Daten verfügbar</div>
+             <div className="p-12 text-center text-muted">Keine Uptime-Daten verfügbar</div>
            ) : (
              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                {uptimeFields.map((field) => (
-                 <div key={field.key} className="rounded-lg border border-gray-200 dark:border-zinc-800 p-4 bg-gray-50/50 dark:bg-zinc-950/30">
-                   <p className="text-sm text-gray-500 dark:text-zinc-500 mb-1">{field.label}</p>
-                   <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">{formatPercent(uptimeStats[field.key])}</p>
+                 <div key={field.key} className="rounded-xl border border-border p-4 bg-background">
+                   <p className="font-mono text-[10px] uppercase tracking-wide text-muted sm:text-xs">{field.label}</p>
+                   <p className="mt-2 font-display text-3xl font-semibold text-foreground">{formatPercent(uptimeStats[field.key])}</p>
                  </div>
                ))}
              </div>

@@ -72,7 +72,7 @@ export function CompanionSection({ externalId }: CompanionSectionProps) {
       {/* Update History */}
       {status?.configured && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold mb-4 text-foreground">
             Update-Verlauf
           </h3>
           <UpdateHistoryTable externalId={externalId} />
