@@ -614,7 +614,7 @@ export default function InstanceDetailPage({ params }) {
                   <th className="px-6 py-3 text-left font-mono text-[10px] font-normal text-muted uppercase tracking-wide w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-border text-foreground focus:ring-primary/40"
+                      className="rounded border-border text-primary focus:ring-primary/40"
                       checked={filteredWorkflows.length > 0 && selectedWorkflows.length === filteredWorkflows.length}
                       onChange={handleSelectAll}
                     />
@@ -670,7 +670,7 @@ export default function InstanceDetailPage({ params }) {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="checkbox"
-                            className="rounded border-border text-foreground focus:ring-primary/40"
+                            className="rounded border-border text-primary focus:ring-primary/40"
                             checked={selectedWorkflows.includes(workflow.id)}
                             onChange={() => handleSelectWorkflow(workflow.id)}
                           />
@@ -681,7 +681,7 @@ export default function InstanceDetailPage({ params }) {
                               href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${workflow.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-foreground hover:underline"
+                              className="text-primary hover:underline"
                             >
                               {workflow.name}
                             </a>
@@ -754,7 +754,7 @@ export default function InstanceDetailPage({ params }) {
                             href={`${instance.baseUrl.replace(/\/$/, '')}/workflow/${event.payload.workflowId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-foreground hover:underline"
+                            className="hover:text-primary hover:underline"
                           >
                             {event.payload.workflowName}
                           </a>
