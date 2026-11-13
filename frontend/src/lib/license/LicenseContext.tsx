@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getLicenseInfo } from '../api';
 import { LicenseInfo } from '../types';
 import { featureEnabled } from './entitlements';
+import { editionLabel } from './edition';
 import { useAuth } from '../auth/AuthContext';
 import type { LoginResponse } from '../api';
 
@@ -55,18 +56,18 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]);
 
-  useEffect(() => {
-    if (license?.edition) {
-      document.title = `Controla - ${license.edition}`;
-    }
-  }, [license]);
-
   const currentLicense = loadedFor === user ? license : null;
   const isFeatureEnabled = (feature: string) => {
     return featureEnabled(currentLicense, feature);
   };
 
+  // 'Hosted Ops' / 'Premium Edition' are internal edition keys of hosted backends, not display names.
   const isPremium = currentLicense?.edition === 'Hosted Ops' || currentLicense?.edition === 'Premium Edition';
+  const label = currentLicense?.edition ? editionLabel(currentLicense, isPremium) : null;
+
+  useEffect(() => {
+    if (label) document.title = `Controla - ${label}`;
+  }, [label]);
   const maxInstances = currentLicense?.tenantBound === false ? 0 : (currentLicense?.maxInstances ?? 0);
 
   return (

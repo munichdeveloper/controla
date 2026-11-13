@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useLicense } from '@/lib/license/LicenseContext';
+import { editionLabel } from '@/lib/license/edition';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Brand } from '@/components/Brand';
@@ -52,7 +53,7 @@ export default function LoginPage() {
               <Skeleton className="h-5 w-32" />
             ) : isPremium ? (
               <span className="font-semibold text-primary">
-                Hosted Ops
+                {editionLabel(license, isPremium)}
               </span>
             ) : (
               license?.edition || 'Community Edition'
