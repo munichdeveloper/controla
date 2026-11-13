@@ -34,7 +34,7 @@ Controla uses a **single-container architecture** for the backend and frontend:
 |------|---------|-------------|
 | 3000 | Frontend | Next.js User Interface |
 | 8081 | Backend | Spring Boot REST API |
-| 5432 | PostgreSQL | Database (separate container) |
+| 5432 | PostgreSQL | Database (separate container, bound to 127.0.0.1 only) |
 
 ## Node.js toolchain and image verification
 
@@ -113,7 +113,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-controla}
       POSTGRES_USER: ${POSTGRES_USER:-controla_user}
