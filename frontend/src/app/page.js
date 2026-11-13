@@ -1,7 +1,8 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getInstances, createInstance, updateInstance, exportInstanceWorkflows } from '@/lib/api';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getInstances, createInstance, updateInstance, exportInstanceWorkflows, getInstanceErrorPatterns, getInstanceEvents } from '@/lib/api';
+import { summarizeErrorPatterns, formatErrorCount, pickLatestError } from '@/lib/dashboard/errorSummary';
 import { formatRelativeTime, getVersionUpdateState } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useLicense } from '@/lib/license/LicenseContext';
@@ -260,6 +261,45 @@ function EditInstanceModal({ isOpen, onClose, onSuccess, instance }) {
   );
 }
 
+function LatestErrorPanel({ latestError, event, loading }) {
+  return (
+    <aside className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <p className="font-mono text-[10px] uppercase tracking-wide text-muted">
+        Letzter Fehler{latestError ? ` · ${latestError.instance.name}` : ''}
+      </p>
+      {loading && !latestError ? (
+        <div className="mt-5 space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : !latestError ? (
+        <p className="mt-5 text-sm text-muted">Keine fehlgeschlagenen Ausführungen in den letzten 24 Stunden.</p>
+      ) : (
+        <>
+          <h3 className="mt-5 text-lg font-semibold text-foreground">
+            {event?.payload?.workflowName || latestError.latest.workflows[0] || 'Unbekannter Workflow'}
+          </h3>
+          <p className="mt-2 text-xs text-muted">
+            {event?.payload?.node ? `Node: ${event.payload.node} · ` : ''}
+            {formatRelativeTime(event?.occurredAt || latestError.latest.occurredAt)}
+          </p>
+          <div className="mt-4 rounded-lg border border-danger/20 bg-danger/5 p-4">
+            <p className="break-words font-mono text-xs text-danger">
+              {event?.payload?.errorMessage || latestError.latest.errorMessage}
+            </p>
+          </div>
+          <Link
+            href={`/instances/${latestError.instance.id}`}
+            className="mt-5 inline-flex text-sm font-medium text-primary hover:underline"
+          >
+            Instanz öffnen →
+          </Link>
+        </>
+      )}
+    </aside>
+  );
+}
+
 export default function Dashboard() {
   const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth();
   const { license, maxInstances, isPremium, loading: licenseLoading, error: licenseError } = useLicense();
@@ -279,6 +319,34 @@ export default function Dashboard() {
     queryFn: getInstances,
     enabled: isAuthenticated,
   });
+
+  // Errors of the last 24 h per reachable instance, from the existing
+  // error-pattern endpoint (CE and Premium). Offline/locked instances stay unknown.
+  const reachable = (instances || []).filter((i) => i.status === 'online');
+  const errorQueries = useQueries({
+    queries: reachable.map((instance) => ({
+      queryKey: ['error-patterns', instance.id, '1d'],
+      queryFn: () => getInstanceErrorPatterns(instance.id, '1d'),
+      staleTime: 2 * 60 * 1000,
+      retry: false,
+    })),
+  });
+  const errorSummaries = {};
+  reachable.forEach((instance, index) => {
+    errorSummaries[instance.id] = summarizeErrorPatterns(errorQueries[index]?.data);
+  });
+  const errorsLoading = errorQueries.some((q) => q.isLoading);
+  const latestError = pickLatestError(reachable, errorSummaries);
+
+  // Node and workflow of that newest error (one event, same endpoint as the Fehler tab).
+  const { data: latestEvents } = useQuery({
+    queryKey: ['events', latestError?.instance.id, 'latest'],
+    queryFn: () => getInstanceEvents(latestError.instance.id, { type: 'WORKFLOW_ERROR', limit: 1 }),
+    enabled: !!latestError,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
+  });
+  const latestEvent = latestEvents?.[0];
 
   const handleExport = async (e, instanceId) => {
     e.preventDefault();
@@ -342,11 +410,23 @@ export default function Dashboard() {
   const onlineCount = list.filter((i) => i.status === 'online').length;
   const offlineCount = list.filter((i) => i.status === 'offline').length;
   const updateCount = list.filter((i) => getVersionUpdateState(i.version, i.latestVersion) === 'update-available').length;
+  const knownErrorCounts = Object.values(errorSummaries).filter((e) => e.count !== null);
+  const errorTotal = knownErrorCounts.reduce((sum, e) => sum + e.count, 0);
+  const errorCapped = knownErrorCounts.some((e) => e.capped);
   const stats = [
     { label: 'Instanzen', value: list.length, tone: '' },
-    { label: 'Erreichbar', value: onlineCount, tone: 'text-primary' },
-    { label: 'Nicht erreichbar', value: offlineCount, tone: offlineCount > 0 ? 'text-danger' : '' },
-    { label: 'Updates verfügbar', value: updateCount, tone: updateCount > 0 ? 'text-warning' : '' },
+    {
+      label: 'Erreichbar',
+      value: onlineCount,
+      tone: 'text-primary',
+      hint: offlineCount > 0 ? `${offlineCount} nicht erreichbar` : null,
+    },
+    {
+      label: 'Fehler 24 h',
+      value: errorsLoading && knownErrorCounts.length === 0 ? '…' : `${errorTotal}${errorCapped ? '+' : ''}`,
+      tone: errorTotal > 0 ? 'text-warning' : '',
+    },
+    { label: 'Updates verfügbar', value: updateCount, tone: '' },
   ];
 
   const editButton = (instance) => (
@@ -455,16 +535,18 @@ export default function Dashboard() {
               <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
                 <p className="font-mono text-[10px] uppercase tracking-wide text-muted sm:text-xs">{stat.label}</p>
                 <p className={`mt-2 font-display text-3xl font-semibold ${stat.tone || 'text-foreground'}`}>{stat.value}</p>
+                {stat.hint && <p className="mt-1 text-xs text-danger">{stat.hint}</p>}
               </div>
             ))}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-panel">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-panel">
             <table className="hidden w-full text-left text-sm md:table">
               <caption className="sr-only">Verbundene n8n-Instanzen</caption>
               <thead className="border-b border-border bg-background font-mono text-[10px] uppercase tracking-wide text-muted">
                 <tr>
-                  {['Instanz', 'Status', 'n8n', 'Letzter Kontakt'].map((label) => (
+                  {['Instanz', 'Status', 'n8n', 'Letzter Kontakt', 'Fehler 24 h'].map((label) => (
                     <th key={label} scope="col" className="px-4 py-3 font-normal">{label}</th>
                   ))}
                   <th scope="col" className="px-4 py-3 font-normal text-right"><span className="sr-only">Aktionen</span></th>
@@ -499,6 +581,9 @@ export default function Dashboard() {
                         <VersionBadge version={instance.version} latestVersion={instance.latestVersion} />
                       </td>
                       <td className="px-4 py-4 text-xs text-muted">{formatRelativeTime(instance.lastSeenAt)}</td>
+                      <td className={`px-4 py-4 font-mono text-xs ${errorSummaries[instance.id]?.count ? 'text-warning' : 'text-muted'}`}>
+                        {formatErrorCount(errorSummaries[instance.id])}
+                      </td>
                       <td className="px-4 py-2 text-right">
                         <div className="inline-flex items-center gap-1">
                           {editButton(instance)}
@@ -522,6 +607,7 @@ export default function Dashboard() {
                       <StatusLabel status={instance.status} />
                       <span className="font-mono text-muted">n8n {instance.version || '–'}</span>
                       <span className="text-muted">{formatRelativeTime(instance.lastSeenAt)}</span>
+                      <span className="text-muted">Fehler 24 h: {formatErrorCount(errorSummaries[instance.id])}</span>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center">
@@ -531,6 +617,8 @@ export default function Dashboard() {
                 </li>
               ))}
             </ul>
+          </div>
+          <LatestErrorPanel latestError={latestError} event={latestEvent} loading={errorsLoading} />
           </div>
         </>
       )}
