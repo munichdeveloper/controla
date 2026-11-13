@@ -1,95 +1,33 @@
-# Software Factory v0.4.4; independent immutable Harness v0.3.2 pin.
-name: Software Factory
-run-name: Factory ${{ (github.event_name == 'push' || github.event_name == 'workflow_run') && 'notify' || inputs.mode || 'manager' }} ${{ inputs.execution_id }}
+name: Factory Temporal executor
+run-name: SF Temporal ${{ fromJSON(inputs.request).executionId }} ${{ inputs.binding }}
 on:
-  push:
-  workflow_run:
-    workflows: [Test]
-    types: [completed]
-  schedule:
-    - cron: '17 */2 * * *'
   workflow_dispatch:
     inputs:
-      mode:
-        type: choice
-        options: [manager, merge, notify, check-slack, bootstrap, worker]
-        default: manager
-      execution_id:
+      request:
         type: string
-        default: ''
-      issue_number:
+        required: true
+      binding:
         type: string
-        default: ''
-      dry_run:
-        type: boolean
-        default: false
-permissions: {}
+        required: true
+      validation:
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
 concurrency:
-  group: ${{ github.repository }}-software-factory-${{ inputs.mode == 'worker' && inputs.execution_id || 'manager' }}
+  group: sf-temporal-${{ fromJSON(inputs.request).executionId }}
   cancel-in-progress: false
 jobs:
-  factory:
-    if: inputs.mode != 'worker' && (github.event_name != 'push' || github.ref_name == github.event.repository.default_branch)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+  code:
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
-      actions: write
-    steps:
-      - uses: munichdeveloper/software-factory@4e6c3a2895e4e060062db4b9369a719bce2fe32d
-        with:
-          mode: ${{ (github.event_name == 'push' || github.event_name == 'workflow_run' || inputs.mode == 'merge') && 'notify' || inputs.mode || 'manager' }}
-          dry-run: ${{ inputs.dry_run || false }}
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-  coding:
-    if: inputs.mode == 'worker' && !inputs.dry_run
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      actions: write
-    uses: munichdeveloper/software-factory/.github/workflows/coding-worker.yml@4e6c3a2895e4e060062db4b9369a719bce2fe32d
+      actions: read
+    uses: munichdeveloper/software-factory/.github/workflows/temporal-coding-executor.yml@227fd778d030b95f3f8863d669b3d0ffece9c31d
     with:
-      factory-ref: 4e6c3a2895e4e060062db4b9369a719bce2fe32d
-      harness-ref: 8f1732c05c351af32bd25a6306a92f3bb06c1bad
-      execution-id: ${{ inputs.execution_id }}
-      issue-number: ${{ inputs.issue_number }}
+      factory-ref: 227fd778d030b95f3f8863d669b3d0ffece9c31d
+      harness-ref: 7d571cb233db55075f7f26178c97a870142092f1
+      request: ${{ inputs.request }}
+      validation: ${{ inputs.validation }}
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  merge:
-    needs: factory
-    if: ${{ !cancelled() && inputs.mode != 'worker' && inputs.mode != 'check-slack' && inputs.mode != 'notify' && inputs.mode != 'bootstrap' && (needs.factory.result == 'success' || (needs.factory.result == 'failure' && (github.event_name == 'push' || github.event_name == 'workflow_run' || inputs.mode == 'merge'))) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      checks: read
-      statuses: read
-      actions: write
-    steps:
-      - uses: munichdeveloper/software-factory@4e6c3a2895e4e060062db4b9369a719bce2fe32d
-        with:
-          mode: merge
-          dry-run: ${{ inputs.dry_run || false }}
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-  merge-notifications:
-    needs: merge
-    if: always() && needs.merge.result != 'skipped'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-      actions: read
-    steps:
-      - uses: munichdeveloper/software-factory@4e6c3a2895e4e060062db4b9369a719bce2fe32d
-        with:
-          mode: notify
-          dry-run: ${{ inputs.dry_run || false }}
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
