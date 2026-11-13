@@ -10,6 +10,13 @@ import { PageHeader } from '@/components/PageHeader';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/Skeleton';
+import { describeBackupRun, backupErrorHint } from '@/lib/backups/runStatus';
+
+const RUN_TONE_CLASSES = {
+  ok: 'bg-primary/5 border-primary/20 text-primary',
+  warning: 'bg-warning/5 border-warning/20 text-warning',
+  error: 'bg-danger/5 border-danger/20 text-danger',
+};
 
 export default function BackupSettingsPage() {
   const queryClient = useQueryClient();
@@ -59,6 +66,9 @@ export default function BackupSettingsPage() {
       });
     }
   }, [settings]);
+
+  const run = describeBackupRun(settings);
+  const failedById = Object.fromEntries((run?.failedInstances ?? []).map((f) => [f.externalId, f]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -162,18 +172,39 @@ export default function BackupSettingsPage() {
         <div className="bg-card rounded-xl border border-border p-6">
           <h3 className="text-lg font-medium text-foreground mb-4">Backup-Status</h3>
 
+          {run && (
+            <div role={run.tone === 'ok' ? 'status' : 'alert'} className={`mb-4 rounded-lg border p-4 ${RUN_TONE_CLASSES[run.tone]}`}>
+              <p className="font-medium">
+                {run.title}
+                {run.attemptAt && (
+                  <span className="font-normal opacity-80">
+                    {' '}({formatDistanceToNow(new Date(run.attemptAt), { addSuffix: true, locale: de })})
+                  </span>
+                )}
+              </p>
+              {run.hint && <p className="mt-1 text-sm">{run.hint}</p>}
+              {run.detail && <p className="mt-1 text-xs opacity-80 break-words">{run.detail}</p>}
+            </div>
+          )}
+
           {!instances || instances.length === 0 ? (
             <p className="text-muted text-sm">Keine Instanzen gefunden.</p>
           ) : (
             <div className="space-y-2">
               {instances.map((instance) => {
                 const lastBackup = lastBackups?.[instance.id];
+                const failure = failedById[instance.id];
                 return (
                   <div key={instance.id} className="flex items-center justify-between p-2 bg-background rounded border border-border">
                     <div className="flex items-center space-x-3 overflow-hidden">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lastBackup ? 'bg-primary' : 'bg-border'}`}></div>
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${failure ? 'bg-danger' : lastBackup ? 'bg-primary' : 'bg-border'}`}></div>
                       <div className="truncate">
                         <div className="text-sm font-medium text-foreground truncate">{instance.name}</div>
+                        {failure && (
+                          <div className="text-xs text-danger truncate" title={failure.errorMessage || undefined}>
+                            {backupErrorHint(failure.errorCategory)}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-right whitespace-nowrap ml-4">
