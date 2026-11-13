@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "profile": "npm",
-  "timeoutMinutes": 20,
-  "composeProjectPrefix": "sf-validation",
+  "profile": "maven",
+  "javaVersion": "17",
+  "timeoutMinutes": 30,
+  "composeProjectPrefix": "controla-validation",
   "environment": {}
 }
