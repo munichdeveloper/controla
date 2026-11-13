@@ -62,11 +62,25 @@ export interface AlertSettings {
   notifyOnInvalidApiKey: boolean;
 }
 
+export interface BackupFailedInstance {
+  externalId: string;
+  name: string;
+  errorCategory: string;
+  errorMessage?: string | null;
+  lastAttemptAt?: string | null;
+}
+
 export interface BackupSettings {
   enabled: boolean;
   googleDriveFolderId: string;
   intervalHours: number;
   lastBackupAt?: string;
+  /** Result of the most recent scheduled run; only sent by Premium backends that record it. */
+  lastAttemptAt?: string | null;
+  lastStatus?: 'SUCCESS' | 'PARTIAL' | 'FAILED' | null;
+  lastErrorCategory?: string | null;
+  lastErrorMessage?: string | null;
+  failedInstances?: BackupFailedInstance[];
 }
 
 export interface LicenseInfo {
