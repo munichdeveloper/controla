@@ -129,22 +129,46 @@ public class N8nApiClient {
         if (baseUrl == null || apiKey == null) {
             return Collections.emptyList();
         }
-
-        String url = baseUrl.replaceAll("/$", "") + "/api/v1/workflows";
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-N8N-API-KEY", apiKey);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
-
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("data")) {
-                return (List<Map<String, Object>>) body.get("data");
-            }
+            return fetchAllWorkflows(baseUrl.replaceAll("/$", ""), entity);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch raw workflows: " + e.getMessage(), e);
         }
-        return new ArrayList<>();
+    }
+
+    /**
+     * All workflows of an instance. n8n pages {@code /api/v1/workflows} (100 per page by default), so a single
+     * request would silently drop everything after the first page.
+     */
+    private List<Map<String, Object>> fetchAllWorkflows(String base, HttpEntity<Void> entity) {
+        List<Map<String, Object>> all = new ArrayList<>();
+        String cursor = null;
+        for (int page = 0; page < MAX_WORKFLOW_PAGES; page++) {
+            String url = base + "/api/v1/workflows?limit=" + WORKFLOW_PAGE_SIZE + (cursor != null ? "&cursor={cursor}" : "");
+            Map<String, Object> uriVariables = cursor != null ? Map.of("cursor", cursor) : Map.of();
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class, uriVariables);
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                break;
+            }
+            if (body.get("data") instanceof List<?> data) {
+                for (Object item : data) {
+                    if (item instanceof Map<?, ?> wf) {
+                        all.add((Map<String, Object>) wf);
+                    }
+                }
+            }
+            Object next = body.get("nextCursor");
+            cursor = next instanceof String s && !s.isBlank() ? s : null;
+            if (cursor == null) {
+                return all;
+            }
+        }
+        logger.warn("Stopped reading workflows after {} pages; the export may be incomplete", MAX_WORKFLOW_PAGES);
+        return all;
     }
 
     public List<WorkflowDto> getWorkflows(String baseUrl, String apiKey) {
@@ -152,22 +176,15 @@ public class N8nApiClient {
             return Collections.emptyList();
         }
 
-        String url = baseUrl.replaceAll("/$", "") + "/api/v1/workflows";
-
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-N8N-API-KEY", apiKey);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        List<WorkflowDto> workflows = new ArrayList<>();
+        List<WorkflowDto> workflows;
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> body = response.getBody();
-
-            if (body != null && body.containsKey("data")) {
-                List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
-                workflows = data.stream().map(this::mapToWorkflowDto).collect(Collectors.toList());
-            }
+            workflows = fetchAllWorkflows(baseUrl.replaceAll("/$", ""), entity).stream()
+                    .map(this::mapToWorkflowDto).collect(Collectors.toList());
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch workflows from n8n: " + e.getMessage(), e);
         }
