@@ -158,6 +158,27 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- The published test jar (testing/FakeN8n) carries them too. -->
+                    <execution>
+                        <id>include-ce-license-and-notice-in-test-jar</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.testOutputDirectory}/META-INF</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/..</directory>
+                                    <includes>
+                                        <include>LICENSE</include>
+                                        <include>NOTICE</include>
+                                    </includes>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <!-- Publishes test helpers such as testing/FakeN8n as backend-<version>-tests.jar,
