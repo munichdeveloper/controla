@@ -17,6 +17,7 @@ export async function mockApi(page, options = {}) {
       'diagnostics.report': true,
       'alert.workflow_error': premium,
       'alert.invalid_api_key': premium,
+      'backup.scheduled': premium,
     },
     instances: [{ ...demo }],
     alerts: { channels: { email: { address: 'alerts@example.com' } }, events: { instanceOffline: true, workflowError: false, invalidApiKey: false } },
@@ -67,6 +68,7 @@ export async function mockApi(page, options = {}) {
       if (method === 'PUT') Object.assign(instance, request.postDataJSON(), { name: `Gespeichert: ${request.postDataJSON().name}` });
       return reply(instance);
     }
+    if (/^\/instances\/[^/]+\/error-patterns$/.test(path)) return reply([]);
     if (path.endsWith('/workflows')) return reply([{ id: 'wf1', name: 'Bestellung verarbeiten', active: true, lastRunAt: null, lastErrorAt: null }]);
     if (path === '/alerts/settings') {
       if (method === 'PUT') {
@@ -101,7 +103,7 @@ export async function login(page, username = 'admin') {
   if (username !== 'admin') await page.locator('#username').fill(username);
   await page.locator('#password').fill(password);
   await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Instanz-Übersicht' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Instanzübersicht', exact: true })).toBeVisible();
 }
 
 export const test = base.extend({
