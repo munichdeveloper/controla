@@ -10,6 +10,13 @@ public class InstanceDetailDto {
     private String version;
     private String latestVersion;
     private Instant lastSeenAt;
+    private Instant archivedAt;
+    private Instant slotAvailableAt;
+
+    public Instant getArchivedAt() { return archivedAt; }
+    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
+    public Instant getSlotAvailableAt() { return slotAvailableAt; }
+    public void setSlotAvailableAt(Instant slotAvailableAt) { this.slotAvailableAt = slotAvailableAt; }
     private Instant createdAt;
 
     public InstanceDetailDto() {
