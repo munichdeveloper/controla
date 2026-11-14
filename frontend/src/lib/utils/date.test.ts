@@ -39,6 +39,8 @@ describe('formatDate', () => {
 
 describe('formatRelativeTime', () => {
   it('describes the past in German', () => {
+    expect(formatRelativeTime('2026-11-14T11:59:30Z')).toBe('gerade eben');
+    expect(formatRelativeTime('2026-11-14T11:59:00Z')).toBe('vor 1 Minute');
     expect(formatRelativeTime('2026-11-14T11:55:00Z')).toBe('vor 5 Minuten');
     expect(formatRelativeTime('2026-11-14T09:00:00Z')).toBe('vor etwa 3 Stunden');
     expect(formatRelativeTime('2026-11-10T12:00:00Z')).toBe('vor 4 Tagen');

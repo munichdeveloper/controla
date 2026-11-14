@@ -127,7 +127,7 @@ function VersionBadge({ version, latestVersion }) {
   }
 
   return (
-    <span className="ml-2 rounded-full border border-warning/30 px-2 py-0.5 text-[11px] font-medium text-warning">
+    <span className="ml-2 inline-flex shrink-0 whitespace-nowrap rounded-full border border-warning/30 px-2 py-0.5 text-[11px] font-medium text-warning">
       Update {latestVersion}
     </span>
   );
@@ -541,14 +541,14 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-panel">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0 overflow-x-auto rounded-2xl border border-border bg-card shadow-panel">
             <table className="hidden w-full text-left text-sm md:table">
               <caption className="sr-only">Verbundene n8n-Instanzen</caption>
               <thead className="border-b border-border bg-background font-mono text-[10px] uppercase tracking-wide text-muted">
                 <tr>
                   {['Instanz', 'Status', 'n8n', 'Letzter Kontakt', 'Fehler 24 h'].map((label) => (
-                    <th key={label} scope="col" className="px-4 py-3 font-normal">{label}</th>
+                    <th key={label} scope="col" className="whitespace-nowrap px-4 py-3 font-normal">{label}</th>
                   ))}
                   <th scope="col" className="px-4 py-3 font-normal text-right"><span className="sr-only">Aktionen</span></th>
                 </tr>
@@ -562,30 +562,31 @@ export default function Dashboard() {
                       onClick={() => router.push(`/instances/${instance.id}`)}
                       className={`cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-background ${offline ? 'bg-danger/5' : ''}`}
                     >
-                      <th scope="row" className="px-4 py-4 font-medium">
+                      <th scope="row" className="w-full min-w-[12rem] max-w-0 px-4 py-4 font-medium">
                         <Link
                           href={`/instances/${instance.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-foreground hover:text-primary"
+                          className="block truncate text-foreground hover:text-primary"
+                          title={instance.name}
                         >
                           {instance.name}
                         </Link>
-                        <span className="mt-0.5 block max-w-[22rem] truncate font-mono text-xs font-normal text-muted" title={instance.baseUrl}>
+                        <span className="mt-0.5 block truncate font-mono text-xs font-normal text-muted" title={instance.baseUrl}>
                           {instance.baseUrl.replace(/^https?:\/\//, '')}
                         </span>
                       </th>
-                      <td className="px-4 py-4">
+                      <td className="whitespace-nowrap px-4 py-4">
                         <StatusLabel status={instance.status} />
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="whitespace-nowrap px-4 py-4">
                         <span className="font-mono text-xs text-muted">{instance.version || '–'}</span>
                         <VersionBadge version={instance.version} latestVersion={instance.latestVersion} />
                       </td>
-                      <td className="px-4 py-4 text-xs text-muted">{formatRelativeTime(instance.lastSeenAt)}</td>
-                      <td className={`px-4 py-4 font-mono text-xs ${errorSummaries[instance.id]?.count ? 'text-warning' : 'text-muted'}`}>
+                      <td className="whitespace-nowrap px-4 py-4 text-xs text-muted">{formatRelativeTime(instance.lastSeenAt)}</td>
+                      <td className={`whitespace-nowrap px-4 py-4 font-mono text-xs ${errorSummaries[instance.id]?.count ? 'text-warning' : 'text-muted'}`}>
                         {formatErrorCount(errorSummaries[instance.id])}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="whitespace-nowrap px-4 py-2 text-right">
                         <div className="inline-flex items-center gap-1">
                           {editButton(instance)}
                           {exportButton(instance)}

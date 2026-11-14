@@ -137,6 +137,8 @@ export function formatRelativeTime(dateString: string | null | undefined): strin
 
   try {
     const date = new Date(dateString);
+    const ageMs = Date.now() - date.getTime();
+    if (ageMs >= 0 && ageMs < 60_000) return 'gerade eben';
     return formatDistanceToNow(date, { addSuffix: true, locale: de });
   } catch {
     return 'Ungültig';
