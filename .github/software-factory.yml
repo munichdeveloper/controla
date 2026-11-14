@@ -63,6 +63,9 @@ notifications:
     maxPerRun: 20
     since: '2026-11-07T00:54:52Z' # Do not backfill earlier actions.
     events:
+      run_started:
+        enabled: true
+        channel: null
       issue_created:
         enabled: true
         channel: null
