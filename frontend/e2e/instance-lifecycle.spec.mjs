@@ -58,7 +58,7 @@ test('restore conflicts and delete failures stay visible without losing the arch
   await archive(page);
   api.restoreConflict = true;
   await page.getByRole('button', { name: 'Wiederherstellen', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Kein Instanzplatz frei.');
+  await expect(page.getByRole('alert').filter({ hasText: 'Kein Instanzplatz frei.' })).toBeVisible();
   api.failDelete = true;
   await page.getByRole('button', { name: 'Endgültig löschen', exact: true }).click();
   const dialog = page.getByRole('dialog');
