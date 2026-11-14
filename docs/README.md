@@ -13,6 +13,7 @@ Willkommen zur Controla-Dokumentation!
 ### Entwicklung
 - [quality-review.md](quality-review.md) - Wöchentlicher Code-Qualitätsbericht, Baselines und Fehlerregeln
 - [DEPENDENCY_UPGRADE.md](DEPENDENCY_UPGRADE.md) - Next-16-/React-19-Migration, Browserprüfungen und gestufter Rollout/Rollback
+- [premium-frontend-branch.md](premium-frontend-branch.md) - Geschützter Premium-Frontend-Branch, selektive Cherry-Picks und manuelle Build-Umstellung
 
 ### Architektur
 - [system.yaml](../doc-meta/system.yaml) - System-Architektur und Komponenten
