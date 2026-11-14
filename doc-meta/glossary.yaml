@@ -38,7 +38,7 @@ terms:
 
   - term: Rewrites
     definition: Next.js feature to proxy API requests from /api/* to backend
-    context: Only works in development mode, not in standalone production builds
+    context: Works in development and standalone production builds; the Docker smoke test verifies authenticated calls through the Next.js proxy to the backend
 
 
   - term: Feature Key

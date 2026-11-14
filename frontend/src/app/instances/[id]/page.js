@@ -17,6 +17,7 @@ import { formatDate, formatRelativeTime, getStatusColor, getSeverityColor, getVe
 import { useState, useMemo, Fragment, useRef } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
+import { useParams } from 'next/navigation';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -110,7 +111,7 @@ const uptimeFields = [
 
 const STATUS_TEXT = { online: 'Online', offline: 'Nicht erreichbar', locked: 'Gesperrt', unknown: 'Unbekannt' };
 
-export default function InstanceDetailPage({ params }) {
+export default function InstanceDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [patternRange, setPatternRange] = useState('14d');
   const [workflowFilter, setWorkflowFilter] = useState('active'); // 'active', 'inactive', 'all'
@@ -118,7 +119,7 @@ export default function InstanceDetailPage({ params }) {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const instanceId = params.id;
+  const { id: instanceId } = useParams();
   const { isPremium, isFeatureEnabled } = useLicense();
   const importEnabled = isFeatureEnabled(FEATURES.WORKFLOW_IMPORT);
   const backupsEnabled = isFeatureEnabled(FEATURES.BACKUP_SCHEDULED);
