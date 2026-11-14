@@ -39,7 +39,7 @@ Find out why an instance has problems: DNS and reachability, TLS certificate, n8
 
 ### 📊 Basic metrics
 
-Understand execution behavior at a glance.
+Understand execution behavior at a glance: failed executions grouped into error patterns, plus the latest workflow errors per instance.
 
 ### ✉️ Alerts
 
@@ -189,7 +189,8 @@ docker run --env-file .env -p 3000:3000 -p 8081:8081 controla
 * GET /api/instances/{id}
 * GET /api/instances/{id}/workflows
 * GET /api/instances/{id}/events
-* GET /api/instances/{id}/metrics
+* GET /api/instances/{id}/error-patterns – failed executions grouped by error
+* GET /api/instances/{id}/export – manual workflow export (ZIP)
 * GET /api/instances/{id}/diagnostics – diagnostic report (reachability, TLS, n8n health and readiness, API key, failed executions)
 
 ### License & features
@@ -211,7 +212,7 @@ See `.env.example` for all configuration options.
 
 ## 📦 License
 
-Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md). Previous releases remain under their originally published license (including AGPLv3).
+Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md); the decision and the CE/Premium boundary are recorded in [ADR-003](docs/04_decisions/ADR-003-open-core-apache-license.md). Previous releases remain under their originally published license (including AGPLv3).
 
 ---
 
