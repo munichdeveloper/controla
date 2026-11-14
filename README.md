@@ -1,5 +1,7 @@
 # Controla - Community Edition
 
+> **Branch `premium/frontend`:** This branch holds the part of the Community Edition frontend that goes into the Controla Premium Edition. It does not follow `main`; selected changes from `main` are cherry-picked here by pull request. For the current Community Edition, use `main` and the releases. Process: [docs/premium-frontend-branch.md](https://github.com/munichdeveloper/controla/blob/main/docs/premium-frontend-branch.md).
+
 [![Periodic Quality Review](https://github.com/munichdeveloper/controla/actions/workflows/periodic-quality-review.yml/badge.svg?branch=main)](https://github.com/munichdeveloper/controla/actions/workflows/periodic-quality-review.yml)
 
 Controla helps you run n8n reliably in production.
