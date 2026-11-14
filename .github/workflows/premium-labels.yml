@@ -1,0 +1,74 @@
+name: Premium labels
+
+# Labels for the premium/frontend promotion flow (docs/premium-frontend-branch.md).
+# Runs on pull_request_target so it also works for PRs opened by the promote
+# workflow. It never checks out or runs code from the PR.
+on:
+  pull_request_target:
+    types: [opened, reopened, closed]
+    branches: [premium/frontend]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  TARGET: premium/frontend
+  GH_TOKEN: ${{ github.token }}
+  PR: ${{ github.event.pull_request.number }}
+
+jobs:
+  label-promotion:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label promotion PR
+        run: |
+          gh label create premium:promotion --repo "$GITHUB_REPOSITORY" --color 5319e7 \
+            --description "PR that promotes main commits to premium/frontend" 2>/dev/null || true
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label premium:promotion
+
+  mark-promoted:
+    if: github.event.action == 'closed' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Label fully promoted source PRs
+        run: |
+          set -euo pipefail
+          gh label create premium:promoted --repo "$GITHUB_REPOSITORY" --color 0e8a16 \
+            --description "All commits of this main PR are on premium/frontend" 2>/dev/null || true
+          git fetch origin main "$TARGET"
+          picked=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/commits" --paginate --jq '.[].commit.message' \
+            | grep -oE 'cherry picked from commit [0-9a-f]{40}' | awk '{print $5}' | sort -u || true)
+          [ -n "$picked" ] || { echo "No cherry-pick trailers found"; exit 0; }
+          sources=$(for sha in $picked; do
+            gh api "repos/$GITHUB_REPOSITORY/commits/$sha/pulls" \
+              --jq '.[] | select(.merged_at != null and .base.ref == "main") | .number'
+          done | sort -un)
+          for src in $sources; do
+            merge=$(gh pr view "$src" --repo "$GITHUB_REPOSITORY" --json mergeCommit --jq '.mergeCommit.oid')
+            if [ "$(git rev-list --parents -n1 "$merge" | wc -w)" -gt 2 ]; then
+              needed=$(git rev-list --no-merges "$merge^1..$merge")
+            else
+              needed=$merge
+            fi
+            missing=0
+            for sha in $needed; do
+              git log "origin/$TARGET" --fixed-strings --grep="cherry picked from commit $sha" -1 --format=%H \
+                | grep -q . || missing=$((missing + 1))
+            done
+            if [ "$missing" -eq 0 ]; then
+              gh pr edit "$src" --repo "$GITHUB_REPOSITORY" --add-label premium:promoted
+              gh pr comment "$src" --repo "$GITHUB_REPOSITORY" --body "Promoted to \`$TARGET\` in #$PR."
+            else
+              gh pr comment "$src" --repo "$GITHUB_REPOSITORY" \
+                --body "Partially promoted to \`$TARGET\` in #$PR ($missing commit(s) still missing), so no \`premium:promoted\` label."
+            fi
+          done

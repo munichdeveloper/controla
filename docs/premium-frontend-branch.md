@@ -55,6 +55,32 @@ green CI alone does not authorize a bulk import from `main`.
 
 ## Promote selected changes
 
+### Automated (default)
+
+1. Go to **Actions → Premium promote → Run workflow** on `main` and enter the
+   merged `main` PR numbers, oldest dependency first (for example `90 101`).
+2. The workflow ([premium-promote.yml](../.github/workflows/premium-promote.yml))
+   collects each PR's commits (the squash commit, or the PR's own non-merge
+   commits for a merge commit), skips commits already on `premium/frontend`,
+   refuses commits touching `backend/` unless `allow_backend` is set, and
+   cherry-picks them with `-x` onto a fresh `promote/...` branch. On a conflict
+   it stops; then follow the manual steps below.
+3. It opens a PR against `premium/frontend` with the label `premium:promotion`
+   and the SHA table, and starts the Test workflow on the branch so the required
+   checks run (pushes made with `GITHUB_TOKEN` trigger no other workflows).
+4. Review the diff, wait for green checks, and merge with **Rebase and merge**.
+5. After the merge, [premium-labels.yml](../.github/workflows/premium-labels.yml)
+   reads the `cherry picked from commit` trailers and labels each source PR
+   `premium:promoted` once all of its commits are on `premium/frontend`, with a
+   comment linking the promotion PR. Partial promotions only get a comment. It
+   also labels manually opened PRs against `premium/frontend` with
+   `premium:promotion`.
+
+Rulesets currently require no approval because the project has one maintainer;
+the review in step 4 is the maintainer's own.
+
+### Manual
+
 Use a clean checkout with `origin` pointing to `munichdeveloper/controla`.
 Replace `REPLACE_WITH_FULL_SOURCE_SHA` below with a reviewed full commit SHA.
 
