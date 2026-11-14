@@ -89,5 +89,10 @@ merge:
     maxFiles: 60
     maxContextBytes: 250000
   postMergeWorkflows: [ docker-publish.yml ]
+  # Risk-based auto-merge (Johannes, 2026-11-14): Factory merges up to medium risk on its own, above that a person approves.
+  risk:
+    enabled: true
+    mode: enforce
+    autoMergeUpTo: medium
 deploy:
   enabled: false
