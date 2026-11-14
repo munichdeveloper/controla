@@ -63,6 +63,9 @@ notifications:
     maxPerRun: 20
     since: '2026-11-07T00:54:52Z' # Do not backfill earlier actions.
     events:
+      run_started:
+        enabled: true
+        channel: null
       issue_created:
         enabled: true
         channel: null
@@ -89,5 +92,10 @@ merge:
     maxFiles: 60
     maxContextBytes: 250000
   postMergeWorkflows: [ docker-publish.yml ]
+  # Risk-based auto-merge (Johannes, 2026-11-14): Factory merges up to medium risk on its own, above that a person approves.
+  risk:
+    enabled: true
+    mode: enforce
+    autoMergeUpTo: medium
 deploy:
   enabled: false
