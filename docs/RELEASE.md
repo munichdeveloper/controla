@@ -1,5 +1,10 @@
 # Releasing Controla CE
 
+Premium frontend promotion is independent of CE releases and Premium's fixed
+CE-backend Maven version. See [Premium frontend promotion](premium-frontend-branch.md)
+for the protected `premium/frontend` branch, selective cherry-picks and the
+manual Premium build switch.
+
 A release is cut by the **Release** workflow (`.github/workflows/release.yml`), not by
 creating a GitHub release by hand. The workflow publishes the artifacts first and creates
 the tag and the GitHub release last, so a release never exists without its artifacts.
