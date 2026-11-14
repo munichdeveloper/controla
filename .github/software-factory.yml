@@ -66,6 +66,9 @@ notifications:
       run_started:
         enabled: true
         channel: null
+      approval_required: # A PR above merge.risk.autoMergeUpTo waits for /harness approve.
+        enabled: true
+        channel: null
       issue_created:
         enabled: true
         channel: null
