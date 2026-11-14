@@ -13,3 +13,16 @@ export function featureEnabled(license: LicenseInfo | null, key: string): boolea
   return legacyPremium && legacyKeys.includes(key)
     && legacyKeys.every((known) => !Object.prototype.hasOwnProperty.call(license.features, known));
 }
+
+/**
+ * CE shows paid features as locked with an upgrade hint. Hosted editions (Solo/Agency) hide
+ * features the booked plan does not include instead of advertising them to paying customers.
+ */
+export function showsLockedFeatures(license: LicenseInfo | null): boolean {
+  return !isHostedEdition(license);
+}
+
+// 'Hosted Ops' / 'Premium Edition' are internal edition keys of hosted backends, not display names.
+export function isHostedEdition(license: LicenseInfo | null): boolean {
+  return license?.edition === 'Hosted Ops' || license?.edition === 'Premium Edition';
+}
