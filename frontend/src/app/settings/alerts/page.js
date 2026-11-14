@@ -11,7 +11,7 @@ import { ContainerAlertSettingsCard } from '@/components/alerts/ContainerAlertSe
 
 export default function AlertSettingsPage() {
   const queryClient = useQueryClient();
-  const { isFeatureEnabled, loading: licenseLoading } = useLicense();
+  const { isFeatureEnabled, showLockedFeatures, loading: licenseLoading } = useLicense();
   const workflowErrorEnabled = isFeatureEnabled('alert.workflow_error');
   const invalidApiKeyEnabled = isFeatureEnabled('alert.invalid_api_key');
 
@@ -190,7 +190,7 @@ export default function AlertSettingsPage() {
               </div>
             </div>
 
-            <div className="relative group">
+            {(workflowErrorEnabled || showLockedFeatures) && <div className="relative group">
               <div className={`flex items-start ${!workflowErrorEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <div className="flex items-center h-5">
                   <input
@@ -215,9 +215,9 @@ export default function AlertSettingsPage() {
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
               )}
-            </div>
+            </div>}
 
-            <div className="relative group">
+            {(invalidApiKeyEnabled || showLockedFeatures) && <div className="relative group">
               <div className={`flex items-start ${!invalidApiKeyEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <div className="flex items-center h-5">
                   <input
@@ -242,7 +242,7 @@ export default function AlertSettingsPage() {
                   <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                 </div>
               )}
-            </div>
+            </div>}
           </div>
 
           <div className="mt-8 pt-6 border-t border-border flex justify-end">

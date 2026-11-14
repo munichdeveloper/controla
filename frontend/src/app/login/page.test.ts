@@ -19,6 +19,7 @@ beforeEach(() => {
     error: false,
     isFeatureEnabled: () => false,
     isPremium: false,
+    showLockedFeatures: true,
     maxInstances: 3,
   });
 });

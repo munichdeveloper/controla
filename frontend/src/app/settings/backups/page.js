@@ -20,7 +20,7 @@ const RUN_TONE_CLASSES = {
 
 export default function BackupSettingsPage() {
   const queryClient = useQueryClient();
-  const { isFeatureEnabled, loading: licenseLoading } = useLicense();
+  const { isFeatureEnabled, showLockedFeatures, loading: licenseLoading } = useLicense();
   const backupsEnabled = isFeatureEnabled(FEATURES.BACKUP_SCHEDULED);
 
   const [formData, setFormData] = useState({
@@ -130,8 +130,19 @@ export default function BackupSettingsPage() {
     );
   }
 
+  if (!backupsEnabled && !showLockedFeatures) {
+    // Hosted plan without scheduled backups: no upgrade teaser for paying customers.
+    return (
+      <div>
+        <PageHeader eyebrow="Einstellungen" title="Backups" />
+        <div className="bg-card rounded-xl border border-border p-8 max-w-2xl text-muted">
+          Automatische Backups sind in deinem Tarif nicht enthalten.
+        </div>
+      </div>
+    );
+  }
+
   if (!backupsEnabled) {
-    // ... existing non-premium code ...
     return (
       <div>
         <PageHeader eyebrow="Einstellungen" title="Backups" />

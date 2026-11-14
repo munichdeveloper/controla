@@ -11,11 +11,13 @@ import { editionLabel, HOSTED_OFFER_NAME } from '@/lib/license/edition';
 import { getVersion } from '@/lib/api';
 import { Brand } from '@/components/Brand';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { FEATURES } from '@/lib/license/features';
 
-const links = [
+const allLinks = [
   { label: 'Instanzen', href: '/' },
   { label: 'Alerts', href: '/settings/alerts' },
-  { label: 'Backups', href: '/settings/backups' },
+  // Hosted plans without scheduled backups hide the entry; CE keeps it as upgrade teaser.
+  { label: 'Backups', href: '/settings/backups', feature: FEATURES.BACKUP_SCHEDULED },
 ] as const;
 
 function isActive(pathname: string | null, href: string) {
@@ -40,8 +42,9 @@ export function EditionChip() {
 
 function Navigation() {
   const { isAuthenticated, user, logout } = useAuth();
-  const { isPremium } = useLicense();
+  const { isPremium, isFeatureEnabled, showLockedFeatures } = useLicense();
   const pathname = usePathname();
+  const links = allLinks.filter((link) => !('feature' in link) || showLockedFeatures || isFeatureEnabled(link.feature));
   const [open, setOpen] = useState(false);
 
   useEffect(() => setOpen(false), [pathname]);

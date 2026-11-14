@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getLicenseInfo } from '../api';
 import { LicenseInfo } from '../types';
-import { featureEnabled } from './entitlements';
+import { featureEnabled, isHostedEdition, showsLockedFeatures } from './entitlements';
 import { editionLabel } from './edition';
 import { useAuth } from '../auth/AuthContext';
 import type { LoginResponse } from '../api';
@@ -14,6 +14,8 @@ interface LicenseContextType {
   error: boolean;
   isFeatureEnabled: (feature: string) => boolean;
   isPremium: boolean;
+  /** true: show unavailable paid features with an upgrade hint (CE); false: hide them (Solo/Agency). */
+  showLockedFeatures: boolean;
   maxInstances: number;
 }
 
@@ -61,8 +63,8 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     return featureEnabled(currentLicense, feature);
   };
 
-  // 'Hosted Ops' / 'Premium Edition' are internal edition keys of hosted backends, not display names.
-  const isPremium = currentLicense?.edition === 'Hosted Ops' || currentLicense?.edition === 'Premium Edition';
+  const isPremium = isHostedEdition(currentLicense);
+  const showLockedFeatures = showsLockedFeatures(currentLicense);
   const label = currentLicense?.edition ? editionLabel(currentLicense, isPremium) : null;
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const maxInstances = currentLicense?.tenantBound === false ? 0 : (currentLicense?.maxInstances ?? 0);
 
   return (
-    <LicenseContext.Provider value={{ license: currentLicense, loading: loading || loadedFor !== user, error, isFeatureEnabled, isPremium, maxInstances }}>
+    <LicenseContext.Provider value={{ license: currentLicense, loading: loading || loadedFor !== user, error, isFeatureEnabled, isPremium, showLockedFeatures, maxInstances }}>
       {children}
     </LicenseContext.Provider>
   );

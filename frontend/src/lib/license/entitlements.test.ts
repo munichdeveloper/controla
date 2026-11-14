@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featureEnabled } from './entitlements';
+import { featureEnabled, showsLockedFeatures } from './entitlements';
 import type { LicenseInfo } from '../types';
 
 const license = (features: Record<string, boolean>, edition = 'Premium Edition'): LicenseInfo =>
@@ -33,5 +33,11 @@ describe('server entitlements and version compatibility', () => {
       expect(featureEnabled(solo, key)).toBe(false);
     expect(featureEnabled({ ...license({}), plan: 'agency' }, 'workflow.import')).toBe(false);
     expect(featureEnabled(solo, 'diagnostics.report')).toBe(true);
+  });
+  it('shows locked paid features only in the Community Edition', () => {
+    expect(showsLockedFeatures(license({}, 'Community Edition'))).toBe(true);
+    expect(showsLockedFeatures(null)).toBe(true);
+    expect(showsLockedFeatures(license({}, 'Premium Edition'))).toBe(false);
+    expect(showsLockedFeatures(license({}, 'Hosted Ops'))).toBe(false);
   });
 });
