@@ -159,7 +159,7 @@ export default function BackupSettingsPage() {
             Automatische Backups
           </h3>
           <p className="text-muted mb-6">
-            Sichere deine Workflows automatisch auf Google Drive. Geplante Workflow-Exporte sind im Agency-Tarif enthalten.
+            Sichere deine Workflows automatisch auf Google Drive. Geplante Workflow-Exporte sind im Managed Hosting enthalten (Solo und Agency).
           </p>
           <a
             href="https://www.controla.dev/pricing"
