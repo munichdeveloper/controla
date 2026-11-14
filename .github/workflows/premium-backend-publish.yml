@@ -2,7 +2,8 @@ name: Premium backend publish
 
 # Lives only on premium/backend. Every merge to this branch builds the backend
 # library and publishes it to GitHub Packages as <CE base>-premium.<run>,
-# e.g. 1.3.0-premium.4. Premium pins that version in its pom.xml.
+# e.g. 1.3.0-premium.4, and tags the commit as premium-backend/<version>.
+# Premium pins that version in its pom.xml.
 # CE releases from main are not used by Premium anymore.
 on:
   push:
@@ -10,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # push the version tag
   packages: write
 
 concurrency:
@@ -53,9 +54,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Tag published version
+        run: |
+          TAG="premium-backend/$VERSION"
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
       - name: Summary
         run: |
           {
+            echo
+            echo "Tag: \`$TAG\`"
             echo
             echo "Pin in Premium pom.xml:"
             echo '```xml'
