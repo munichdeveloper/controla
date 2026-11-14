@@ -1,0 +1,138 @@
+name: Premium promote
+
+# Promote merged main PRs to premium/frontend (docs/premium-frontend-branch.md).
+# Start manually: Actions -> "Premium promote" -> Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      prs:
+        description: 'Merged main PR numbers, oldest dependency first (e.g. "90 101")'
+        required: true
+        type: string
+      allow_backend:
+        description: 'Allow commits that touch backend/ (normally not needed for Premium)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: premium-promote
+  cancel-in-progress: false
+
+env:
+  TARGET: premium/frontend
+  GH_TOKEN: ${{ github.token }}
+  PRS: ${{ inputs.prs }}
+  ALLOW_BACKEND: ${{ inputs.allow_backend }}
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure labels exist
+        run: |
+          gh label create premium:promotion --color 5319e7 \
+            --description "PR that promotes main commits to premium/frontend" 2>/dev/null || true
+          gh label create premium:promoted --color 0e8a16 \
+            --description "All commits of this main PR are on premium/frontend" 2>/dev/null || true
+
+      - name: Collect source commits
+        id: collect
+        run: |
+          set -euo pipefail
+          git fetch origin main "$TARGET"
+          prs=$(echo "$PRS" | tr ',#' '  ' | xargs -n1 | grep -E '^[0-9]+$' || true)
+          [ -n "$prs" ] || { echo "::error::No PR numbers given"; exit 1; }
+          : > shas.txt
+          : > table.md
+          for pr in $prs; do
+            info=$(gh pr view "$pr" --json state,baseRefName,mergeCommit,title,url)
+            state=$(jq -r .state <<<"$info"); base=$(jq -r .baseRefName <<<"$info")
+            merge=$(jq -r '.mergeCommit.oid // empty' <<<"$info")
+            title=$(jq -r .title <<<"$info"); url=$(jq -r .url <<<"$info")
+            if [ "$state" != MERGED ] || [ "$base" != main ] || [ -z "$merge" ]; then
+              echo "::error::#$pr is not a PR merged into main"; exit 1
+            fi
+            git merge-base --is-ancestor "$merge" origin/main \
+              || { echo "::error::Merge commit of #$pr is not on main"; exit 1; }
+            parents=$(git rev-list --parents -n1 "$merge" | wc -w)
+            if [ "$parents" -gt 2 ]; then
+              # Merge commit: take the PR's own non-merge commits, oldest first.
+              commits=$(git rev-list --no-merges --reverse "$merge^1..$merge")
+            else
+              # Squash merge: one commit. A multi-commit rebase merge cannot be
+              # reconstructed reliably, so refuse it.
+              n=$(gh pr view "$pr" --json commits --jq '.commits | length')
+              if [ "$n" -gt 1 ] && ! git log -1 --format=%s "$merge" | grep -q "(#$pr)"; then
+                echo "::error::#$pr looks like a rebase merge with $n commits; promote it manually"; exit 1
+              fi
+              commits=$merge
+            fi
+            for sha in $commits; do
+              if git log "origin/$TARGET" --fixed-strings --grep="cherry picked from commit $sha" -1 --format=%H | grep -q .; then
+                echo "::warning::$sha from #$pr is already on $TARGET, skipping"; continue
+              fi
+              if [ "$ALLOW_BACKEND" != true ] && git show --name-only --format= "$sha" | grep -q '^backend/'; then
+                echo "::error::$sha from #$pr touches backend/. Split it on main or rerun with allow_backend"; exit 1
+              fi
+              echo "$sha" >> shas.txt
+              echo "| \`$sha\` ([#$pr]($url)) | $title | fill after merge |" >> table.md
+            done
+          done
+          [ -s shas.txt ] || { echo "::error::Nothing to promote, everything is already on $TARGET"; exit 1; }
+          echo "list=$(echo $prs)" >> "$GITHUB_OUTPUT"
+          echo "slug=$(echo $prs | tr ' ' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Cherry-pick onto premium/frontend
+        env:
+          SLUG: ${{ steps.collect.outputs.slug }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="promote/pr-$SLUG-$GITHUB_RUN_ID"
+          git switch --create "$branch" "origin/$TARGET"
+          while read -r sha; do
+            if ! git cherry-pick -x "$sha"; then
+              git cherry-pick --abort || true
+              echo "::error::Conflict while cherry-picking $sha. Resolve it manually as described in docs/premium-frontend-branch.md"
+              exit 1
+            fi
+          done < shas.txt
+          [ -z "$(git rev-list --merges "origin/$TARGET..HEAD")" ]
+          git push origin "$branch"
+          echo "BRANCH=$branch" >> "$GITHUB_ENV"
+
+      - name: Open PR and start required checks
+        env:
+          LIST: ${{ steps.collect.outputs.list }}
+        run: |
+          set -euo pipefail
+          sources=$(echo "$LIST" | sed -E 's/([0-9]+)/#\1/g; s/ /, /g')
+          {
+            echo "Promotes $sources from \`main\` to \`$TARGET\`."
+            echo
+            echo "| Source SHA / source PR | Reason | Result SHA on Premium |"
+            echo "| --- | --- | --- |"
+            cat table.md
+            echo
+            echo "Merge with **Rebase and merge** so the \`cherry picked from commit\` trailers survive."
+            echo "After the merge, the source PRs get \`premium:promoted\` automatically."
+            echo
+            echo "_Created by the Premium promote workflow (run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)._"
+          } > body.md
+          gh pr create --base "$TARGET" --head "$BRANCH" \
+            --title "premium: promote $sources" --body-file body.md --label premium:promotion
+          # Pushes and PRs made with GITHUB_TOKEN do not trigger other workflows,
+          # so start the required checks explicitly on the promotion branch.
+          gh workflow run test.yml --ref "$BRANCH"
