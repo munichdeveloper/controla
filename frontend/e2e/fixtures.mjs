@@ -15,6 +15,8 @@ export async function mockApi(page, options = {}) {
     edition: premium ? 'Hosted Ops' : 'Community Edition',
     features: options.features ?? {
       'diagnostics.report': true,
+      'instances.archive': true,
+      'instances.delete': true,
       'alert.workflow_error': premium,
       'alert.invalid_api_key': premium,
       'backup.scheduled': premium,
@@ -32,7 +34,7 @@ export async function mockApi(page, options = {}) {
     const method = request.method();
     const token = request.headers().authorization?.replace('Bearer token-', '') || '';
     const username = token ? decodeURIComponent(token) : '';
-    state.calls.push({ method, path, username, data: request.postDataJSON() });
+    state.calls.push({ method, path, query: url.search, username, data: request.postDataJSON() });
     const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
     const text = (body, status) => route.fulfill({ status, body });
     if (path === '/license') {
@@ -54,7 +56,8 @@ export async function mockApi(page, options = {}) {
     if (path === '/instances' && method === 'GET') {
       if (options.instancesGate) await options.instancesGate;
       if (state.failInstances) return text('Simulierter Ladefehler', 503);
-      return reply(state.instances.map(item => ({ ...item, name: options.scopedInstances ? `Instanz für ${username}` : item.name })));
+      return reply(state.instances.filter(item => !item.archivedAt || url.searchParams.get('includeArchived') === 'true')
+        .map(item => ({ ...item, name: options.scopedInstances ? `Instanz für ${username}` : item.name })));
     }
     if (path === '/instances' && method === 'POST') {
       const input = request.postDataJSON();
@@ -65,7 +68,25 @@ export async function mockApi(page, options = {}) {
     if (/^\/instances\/[^/]+$/.test(path)) {
       const instance = state.instances.find(item => path.endsWith(`/${item.id}`));
       if (!instance) return text('Not found', 404);
+      if (method === 'DELETE') {
+        if (state.failDelete) return text('Löschen fehlgeschlagen', 500);
+        state.instances = state.instances.filter(item => item.id !== instance.id);
+        return route.fulfill({ status: 204 });
+      }
       if (method === 'PUT') Object.assign(instance, request.postDataJSON(), { name: `Gespeichert: ${request.postDataJSON().name}` });
+      return reply(instance);
+    }
+    if (/^\/instances\/[^/]+\/(archive|restore)$/.test(path) && method === 'POST') {
+      const instance = state.instances.find(item => path.split('/')[2] === item.id);
+      if (!instance) return text('Not found', 404);
+      if (path.endsWith('/archive')) {
+        instance.archivedAt = new Date().toISOString();
+        instance.slotAvailableAt = new Date(Date.now() + 6 * 3600000).toISOString();
+      } else {
+        if (state.restoreConflict) return reply({ code: 'instance_limit_exceeded', message: 'Kein Instanzplatz frei.' }, 409);
+        instance.archivedAt = null;
+        instance.slotAvailableAt = null;
+      }
       return reply(instance);
     }
     if (/^\/instances\/[^/]+\/error-patterns$/.test(path)) return reply([]);

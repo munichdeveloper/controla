@@ -10,6 +10,9 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -39,6 +43,19 @@ public class InstanceService {
     private final de.atstck.controla.license.LicenseService licenseService;
     private final de.atstck.controla.alerts.InstanceAlertHandler instanceAlertHandler;
     private final InstanceCredentialService credentialService;
+    private InstanceSlotPolicy slotPolicy = tenantId -> Duration.ofHours(6);
+    private List<InstanceLifecycleListener> lifecycleListeners = List.of();
+
+    /** Configure contributions without changing the constructor used by existing editions. */
+    public void configureLifecycle(InstanceSlotPolicy slotPolicy, List<InstanceLifecycleListener> listeners) {
+        this.slotPolicy = slotPolicy;
+        this.lifecycleListeners = List.copyOf(listeners);
+    }
+
+    @Autowired
+    void wireLifecycle(InstanceSlotPolicy policy, ObjectProvider<InstanceLifecycleListener> listeners) {
+        configureLifecycle(policy, listeners.orderedStream().toList());
+    }
 
     public InstanceService(CoreApiClient coreApiClient, InstanceRepository instanceRepository, N8nApiClient n8nApiClient, CryptoService cryptoService, de.atstck.controla.license.LicenseService licenseService, de.atstck.controla.alerts.InstanceAlertHandler instanceAlertHandler, InstanceCredentialService credentialService) {
         this.coreApiClient = coreApiClient;
@@ -54,10 +71,18 @@ public class InstanceService {
         return credentialService.getDecryptedApiKey(instance);
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<InstanceSummaryDto> getInstances() {
+        return getInstances(false);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public List<InstanceSummaryDto> getInstances(boolean includeArchived) {
         String tenantId = TenantContext.getTenantId();
+        instanceRepository.lockInstanceCreation(tenantId);
         // Lade alle Instanzen aus der lokalen Datenbank für den aktuellen Tenant
-        List<Instance> instances = instanceRepository.findByTenantId(tenantId);
+        List<Instance> instances = instanceRepository.findByTenantId(tenantId).stream()
+                .filter(instance -> includeArchived || instance.getArchivedAt() == null).toList();
 
         // Update status for all instances
         instances.forEach(this::updateInstanceStatus);
@@ -68,7 +93,9 @@ public class InstanceService {
                 .toList();
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public InstanceDetailDto getInstance(String id) {
+        instanceRepository.lockInstanceCreation(TenantContext.getTenantId());
         Instance instance = verifyOwnership(id);
         updateInstanceStatus(instance);
         instanceRepository.save(instance);
@@ -77,6 +104,7 @@ public class InstanceService {
 
     public List<WorkflowDto> getInstanceWorkflows(String id) {
         Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) return Collections.emptyList();
         String apiKey = getDecryptedApiKey(instance);
         if (apiKey == null) return Collections.emptyList();
         return n8nApiClient.getWorkflows(instance.getBaseUrl(), apiKey);
@@ -84,6 +112,7 @@ public class InstanceService {
 
     public List<EventDto> getInstanceEvents(String id, String type, Integer limit) {
         Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) return Collections.emptyList();
         String apiKey = getDecryptedApiKey(instance);
         if (apiKey == null) return Collections.emptyList();
 
@@ -97,6 +126,7 @@ public class InstanceService {
 
     public List<ErrorPatternDto> getInstanceErrorPatterns(String id, String range) {
         Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) return Collections.emptyList();
         String apiKey = getDecryptedApiKey(instance);
         if (apiKey == null) return Collections.emptyList();
 
@@ -151,8 +181,11 @@ public class InstanceService {
             // Serialize admission across backend processes, including tenants with no instances yet.
             // Under READ_COMMITTED, the following count sees the preceding creator's commit.
             instanceRepository.lockInstanceCreation(tenantId);
-            long currentCount = instanceRepository.countByTenantId(tenantId);
+            Instant now = Instant.now();
+            long currentCount = occupiedSlots(tenantId, now);
             if (currentCount >= maxInstances) {
+                Instant availableAt = lockedUrlAvailableAt(tenantId, createDto.getBaseUrl(), now);
+                if (availableAt != null) throw new InstanceSlotLockedException(availableAt);
                 throw new InstanceLimitExceededException(maxInstances, licenseService.getEditionName());
             }
         }
@@ -177,8 +210,11 @@ public class InstanceService {
         return toSummaryDto(saved);
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public InstanceSummaryDto updateInstance(String id, CreateInstanceDto updateDto) {
+        instanceRepository.lockInstanceCreation(TenantContext.getTenantId());
         Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) throw new IllegalStateException("Archivierte Instanzen können nicht bearbeitet werden.");
         String tenantId = TenantContext.getTenantId();
 
         if (updateDto.getName() != null) {
@@ -198,8 +234,117 @@ public class InstanceService {
         return toSummaryDto(saved);
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public InstanceSummaryDto archiveInstance(String id) {
+        instanceRepository.lockInstanceCreation(TenantContext.getTenantId());
+        Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() == null) {
+            instance.setArchivedAt(Instant.now());
+            lifecycleListeners.forEach(listener -> listener.onArchived(instance));
+            instanceRepository.save(instance);
+        }
+        return toSummaryDto(instance);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public InstanceSummaryDto restoreInstance(String id) {
+        String tenantId = TenantContext.getTenantId();
+        instanceRepository.lockInstanceCreation(tenantId);
+        Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) {
+            Instant now = Instant.now();
+            int max = licenseService.getMaxInstances();
+            // An archive within the lock period already reserves its own slot.
+            long ownReservation = availableAt(tenantId, instance.getArchivedAt()).isAfter(now) ? 1 : 0;
+            if (max != -1 && occupiedSlots(tenantId, now) - ownReservation >= max) {
+                throw new InstanceLimitExceededException(max, licenseService.getEditionName());
+            }
+            instance.setArchivedAt(null);
+            instance.setStatus("unknown");
+            // Do not send alerts for errors accumulated while monitoring was paused.
+            instance.setLastErrorCheck(LocalDateTime.now());
+            lifecycleListeners.forEach(listener -> listener.onRestored(instance));
+            instanceRepository.save(instance);
+        }
+        return toSummaryDto(instance);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void deleteInstance(String id, InstanceDeleteOptions options) {
+        String tenantId = TenantContext.getTenantId();
+        instanceRepository.lockInstanceCreation(tenantId);
+        Instance instance = verifyOwnership(id);
+        InstanceDeleteOptions effectiveOptions = options == null ? InstanceDeleteOptions.DEFAULT : options;
+        lifecycleListeners.forEach(listener -> listener.beforeDelete(instance, effectiveOptions));
+        instanceRepository.reserveDeletedSlot(tenantId, slotUrl(instance.getBaseUrl()), Instant.now());
+        instanceRepository.delete(instance);
+    }
+
+    private Instant availableAt(String tenantId, Instant since) {
+        return since.plus(slotPolicy.archiveSlotLock(tenantId));
+    }
+
+    private long occupiedSlots(String tenantId, Instant now) {
+        Instant cutoff = now.minus(slotPolicy.archiveSlotLock(tenantId));
+        return instanceRepository.countByTenantId(tenantId)
+                - instanceRepository.countByTenantIdAndArchivedAtLessThanEqual(tenantId, cutoff)
+                + instanceRepository.countReservedDeletedSlots(tenantId, cutoff);
+    }
+
+    private Instant lockedUrlAvailableAt(String tenantId, String baseUrl, Instant now) {
+        String url = slotUrl(baseUrl);
+        Instant archived = instanceRepository.findByTenantIdAndArchivedAtIsNotNull(tenantId).stream()
+                .filter(instance -> slotUrl(instance.getBaseUrl()).equals(url))
+                .map(Instance::getArchivedAt).max(Comparator.naturalOrder()).orElse(null);
+        Instant deleted = instanceRepository.latestSlotDeletion(tenantId, url).orElse(null);
+        Instant latest = archived == null ? deleted : deleted == null || archived.isAfter(deleted) ? archived : deleted;
+        if (latest == null) return null;
+        Instant until = availableAt(tenantId, latest);
+        return until.isAfter(now) ? until : null;
+    }
+
+    private String slotUrl(String baseUrl) {
+        String trimmed = baseUrl.trim();
+        java.net.URI uri;
+        try {
+            uri = java.net.URI.create(trimmed).normalize();
+        } catch (IllegalArgumentException exception) {
+            // Legacy entries with malformed URLs must still be deletable.
+            return trimmed;
+        }
+        if (uri.getScheme() == null || uri.getHost() == null) return trimmed;
+        String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
+        int port = uri.getPort();
+        String path = uri.getRawPath() == null ? "" : uri.getRawPath().replaceAll("/+$", "");
+        return scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT)
+                + (port == -1 || (port == 443 && scheme.equals("https")) || (port == 80 && scheme.equals("http")) ? "" : ":" + port)
+                + path + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery());
+    }
+
+    @Scheduled(fixedDelay = 3600000)
+    @Transactional
+    public void cleanExpiredSlotLocks() {
+        Instant now = Instant.now();
+        for (String tenantId : instanceRepository.tenantsWithSlotLocks()) {
+            instanceRepository.deleteExpiredSlotLocks(tenantId, now.minus(slotPolicy.archiveSlotLock(tenantId)));
+        }
+    }
+
+    /** Re-read under the tenant lock so a stale scheduler snapshot cannot restore or reinsert an instance. */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void refreshInstanceStatus(String externalId, String tenantId) {
+        instanceRepository.lockInstanceCreation(tenantId);
+        instanceRepository.findByExternalIdAndTenantId(externalId, tenantId)
+                .filter(instance -> instance.getArchivedAt() == null)
+                .ifPresent(instance -> {
+                    updateInstanceStatus(instance);
+                    instanceRepository.save(instance);
+                });
+    }
+
     public byte[] exportWorkflows(String id, List<String> workflowIds) {
         Instance instance = verifyOwnership(id);
+        if (instance.getArchivedAt() != null) throw new IllegalStateException("Die Überwachung dieser Instanz ist pausiert.");
         return exportWorkflows(instance, workflowIds);
     }
 
@@ -244,7 +389,7 @@ public class InstanceService {
     private Instance verifyOwnership(String externalId) {
         String tenantId = TenantContext.getTenantId();
         return instanceRepository.findByExternalIdAndTenantId(externalId, tenantId)
-                .orElseThrow(() -> new RuntimeException("Instance not found or access denied"));
+                .orElseThrow(() -> new NoSuchElementException("Instance not found"));
     }
 
     private InstanceSummaryDto toSummaryDto(Instance instance) {
@@ -254,8 +399,10 @@ public class InstanceService {
         dto.setBaseUrl(instance.getBaseUrl());
         dto.setStatus(instance.getStatus());
         dto.setVersion(instance.getVersion());
+        dto.setArchivedAt(instance.getArchivedAt());
+        dto.setSlotAvailableAt(instance.getArchivedAt() == null ? null : availableAt(instance.getTenantId(), instance.getArchivedAt()));
 
-        String latest = n8nApiClient.getLatestN8nVersion();
+        String latest = instance.getArchivedAt() == null ? n8nApiClient.getLatestN8nVersion() : null;
         dto.setLatestVersion(latest);
 
         dto.setLastSeenAt(instance.getLastSeenAt() != null ?
@@ -270,8 +417,10 @@ public class InstanceService {
         dto.setBaseUrl(instance.getBaseUrl());
         dto.setStatus(instance.getStatus());
         dto.setVersion(instance.getVersion());
+        dto.setArchivedAt(instance.getArchivedAt());
+        dto.setSlotAvailableAt(instance.getArchivedAt() == null ? null : availableAt(instance.getTenantId(), instance.getArchivedAt()));
 
-        String latest = n8nApiClient.getLatestN8nVersion();
+        String latest = instance.getArchivedAt() == null ? n8nApiClient.getLatestN8nVersion() : null;
         dto.setLatestVersion(latest);
 
         dto.setLastSeenAt(instance.getLastSeenAt() != null ?
@@ -282,6 +431,7 @@ public class InstanceService {
     }
 
     public void updateInstanceStatus(Instance instance) {
+        if (instance.getArchivedAt() != null) return;
         String oldStatus = instance.getStatus();
         String newStatus = oldStatus;
         boolean invalidApiKeyAlertTriggered = false;

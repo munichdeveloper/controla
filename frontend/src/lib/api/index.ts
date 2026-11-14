@@ -32,11 +32,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || '/api';
 
 export class ApiError extends Error {
   status: number;
+  code?: string;
+  availableAt?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string, availableAt?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
+    this.availableAt = availableAt;
   }
 }
 
@@ -72,9 +76,18 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    let errorBody;
+    try { errorBody = JSON.parse(errorText); } catch { /* Older endpoints return plain text. */ }
+    if (errorBody?.code) {
+      const hint = errorBody.availableAt
+        ? ` Platz wieder frei ab ${new Date(errorBody.availableAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}.`
+        : '';
+      throw new ApiError((errorBody.message || errorBody.code) + hint, response.status, errorBody.code, errorBody.availableAt);
+    }
     throw new ApiError(errorText || `API error: ${response.status} ${response.statusText}`, response.status);
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json();
 }
 
@@ -172,8 +185,22 @@ export async function getCurrentUser(): Promise<LoginResponse> {
 }
 
 // Instance API
-export async function getInstances(): Promise<InstanceSummary[]> {
-  return fetchApi<InstanceSummary[]>('/instances');
+export async function getInstances(includeArchived = false): Promise<InstanceSummary[]> {
+  return fetchApi<InstanceSummary[]>(`/instances${includeArchived === true ? '?includeArchived=true' : ''}`);
+}
+
+export async function archiveInstance(id: string): Promise<InstanceSummary> {
+  return fetchApi<InstanceSummary>(`/instances/${encodeURIComponent(id)}/archive`, { method: 'POST' });
+}
+
+export async function restoreInstance(id: string): Promise<InstanceSummary> {
+  return fetchApi<InstanceSummary>(`/instances/${encodeURIComponent(id)}/restore`, { method: 'POST' });
+}
+
+export async function deleteInstance(id: string, deleteExternalData = false): Promise<void> {
+  return fetchApi<void>(`/instances/${encodeURIComponent(id)}`, {
+    method: 'DELETE', body: JSON.stringify({ deleteExternalData }),
+  });
 }
 
 export interface CreateInstanceRequest {
