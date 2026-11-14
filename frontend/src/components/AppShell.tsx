@@ -20,6 +20,15 @@ const allLinks = [
   { label: 'Backups', href: '/settings/backups', feature: FEATURES.BACKUP_SCHEDULED },
 ] as const;
 
+// Auth pages render their own centered layout without the app chrome,
+// even when a still-valid token marks the user as signed in.
+const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password'];
+
+export function isAuthRoute(pathname: string | null) {
+  if (!pathname) return false;
+  return AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
 function isActive(pathname: string | null, href: string) {
   if (!pathname) return false;
   if (href === '/') return pathname === '/' || pathname.startsWith('/instances');
@@ -49,7 +58,7 @@ function Navigation() {
 
   useEffect(() => setOpen(false), [pathname]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || isAuthRoute(pathname)) {
     return null;
   }
 
@@ -141,6 +150,7 @@ function Navigation() {
 function Footer() {
   const { isAuthenticated } = useAuth();
   const { isPremium } = useLicense();
+  const pathname = usePathname();
   const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -157,7 +167,7 @@ function Footer() {
     }
   }, [isAuthenticated, isPremium]);
 
-  if (!isAuthenticated || !isPremium) {
+  if (!isAuthenticated || !isPremium || isAuthRoute(pathname)) {
     return null;
   }
 
