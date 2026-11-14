@@ -32,9 +32,11 @@ Controla uses a **single-container architecture** for the backend and frontend:
 
 | Port | Service | Description |
 |------|---------|-------------|
-| 3000 | Frontend | Next.js User Interface |
-| 8081 | Backend | Spring Boot REST API |
-| 5432 | PostgreSQL | Database (separate container) |
+| 3000 | Frontend | Next.js User Interface (bound to 127.0.0.1) |
+| 8081 | Backend | Spring Boot REST API (bound to 127.0.0.1) |
+| 5432 | PostgreSQL | Database (separate container, bound to 127.0.0.1) |
+
+The Compose file publishes all ports on `127.0.0.1` only, so they are reachable from the host but not from the network. On a server, put a reverse proxy with TLS in front (Coolify/Traefik, Caddy, nginx) that reaches the `controla` container on port 3000 over the Docker network. Docker port publishing bypasses host firewalls such as ufw, so do not publish these ports on all interfaces.
 
 ## Node.js toolchain and image verification
 
@@ -113,7 +115,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-controla}
       POSTGRES_USER: ${POSTGRES_USER:-controla_user}
@@ -129,8 +131,8 @@ services:
         NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
         BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
     ports:
-      - "3000:3000"
-      - "8081:8081"
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8081:8081"
     environment:
       SERVER_PORT: ${SERVER_PORT:-8081}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}

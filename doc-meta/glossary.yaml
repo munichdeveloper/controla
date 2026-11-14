@@ -7,7 +7,7 @@ terms:
 
   - term: Instance
     definition: A monitored n8n installation with unique API credentials
-    context: Community edition supports up to 3 instances
+    context: Community Edition has no product-side instance cap; capacity depends on self-hosted infrastructure
 
   - term: Tenant
     definition: Isolated data context for a user or organization
@@ -38,7 +38,7 @@ terms:
 
   - term: Rewrites
     definition: Next.js feature to proxy API requests from /api/* to backend
-    context: Only works in development mode, not in standalone production builds
+    context: Works in development and standalone production builds; the Docker smoke test verifies authenticated calls through the Next.js proxy to the backend
 
 
   - term: Feature Key

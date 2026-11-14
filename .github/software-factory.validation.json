@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "profile": "maven",
+  "javaVersion": "17",
+  "timeoutMinutes": 30,
+  "composeProjectPrefix": "controla-validation",
+  "environment": {}
+}

@@ -53,19 +53,19 @@ export function ContainerEventsTimeline({ externalId, service }: { externalId: s
           </button>
         </div>
       </div>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">Ereignisse konnten nicht geladen werden: {(error as Error).message}</p>}
-      {data && events.length === 0 && <p className="text-sm text-gray-500 dark:text-zinc-400">Keine Ereignisse im Zeitraum.</p>}
+      {error && <p className="text-sm text-danger">Ereignisse konnten nicht geladen werden: {(error as Error).message}</p>}
+      {data && events.length === 0 && <p className="text-sm text-muted">Keine Ereignisse im Zeitraum.</p>}
       <ol className="space-y-2 max-h-80 overflow-auto">
         {events.map((event, index) => (
           <li key={`${event.time}-${index}`} className="flex gap-3 text-sm">
-            <span className="font-mono text-xs text-gray-500 dark:text-zinc-500 whitespace-nowrap pt-0.5">{formatDate(event.time)}</span>
-            <span className={isBad(event) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-800 dark:text-zinc-200'}>
+            <span className="font-mono text-xs text-muted whitespace-nowrap pt-0.5">{formatDate(event.time)}</span>
+            <span className={isBad(event) ? 'text-danger font-medium' : 'text-foreground'}>
               {describe(event)}
             </span>
           </li>
         ))}
       </ol>
-      <p className="text-xs text-gray-500 dark:text-zinc-400 mt-3">Docker hält Ereignisse nur begrenzt vor; nach einem Neustart des Docker-Daemons fehlen ältere Einträge.</p>
+      <p className="text-xs text-muted mt-3">Docker hält Ereignisse nur begrenzt vor; nach einem Neustart des Docker-Daemons fehlen ältere Einträge.</p>
     </div>
   );
 }

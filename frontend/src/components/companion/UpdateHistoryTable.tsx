@@ -38,7 +38,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
+      <div className="p-4 bg-danger/5 text-danger rounded">
         {error}
       </div>
     );
@@ -46,7 +46,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
 
   if (history.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-center text-muted">
         Noch keine Updates durchgeführt.
       </div>
     );
@@ -55,51 +55,51 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'SUCCESS':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-primary/10 text-primary';
       case 'FAILED':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-danger/10 text-danger';
       case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-warning/10 text-warning';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-soft text-foreground';
     }
   };
 
   const getTriggerColor = (trigger: string) => {
     switch (trigger) {
       case 'AUTO':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'bg-soft text-foreground';
       case 'MANUAL':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+        return 'bg-soft text-foreground';
       case 'SCHEDULED':
-        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
+        return 'bg-soft text-foreground';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-soft text-foreground';
     }
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
       <table className="w-full">
-        <thead className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+        <thead className="bg-background border-b border-border">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Datum</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Von</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Nach</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Auslöser</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted">Datum</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted">Von</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted">Nach</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted">Auslöser</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
+        <tbody className="divide-y divide-border">
           {history.map((entry) => (
-            <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-              <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+            <tr key={entry.id} className="hover:bg-background">
+              <td className="px-4 py-3 text-sm text-foreground">
                 {new Date(entry.executedAt).toLocaleString('de-DE')}
               </td>
-              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
+              <td className="px-4 py-3 text-sm font-mono text-muted">
                 {entry.fromVersion}
               </td>
-              <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
+              <td className="px-4 py-3 text-sm font-mono text-muted">
                 {entry.toVersion}
               </td>
               <td className="px-4 py-3 text-sm">
@@ -116,7 +116,7 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
                 <td className="px-4 py-3 text-center">
                   <button
                     onClick={() => setExpandedError(expandedError === entry.id ? null : entry.id)}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    className="text-xs text-muted hover:text-muted"
                   >
                     {expandedError === entry.id ? '▼' : '▶'}
                   </button>
@@ -129,9 +129,9 @@ export function UpdateHistoryTable({ externalId }: UpdateHistoryTableProps) {
 
       {/* Error Details (expandable) */}
       {expandedError !== null && (
-        <div className="border-t border-gray-200 dark:border-zinc-700 bg-red-50 dark:bg-red-900/10 p-4">
-          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Fehlermeldung:</p>
-          <p className="text-xs text-red-700 dark:text-red-400 font-mono">
+        <div className="border-t border-border bg-danger/5 p-4">
+          <p className="text-xs text-muted font-semibold mb-1">Fehlermeldung:</p>
+          <p className="text-xs text-danger font-mono">
             {history.find((h) => h.id === expandedError)?.errorMessage}
           </p>
         </div>

@@ -26,7 +26,7 @@ export function SupportBundleButton({ externalId }: { externalId: string }) {
       <button onClick={download} disabled={loading} className={BUTTON_SECONDARY}>
         {loading ? 'Bundle wird erstellt…' : 'Support-Bundle herunterladen'}
       </button>
-      {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
+      {error && <span className="text-sm text-danger">{error}</span>}
     </div>
   );
 }

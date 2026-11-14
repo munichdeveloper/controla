@@ -2,10 +2,9 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: controla-postgres
     restart: unless-stopped
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-controla}
       POSTGRES_USER: ${POSTGRES_USER:-controla_user}
@@ -21,15 +20,16 @@ services:
       - controla-network
   # controla Backend & Frontend (combined in one container)
   controla:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+        NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-/api}
         BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
     ports:
-      - "3000:3000"
-      - "8081:8081"
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8081:8081"
     environment:
       SERVER_PORT: ${SERVER_PORT:-8081}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
@@ -54,7 +54,7 @@ services:
       PASSWORD_RESET_TOKEN_VALIDITY_HOURS: ${PASSWORD_RESET_TOKEN_VALIDITY_HOURS:-24}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8081/api}
-      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-http://localhost:8081/api}
+      NEXT_PUBLIC_BACKEND_BASE_URL: ${NEXT_PUBLIC_BACKEND_BASE_URL:-/api}
     depends_on:
       postgres:
         condition: service_healthy

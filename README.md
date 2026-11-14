@@ -39,7 +39,7 @@ Find out why an instance has problems: DNS and reachability, TLS certificate, n8
 
 ### 📊 Basic metrics
 
-Understand execution behavior at a glance.
+Understand execution behavior at a glance: failed executions grouped into error patterns, plus the latest workflow errors per instance.
 
 ### ✉️ Alerts
 
@@ -70,7 +70,7 @@ Controla focuses on **operations, monitoring and reliability**.
 ## 🏗️ Architecture
 
 * Backend: Spring Boot (Java 17)
-* Frontend: Next.js 14 (TypeScript, Tailwind, TanStack Query)
+* Frontend: Next.js 16, React 19 (TypeScript, Tailwind, TanStack Query)
 * Database: PostgreSQL 16 (H2 for development)
 * Auth: JWT (Spring Security)
 * Deployment: Docker Compose
@@ -95,7 +95,16 @@ This data is normalized and stored for:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Hostinger VPS
+
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/docker-hosting?compose_url=https%3A%2F%2Fraw.githubusercontent.com%2Fmunichdeveloper%2Fcontrola%2Frefs%2Fheads%2Fmain%2Fdocker-compose.hostinger.yml)
+
+The button loads the production Compose file. A configured Traefik proxy, DNS
+hostname and unique installation secrets are required. Follow the
+[Hostinger deployment guide](docs/HOSTINGER.md) before deploying; maintainers must
+publish the public container image once before the button is ready for use.
+
+### Local prerequisites
 
 * Docker & Docker Compose
 
@@ -122,19 +131,24 @@ After startup:
 
 ---
 
-## 📋 Community Edition Limits
+## 📋 Community Edition Scope
 
-* Up to 3 n8n instances
+* Unlimited connected n8n instances on your own infrastructure
 * Basic monitoring
 * Basic metrics
 * Email alerts
 
-The instance limit is enforced by the backend per tenant. Instance creation uses
-a PostgreSQL transaction and a tenant-scoped advisory lock, so concurrent requests
-and multiple backend processes cannot claim the same remaining slot. The Community
-license service returns a fixed limit of three; Hosted Ops replaces that service.
-These checks assume an unmodified backend and database. Operators with control of
-the source code or database can change or bypass them.
+The Community license reports `maxInstances: -1` (no product-side cap). Practical
+capacity depends on your infrastructure and workload; this is not a throughput or
+support SLA. Self-hosters operate and update Controla themselves. Manual workflow
+export remains included; workflow import, scheduled Google Drive exports and
+Enterprise/Companion features are not added by removing the instance cap.
+
+The hosted offer (Managed Hosting) replaces the license service: Solo is EUR 29/month for up to 10
+instances; Agency is EUR 79/month for up to 30 and adds import and scheduled Drive
+exports. Finite extension limits remain enforced per tenant using a PostgreSQL
+transaction and tenant-scoped advisory lock, including across backend processes.
+See [the confirmed CE decision](docs/CE_LIMIT_RECOMMENDATION.md).
 
 Run backend validation with `mvn -B -pl backend verify`. The concurrency tests use
 Testcontainers with PostgreSQL 16 and require a running Docker daemon.
@@ -147,7 +161,7 @@ Testcontainers with PostgreSQL 16 and require a running Docker daemon.
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api \
+  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=/api \
   --build-arg BACKEND_URL=http://localhost:8081/api \
   -t controla .
 ```
@@ -175,7 +189,8 @@ docker run --env-file .env -p 3000:3000 -p 8081:8081 controla
 * GET /api/instances/{id}
 * GET /api/instances/{id}/workflows
 * GET /api/instances/{id}/events
-* GET /api/instances/{id}/metrics
+* GET /api/instances/{id}/error-patterns – failed executions grouped by error
+* GET /api/instances/{id}/export – manual workflow export (ZIP)
 * GET /api/instances/{id}/diagnostics – diagnostic report (reachability, TLS, n8n health and readiness, API key, failed executions)
 
 ### License & features
@@ -197,7 +212,7 @@ See `.env.example` for all configuration options.
 
 ## 📦 License
 
-Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md). Previous releases remain under their originally published license (including AGPLv3).
+Controla Community Edition is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) and [licensing and distribution notes](docs/LICENSING.md); the decision and the CE/Premium boundary are recorded in [ADR-003](docs/04_decisions/ADR-003-open-core-apache-license.md). Previous releases remain under their originally published license (including AGPLv3).
 
 ---
 

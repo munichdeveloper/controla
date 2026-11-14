@@ -91,7 +91,24 @@ def main():
         assert any(path.endswith(".js") for path in assets), "Missing JavaScript assets"
         assert any(path.endswith(".css") for path in assets), "Missing CSS assets"
         for asset in dict.fromkeys(assets):
-            assert request(asset), f"Empty asset: {asset}"
+            content = request(asset)
+            assert content, f"Empty asset: {asset}"
+            if asset.endswith(".js"):
+                assert b"http://localhost:8081/api" not in content, f"Browser API points at localhost: {asset}"
+        wait_for(lambda: docker("inspect", "--format", "{{.State.Health.Status}}", app) == "healthy",
+                 "combined UI/API health check")
+        # A failed child must take down the combined container for Docker to restart it.
+        docker("exec", app, "bash", "-c", "kill -TERM $(pgrep -f '^java -jar /app/backend.jar$')")
+        wait_for(lambda: docker("inspect", "--format", "{{.State.Running}}", app) == "false",
+                 "supervisor after backend failure", timeout=20)
+        assert docker("inspect", "--format", "{{.State.ExitCode}}", app) != "0"
+        docker("start", app)
+        wait_for(lambda: docker("inspect", "--format", "{{.State.Health.Status}}", app) == "healthy",
+                 "health after restarting the combined service")
+        docker("exec", app, "bash", "-c", "kill -TERM $(pgrep -P 1 -f '^next-server')")
+        wait_for(lambda: docker("inspect", "--format", "{{.State.Running}}", app) == "false",
+                 "supervisor after frontend failure", timeout=20)
+        assert docker("inspect", "--format", "{{.State.ExitCode}}", app) != "0"
         print(f"Docker smoke passed: Node {node_version}, npm {npm_version}, PostgreSQL 16, "
               f"login, protected API, rewrite, standalone server and {len(set(assets))} static assets")
     except Exception as error:

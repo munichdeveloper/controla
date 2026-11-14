@@ -3,6 +3,12 @@
 **/.next
 **/target
 frontend/node
+frontend/test-results
+frontend/playwright-report
 .env
 frontend/.env
 **/.env*.local
+
+.env.*
+!*.example
+**/__pycache__

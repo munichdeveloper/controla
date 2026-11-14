@@ -6,7 +6,7 @@ services:
     container_name: controla-postgres
     restart: unless-stopped
     ports:
-      - "${POSTGRES_DEV_PORT:-5433}:5432"
+      - "127.0.0.1:${POSTGRES_DEV_PORT:-5433}:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-controla}
       POSTGRES_USER: ${POSTGRES_USER:-controla_user}

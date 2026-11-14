@@ -1,7 +1,7 @@
 ## Software Factory
 
-Software Factory v0.2.2 is installed through `.github/workflows/factory-manager.yml`,
-pinned to commit `5b9e785bcb396c51f717476273bf5f37a9cc46e7`; the independent Codex Harness is pinned to
+Software Factory v0.4.4 is installed through `.github/workflows/factory-manager.yml`,
+pinned to commit `4e6c3a2895e4e060062db4b9369a719bce2fe32d`; the independent Codex Harness is pinned to
 `8f1732c05c351af32bd25a6306a92f3bb06c1bad` (v0.3.2).
 Configuration is `.github/software-factory.yml`: autonomous policy for every
 supported action, including scope-expanding follow-ups; OpenAI plans tasks and
@@ -12,10 +12,25 @@ Issues, source files or prompts. Resource budgets remain active.
 Only Issues explicitly labeled `harness:managed` belong to SF. Those labels are
 SF's persisted compatibility vocabulary, independent of the retired harnesses.
 The coding worker edits and tests a checkout with read-only GitHub permissions;
-SF reauthorizes and publishes a PR in a separate job. Automatic PR merging and
-coding changes to workflow/agent configuration are unsupported. Product CI and
+SF reauthorizes and publishes a PR in a separate job. A separate mandatory AI
+reviewer may conditionally merge exact reviewed commits after fresh CI and GitHub
+review/branch gates. Green CI alone never approves a merge. Other same-repository
+PRs enter this process only with the `sf:automerge` label; `sf:blocked` stops it.
+AI decisions and reasons are recorded on the PR. The coding worker cannot edit
+workflow/agent configuration. GitHub may require a maintainer to select
+`Approve workflows to run` after a bot updates a PR. SF explains that gate and
+never grants or bypasses it. Separately dispatched tests do not replace the
+native PR required checks. Product CI and
 repository branch rules remain authoritative. Existing pi-spec-harness/Squad
 workflows have been retired; their historical Issues and files are not a queue.
+
+Slack notifications use the Actions secret `SLACK_BOT_TOKEN` and channel
+`C0CGJKK3EKS` (#ki-notification). Only SF-created Issues and bot-performed
+merges of SF PRs notify; human merges are excluded. Notification-only runs do
+not invoke a planner or worker. Do not put the Slack token in config or prompts.
+Both notification-capable jobs need PR write permission to persist receipts on
+adopted PRs. SF journals attempts before sending; ambiguous delivery or receipt
+failures block automatic resends until an operator reconciles actual Slack delivery.
 
 ## Projektkontext: Editionen (Open Core)
 
@@ -47,7 +62,7 @@ Controla wird in zwei Editionen betrieben, die sich ein Frontend teilen:
 
 ### Kopplung an Premium (Gotchas)
 
-- Premium bindet eine **feste CE-Version** aus GitHub Packages (`.github/workflows/maven-publish.yml`). CE-Änderungen kommen dort erst nach Release und Versions-Bump an.
+- Premium bindet eine **feste CE-Version** aus GitHub Packages (`.github/workflows/release.yml`, Ablauf in `docs/RELEASE.md`). CE-Änderungen kommen dort erst nach Release und Versions-Bump an.
 - Premium scannt CE-Pakete über eine **explizite Paketliste** (`@ComponentScan`, `@EnableJpaRepositories`, `@EntityScan`). Ein neues Paket unter `de.atstck.controla.*` bleibt in Premium unsichtbar, bis es dort ergänzt wird – plane das Premium-Update mit ein.
 - Flyway: CE-Migrationen nutzen `V1`–`V99`, Premium beginnt bei `V100`.
 - Aufrufe an vom Kunden eingetragene URLs (n8n-Basis-URL, Companion) laufen über `service/InstanceHttpClient`; dort greift die `InstanceTargetPolicy` auf die aufgelöste IP, auch bei Redirects; Redirects folgt der Client nur auf denselben Host, damit Credential-Header nicht weitergereicht werden. Interne Dienste nutzen das reguläre `restTemplate`.
