@@ -18,6 +18,6 @@ class LicenseControllerTest {
         Map<String, Object> info = controller.getLicenseInfo();
 
         assertThat(info).containsEntry("edition", "Community Edition").containsEntry("maxInstances", -1);
-        assertThat(info.get("features")).isEqualTo(Map.of("diagnostics.report", true));
+        assertThat(info.get("features")).isEqualTo(Map.of("diagnostics.report", true, "instances.archive", true, "instances.delete", true));
     }
 }

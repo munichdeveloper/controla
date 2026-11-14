@@ -66,6 +66,32 @@ class InstanceDiagnosticsServiceTest {
     }
 
     @Test
+    void archivedInstanceSkipsChecksAndPreviouslyCachedReport() {
+        AtomicInteger runs = new AtomicInteger();
+        DiagnosticCheck check = check("count", DiagnosticCategory.N8N, 1, (self, ctx) -> {
+            runs.incrementAndGet();
+            return DiagnosticResult.of(self).ok("active");
+        });
+        InstanceDiagnosticsService service = service(List.of(check), List.of());
+        try {
+            service.runForCurrentTenant("inst_1");
+            instance.setArchivedAt(Instant.now());
+            DiagnosticReportDto report = service.runForCurrentTenant("inst_1");
+            assertThat(report.overallStatus()).isEqualTo(DiagnosticStatus.SKIPPED);
+            assertThat(report.checks()).isEmpty();
+            assertThat(service.run(instance, "tenant-a").overallStatus()).isEqualTo(DiagnosticStatus.SKIPPED);
+            assertThat(runs.get()).isEqualTo(1);
+            service.onArchived(instance);
+            instance.setArchivedAt(null);
+            service.onRestored(instance);
+            service.runForCurrentTenant("inst_1");
+            assertThat(runs.get()).isEqualTo(2);
+        } finally {
+            service.shutdown();
+        }
+    }
+
+    @Test
     void isolatesExceptionsAndTimeoutsAsErrorResults() {
         DiagnosticCheck ok = check("a.ok", DiagnosticCategory.N8N, 1, (self, ctx) -> DiagnosticResult.of(self).ok("fine"));
         DiagnosticCheck throwing = check("a.throws", DiagnosticCategory.N8N, 2, (self, ctx) -> {

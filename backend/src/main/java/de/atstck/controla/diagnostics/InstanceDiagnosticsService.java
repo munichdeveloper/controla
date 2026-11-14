@@ -3,6 +3,8 @@ package de.atstck.controla.diagnostics;
 import de.atstck.controla.instance.Instance;
 import de.atstck.controla.instance.InstanceCredentialService;
 import de.atstck.controla.instance.InstanceRepository;
+import de.atstck.controla.instance.InstanceLifecycleListener;
+import de.atstck.controla.instance.InstanceDeleteOptions;
 import de.atstck.controla.security.TenantContext;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ import java.util.stream.Stream;
  * {@link DiagnosticConclusionProvider}s into one report.
  */
 @Service
-public class InstanceDiagnosticsService {
+public class InstanceDiagnosticsService implements InstanceLifecycleListener {
 
     private static final Logger logger = LoggerFactory.getLogger(InstanceDiagnosticsService.class);
 
@@ -51,6 +53,19 @@ public class InstanceDiagnosticsService {
     private final Clock clock;
     private final ExecutorService executor;
     private final Map<String, CachedReport> cache = new ConcurrentHashMap<>();
+
+    @Override
+    public void onArchived(Instance instance) { evict(instance); }
+
+    @Override
+    public void onRestored(Instance instance) { evict(instance); }
+
+    @Override
+    public void beforeDelete(Instance instance, InstanceDeleteOptions options) { evict(instance); }
+
+    private void evict(Instance instance) {
+        cache.remove(instance.getTenantId() + "/" + instance.getExternalId());
+    }
 
     @Autowired
     public InstanceDiagnosticsService(InstanceRepository instanceRepository,
@@ -97,6 +112,7 @@ public class InstanceDiagnosticsService {
         Instance instance = instanceRepository.findByExternalIdAndTenantId(externalId, tenantId)
                 .orElseThrow(() -> new NoSuchElementException("Instance not found: " + externalId));
 
+        if (instance.getArchivedAt() != null) return run(instance, tenantId);
         String cacheKey = tenantId + "/" + externalId;
         CachedReport cached = cache.get(cacheKey);
         Instant now = clock.instant();
@@ -117,6 +133,10 @@ public class InstanceDiagnosticsService {
      */
     public DiagnosticReportDto run(Instance instance, String tenantId) {
         Instant startedAt = clock.instant();
+        if (instance.getArchivedAt() != null) {
+            return new DiagnosticReportDto(instance.getExternalId(), startedAt, 0,
+                    DiagnosticStatus.SKIPPED, List.of(), List.of());
+        }
         long started = System.nanoTime();
         long deadline = started + totalTimeout.toNanos();
         DiagnosticContext context = new DiagnosticContext(

@@ -55,7 +55,7 @@ class DiagnosticsWiringTest {
             assertThat(context.getBeansOfType(DiagnosticCheck.class)).hasSize(6);
             assertThat(context.getBean(InstanceTargetPolicy.class)).isInstanceOf(AllowAllTargetPolicy.class);
             assertThat(context.getBean(LicenseController.class).getLicenseInfo().get("features"))
-                    .isEqualTo(Map.of("diagnostics.report", true));
+                    .isEqualTo(Map.of("diagnostics.report", true, "instances.archive", true, "instances.delete", true));
         }
     }
 

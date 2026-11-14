@@ -18,7 +18,8 @@ class FeatureRegistryTest {
     void communityFeaturesAreEnabledInCommunityEdition() {
         FeatureRegistry registry = new FeatureRegistry(List.of(new CommunityFeatures()), new CommunityLicenseService());
 
-        assertThat(registry.resolve()).containsExactly(Map.entry("diagnostics.report", true));
+        assertThat(registry.resolve()).containsOnly(Map.entry("diagnostics.report", true),
+                Map.entry("instances.archive", true), Map.entry("instances.delete", true));
     }
 
     @Test

@@ -123,8 +123,9 @@ class InstanceControllerTest {
         configureLicense(edition, limit, existing);
 
         mvc.perform(post("/api/instances").contentType(MediaType.APPLICATION_JSON).content(REQUEST))
-                .andExpect(status().isForbidden())
-                .andExpect(content().string("Maximale Anzahl an Instanzen (" + limit + ") für "
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("code").value("instance_limit_exceeded"))
+                .andExpect(jsonPath("message").value("Maximale Anzahl an Instanzen (" + limit + ") für "
                         + edition + " erreicht."));
 
         verify(repository).countByTenantId(TENANT);
@@ -155,7 +156,7 @@ class InstanceControllerTest {
         mvc.perform(post("/api/instances").param("maxInstances", "-1").param("edition", "Hosted Ops")
                         .header("X-Tenant-Id", "other-tenant")
                         .contentType(MediaType.APPLICATION_JSON).content(forged))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isConflict());
 
         verify(repository).lockInstanceCreation(TENANT);
         verify(repository).countByTenantId(TENANT);

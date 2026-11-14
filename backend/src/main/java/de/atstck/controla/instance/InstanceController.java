@@ -1,10 +1,14 @@
 package de.atstck.controla.instance;
 
 import de.atstck.controla.dto.*;
+import de.atstck.controla.license.CommunityFeatures;
+import de.atstck.controla.license.RequiresFeature;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * REST Controller für Instance-Endpoints.
@@ -26,13 +30,18 @@ public class InstanceController {
      * Liefert Liste aller Instanzen des aktuellen Tenants
      */
     @GetMapping
-    public ResponseEntity<List<InstanceSummaryDto>> getInstances() {
+    public ResponseEntity<List<InstanceSummaryDto>> getInstances(
+            @RequestParam(defaultValue = "false") boolean includeArchived) {
         try {
-            List<InstanceSummaryDto> instances = instanceService.getInstances();
+            List<InstanceSummaryDto> instances = instanceService.getInstances(includeArchived);
             return ResponseEntity.ok(instances);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    public ResponseEntity<List<InstanceSummaryDto>> getInstances() {
+        return getInstances(false);
     }
 
     /**
@@ -45,10 +54,48 @@ public class InstanceController {
             InstanceSummaryDto created = instanceService.createInstance(createDto);
             return ResponseEntity.status(201).body(created);
         } catch (InstanceLimitExceededException e) {
-            return ResponseEntity.status(403).body(e.getMessage());
+            return limitExceeded(e);
+        } catch (InstanceSlotLockedException e) {
+            return slotLocked(e);
         } catch (Exception e) {
             return ResponseEntity.status(400).body("Fehler beim Erstellen der Instanz: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/{id}/archive")
+    @RequiresFeature(CommunityFeatures.INSTANCES_ARCHIVE)
+    public ResponseEntity<InstanceSummaryDto> archiveInstance(@PathVariable String id) {
+        return ResponseEntity.ok(instanceService.archiveInstance(id));
+    }
+
+    @PostMapping("/{id}/restore")
+    @RequiresFeature(CommunityFeatures.INSTANCES_ARCHIVE)
+    public ResponseEntity<InstanceSummaryDto> restoreInstance(@PathVariable String id) {
+        return ResponseEntity.ok(instanceService.restoreInstance(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @RequiresFeature(CommunityFeatures.INSTANCES_DELETE)
+    public ResponseEntity<Void> deleteInstance(@PathVariable String id,
+            @RequestBody(required = false) InstanceDeleteOptions options) {
+        instanceService.deleteInstance(id, options == null ? InstanceDeleteOptions.DEFAULT : options);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Void> instanceNotFound(NoSuchElementException exception) {
+        return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(InstanceLimitExceededException.class)
+    public ResponseEntity<?> limitExceeded(InstanceLimitExceededException exception) {
+        return ResponseEntity.status(409).body(Map.of("code", "instance_limit_exceeded", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(InstanceSlotLockedException.class)
+    public ResponseEntity<?> slotLocked(InstanceSlotLockedException exception) {
+        return ResponseEntity.status(409).body(Map.of("code", "instance_slot_locked", "message", exception.getMessage(),
+                "availableAt", exception.getAvailableAt()));
     }
 
     /**

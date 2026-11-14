@@ -22,6 +22,7 @@ public class DefaultInstanceAlertHandler implements InstanceAlertHandler {
 
     @Override
     public void handleInvalidApiKey(Instance instance) {
+        if (instance.getArchivedAt() != null) return;
         // CE implementation: Do nothing or maybe log it.
         // Premium implementation will override this.
         logger.info("Invalid API key detected (CE no-op handler): tenantId={}, instanceId={}, instanceName={}",
@@ -30,6 +31,7 @@ public class DefaultInstanceAlertHandler implements InstanceAlertHandler {
 
     @Override
     public void handleInstanceOffline(Instance instance) {
+        if (instance.getArchivedAt() != null) return;
         logger.info("Evaluating offline alert: tenantId={}, instanceId={}, instanceName={}",
                 instance.getTenantId(), instance.getExternalId(), instance.getName());
         var settingsOptional = alertSettingsRepository.findByTenantId(instance.getTenantId());
@@ -51,6 +53,7 @@ public class DefaultInstanceAlertHandler implements InstanceAlertHandler {
 
     @Override
     public void handleInstanceOnline(Instance instance) {
+        if (instance.getArchivedAt() != null) return;
         logger.info("Evaluating online alert: tenantId={}, instanceId={}, instanceName={}",
                 instance.getTenantId(), instance.getExternalId(), instance.getName());
         var settingsOptional = alertSettingsRepository.findByTenantId(instance.getTenantId());
@@ -72,6 +75,7 @@ public class DefaultInstanceAlertHandler implements InstanceAlertHandler {
 
     @Override
     public void handleWorkflowError(Instance instance, String workflowName, String errorMessage) {
+        if (instance.getArchivedAt() != null) return;
         // CE implementation: Do nothing.
         // Premium implementation will override this.
         logger.info("Workflow error received (CE no-op handler): tenantId={}, instanceId={}, instanceName={}, workflowName={}",

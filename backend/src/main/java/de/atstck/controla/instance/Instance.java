@@ -2,6 +2,7 @@ package de.atstck.controla.instance;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "instances")
@@ -39,6 +40,13 @@ public class Instance {
 
     @Column(name = "last_error_check")
     private LocalDateTime lastErrorCheck;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    public Instant getArchivedAt() { return archivedAt; }
+
+    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
 
     @PrePersist
     protected void onCreate() {
