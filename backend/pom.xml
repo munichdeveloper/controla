@@ -12,19 +12,6 @@
     <artifactId>backend</artifactId>
     <name>Controla Backend Service</name>
 
-    <dependencyManagement>
-        <dependencies>
-            <!-- Docker 29 compatibility; Boot 3.2 manages the older Testcontainers 1.19 line. -->
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-bom</artifactId>
-                <version>1.21.4</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -79,6 +66,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+        </dependency>
+        <!-- Flyway 10+ ships database support as separate modules. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
         <dependency>
