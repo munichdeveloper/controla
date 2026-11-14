@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FEATURES } from '@/lib/license/features';
 import { useLicense } from '@/lib/license/LicenseContext';
 import { CompanionSettingsPanel } from './CompanionSettingsPanel';
 import { CompanionStatusCard, CompanionIndicatorDot } from './CompanionStatusCard';
@@ -15,11 +16,12 @@ interface CompanionSectionProps {
 }
 
 export function CompanionSection({ externalId }: CompanionSectionProps) {
-  const { isPremium, loading: licenseLoading } = useLicense();
+  const { isFeatureEnabled, loading: licenseLoading } = useLicense();
+  const companionEnabled = isFeatureEnabled(FEATURES.COMPANION_MANAGE);
   const [updateKey, setUpdateKey] = useState(0);
 
   // Polling für Status
-  const { status, isPolling } = useCompanionStatusPoller(externalId, true);
+  const { status, isPolling } = useCompanionStatusPoller(externalId, !licenseLoading && companionEnabled);
 
   // Trigger Statusaktualisierung nach Update
   const handleUpdateStarted = () => {
@@ -31,7 +33,7 @@ export function CompanionSection({ externalId }: CompanionSectionProps) {
     return <div className="p-4">Lädt…</div>;
   }
 
-  if (!isPremium) {
+  if (!companionEnabled) {
     return null;
   }
 
@@ -70,7 +72,7 @@ export function CompanionSection({ externalId }: CompanionSectionProps) {
       {/* Update History */}
       {status?.configured && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold mb-4 text-foreground">
             Update-Verlauf
           </h3>
           <UpdateHistoryTable externalId={externalId} />
@@ -81,10 +83,11 @@ export function CompanionSection({ externalId }: CompanionSectionProps) {
 }
 
 export function CompanionIndicator({ externalId }: { externalId: string }) {
-  const { isPremium, loading: licenseLoading } = useLicense();
-  const { status } = useCompanionStatusPoller(externalId, !licenseLoading && isPremium);
+  const { isFeatureEnabled, loading: licenseLoading } = useLicense();
+  const companionEnabled = isFeatureEnabled(FEATURES.COMPANION_MANAGE);
+  const { status } = useCompanionStatusPoller(externalId, !licenseLoading && companionEnabled);
 
-  if (licenseLoading || !isPremium) {
+  if (licenseLoading || !companionEnabled) {
     return null;
   }
 

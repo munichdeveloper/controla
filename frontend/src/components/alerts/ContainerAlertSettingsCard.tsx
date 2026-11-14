@@ -46,20 +46,20 @@ export function ContainerAlertSettingsCard() {
   if (!enabled) return null;
 
   return (
-    <div className="mt-8 bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-8">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-1">Container-Ereignisse</h3>
-      <p className="text-sm text-gray-500 dark:text-zinc-400 mb-6">
+    <div className="mt-8 bg-card rounded-xl border border-border p-8">
+      <h3 className="text-lg font-semibold text-foreground mb-1">Container-Ereignisse</h3>
+      <p className="text-sm text-muted mb-6">
         Erkannt über den n8n Companion der jeweiligen Instanz. Benachrichtigt wird über die oben eingerichteten Kanäle.
       </p>
       {loadError && (
-        <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+        <div className="mb-4 text-sm text-danger">
           Einstellungen konnten nicht geladen werden: {(loadError as Error).message}{' '}
           <button onClick={() => refetch()} className="underline">
             Erneut versuchen
           </button>
         </div>
       )}
-      {isLoading && <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">Lädt…</p>}
+      {isLoading && <p className="mb-4 text-sm text-muted">Lädt…</p>}
       <div className="space-y-4">
         {OPTIONS.map((option) => (
           <label key={option.key} className="flex items-start gap-3 cursor-pointer">
@@ -68,22 +68,22 @@ export function ContainerAlertSettingsCard() {
               checked={form[option.key]}
               disabled={!data}
               onChange={(e) => setForm((prev) => ({ ...prev, [option.key]: e.target.checked }))}
-              className="mt-1 h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+              className="mt-1 h-4 w-4 text-primary rounded border-border focus:ring-primary"
             />
             <span>
-              <span className="block text-sm font-medium text-gray-900 dark:text-zinc-100">{option.label}</span>
-              <span className="block text-sm text-gray-500 dark:text-zinc-400">{option.description}</span>
+              <span className="block text-sm font-medium text-foreground">{option.label}</span>
+              <span className="block text-sm text-muted">{option.description}</span>
             </span>
           </label>
         ))}
       </div>
-      {mutation.error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{(mutation.error as Error).message}</p>}
+      {mutation.error && <p className="mt-4 text-sm text-danger">{(mutation.error as Error).message}</p>}
       <div className="mt-6 flex justify-end items-center gap-3">
-        {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">Gespeichert</span>}
+        {saved && <span className="text-sm text-primary">Gespeichert</span>}
         <button
           onClick={() => mutation.mutate(form)}
           disabled={!data || mutation.isPending}
-          className="py-2 px-6 rounded-full text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+          className="py-2 px-6 rounded-lg text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {mutation.isPending ? 'Speichere...' : 'Speichern'}
         </button>

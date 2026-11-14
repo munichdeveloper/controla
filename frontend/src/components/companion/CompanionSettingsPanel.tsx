@@ -119,20 +119,20 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-700">
-      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+    <div className="bg-card p-6 rounded-xl border border-border">
+      <h3 className="text-lg font-semibold mb-4 text-foreground">
         Companion-Konfiguration
       </h3>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
+        <div className="mb-4 p-4 bg-danger/5 text-danger rounded">
           {error}
         </div>
       )}
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-muted mb-1">
             Host
           </label>
           <input
@@ -141,12 +141,12 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
             value={formData.host}
             onChange={handleInputChange}
             placeholder="z.B. 192.168.1.100"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-muted mb-1">
             Port
           </label>
           <input
@@ -154,12 +154,12 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
             name="port"
             value={formData.port}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-muted mb-1">
             API-Key
           </label>
           <div className="relative">
@@ -168,18 +168,18 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
               value={formData.apiKey}
               onChange={handleApiKeyChange}
               placeholder={config ? '●●●●●●●●●' : 'API-Key eingeben'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary"
             />
             <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-3 top-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="absolute right-3 top-2 text-muted hover:text-muted"
             >
               {showApiKey ? '👁️' : '👁️‍🗨️'}
             </button>
           </div>
           {config && !formData.apiKeyChanged && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               Aktueller Key: {config.apiKey}
             </p>
           )}
@@ -189,7 +189,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Speichert...' : 'Speichern'}
           </button>
@@ -197,7 +197,7 @@ export function CompanionSettingsPanel({ externalId }: CompanionSettingsPanelPro
             <button
               onClick={handleDelete}
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 border border-danger/40 text-danger rounded-lg hover:bg-danger/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Löscht...' : 'Löschen'}
             </button>

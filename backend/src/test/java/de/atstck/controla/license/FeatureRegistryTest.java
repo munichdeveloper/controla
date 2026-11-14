@@ -22,6 +22,25 @@ class FeatureRegistryTest {
     }
 
     @Test
+    void unlimitedCommunityCapacityDoesNotGrantPaidFeatures() {
+        FeatureProvider paidFeatures = () -> List.of(
+                FeatureDescriptor.premium("workflow.import"),
+                FeatureDescriptor.premium("backup.scheduled"),
+                FeatureDescriptor.premium("companion.manage"),
+                FeatureDescriptor.premium("companion.diagnostics.logs"),
+                FeatureDescriptor.premiumBehavior("alert.workflow_error"),
+                FeatureDescriptor.premiumBehavior("alert.api_key_invalid"));
+        CommunityLicenseService community = new CommunityLicenseService();
+        FeatureRegistry registry = new FeatureRegistry(List.of(new CommunityFeatures(), paidFeatures), community);
+
+        assertThat(community.getMaxInstances()).isEqualTo(-1);
+        assertThat(registry.resolve()).containsEntry("diagnostics.report", true);
+        for (FeatureDescriptor feature : paidFeatures.features()) {
+            assertThat(registry.isEnabled(feature.key())).as(feature.key()).isFalse();
+        }
+    }
+
+    @Test
     void premiumFeaturesFollowTheLicense() {
         LicenseService allEnabled = LicenseStubs.ALL_ENABLED;
 

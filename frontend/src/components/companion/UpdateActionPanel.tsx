@@ -135,20 +135,20 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-700">
-      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+    <div className="bg-card p-6 rounded-xl border border-border">
+      <h3 className="text-lg font-semibold mb-4 text-foreground">
         Update-Einstellungen
       </h3>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
+        <div className="mb-4 p-4 bg-danger/5 text-danger rounded">
           {error}
         </div>
       )}
 
       <div className="space-y-6">
         {/* Auto-Update */}
-        <div className="border-b border-gray-200 dark:border-zinc-700 pb-6">
+        <div className="border-b border-border pb-6">
           <div className="flex items-start gap-3">
             <input
               type="checkbox"
@@ -156,13 +156,13 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
               checked={autoUpdateEnabled}
               onChange={handleAutoUpdateToggle}
               disabled={saving || updating}
-              className="mt-1 w-4 h-4 text-emerald-600 dark:accent-emerald-500 rounded"
+              className="mt-1 w-4 h-4 text-primary rounded"
             />
             <div className="flex-1">
-              <label htmlFor="autoUpdate" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+              <label htmlFor="autoUpdate" className="text-sm font-medium text-foreground cursor-pointer">
                 Automatisch auf neueste Version aktualisieren
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-muted mt-1">
                 Auto-Update installiert immer die semantisch höchste verfügbare Version, auch wenn diese noch nicht als stable markiert ist.
               </p>
             </div>
@@ -170,14 +170,14 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
         </div>
 
         {/* Manual Update */}
-        <div className="border-b border-gray-200 dark:border-zinc-700 pb-6">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Sofortiges Update</h4>
+        <div className="border-b border-border pb-6">
+          <h4 className="font-medium text-foreground mb-3">Sofortiges Update</h4>
           <div className="flex gap-3">
             <select
               value={selectedVersion}
               onChange={(e) => setSelectedVersion(e.target.value)}
               disabled={saving || updating}
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+              className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary"
             >
               <option value="">Version wählen (optional)</option>
               {versions.map((v) => (
@@ -189,7 +189,7 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
             <button
               onClick={handleManualUpdate}
               disabled={saving || updating}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Wird…' : 'Jetzt'}
             </button>
@@ -198,10 +198,10 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
 
         {/* Scheduled Update */}
         <div>
-          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Geplantes Update</h4>
+          <h4 className="font-medium text-foreground mb-3">Geplantes Update</h4>
           {hasScheduled ? (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md mb-3">
-              <p className="text-sm text-blue-800 dark:text-blue-400">
+            <div className="p-4 bg-soft rounded-md mb-3">
+              <p className="text-sm text-foreground">
                 Update geplant für: <strong>{new Date(scheduledDate).toLocaleString('de-DE')}</strong>
               </p>
             </div>
@@ -212,15 +212,15 @@ export function UpdateActionPanel({ externalId, updating, onUpdateStarted }: Upd
               value={scheduledDate.split('T')[0] && scheduledDate.split('T')[1] ? scheduledDate.split('T').join('T').substring(0, 16) : ''}
               onChange={(e) => setScheduledDate(e.target.value)}
               disabled={saving || updating || hasScheduled}
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+              className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary"
             />
             <button
               onClick={hasScheduled ? handleCancelScheduled : handleScheduleUpdate}
               disabled={saving || updating}
-              className={`px-4 py-2 rounded-md text-white ${
+              className={`px-4 py-2 rounded-lg font-medium ${
                 hasScheduled
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  ? 'bg-danger text-on-primary hover:bg-danger/90'
+                  : 'border border-border bg-card text-foreground hover:bg-soft'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {saving ? 'Wird…' : hasScheduled ? 'Stornieren' : 'Planen'}

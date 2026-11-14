@@ -95,7 +95,16 @@ This data is normalized and stored for:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Hostinger VPS
+
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/docker-hosting?compose_url=https%3A%2F%2Fraw.githubusercontent.com%2Fmunichdeveloper%2Fcontrola%2Frefs%2Fheads%2Fmain%2Fdocker-compose.hostinger.yml)
+
+The button loads the production Compose file. A configured Traefik proxy, DNS
+hostname and unique installation secrets are required. Follow the
+[Hostinger deployment guide](docs/HOSTINGER.md) before deploying; maintainers must
+publish the public container image once before the button is ready for use.
+
+### Local prerequisites
 
 * Docker & Docker Compose
 
@@ -122,19 +131,24 @@ After startup:
 
 ---
 
-## 📋 Community Edition Limits
+## 📋 Community Edition Scope
 
-* Up to 3 n8n instances
+* Unlimited connected n8n instances on your own infrastructure
 * Basic monitoring
 * Basic metrics
 * Email alerts
 
-The instance limit is enforced by the backend per tenant. Instance creation uses
-a PostgreSQL transaction and a tenant-scoped advisory lock, so concurrent requests
-and multiple backend processes cannot claim the same remaining slot. The Community
-license service returns a fixed limit of three; Hosted Ops replaces that service.
-These checks assume an unmodified backend and database. Operators with control of
-the source code or database can change or bypass them.
+The Community license reports `maxInstances: -1` (no product-side cap). Practical
+capacity depends on your infrastructure and workload; this is not a throughput or
+support SLA. Self-hosters operate and update Controla themselves. Manual workflow
+export remains included; workflow import, scheduled Google Drive exports and
+Enterprise/Companion features are not added by removing the instance cap.
+
+The hosted offer (Managed Hosting) replaces the license service: Solo is EUR 29/month for up to 10
+instances; Agency is EUR 79/month for up to 30 and adds import and scheduled Drive
+exports. Finite extension limits remain enforced per tenant using a PostgreSQL
+transaction and tenant-scoped advisory lock, including across backend processes.
+See [the confirmed CE decision](docs/CE_LIMIT_RECOMMENDATION.md).
 
 Run backend validation with `mvn -B -pl backend verify`. The concurrency tests use
 Testcontainers with PostgreSQL 16 and require a running Docker daemon.
@@ -147,7 +161,7 @@ Testcontainers with PostgreSQL 16 and require a running Docker daemon.
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8081/api \
+  --build-arg NEXT_PUBLIC_BACKEND_BASE_URL=/api \
   --build-arg BACKEND_URL=http://localhost:8081/api \
   -t controla .
 ```

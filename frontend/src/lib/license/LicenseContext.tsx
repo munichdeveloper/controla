@@ -3,6 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getLicenseInfo } from '../api';
 import { LicenseInfo } from '../types';
+import { featureEnabled, isHostedEdition, showsLockedFeatures } from './entitlements';
+import { editionLabel } from './edition';
+import { useAuth } from '../auth/AuthContext';
+import type { LoginResponse } from '../api';
 
 interface LicenseContextType {
   license: LicenseInfo | null;
@@ -10,22 +14,29 @@ interface LicenseContextType {
   error: boolean;
   isFeatureEnabled: (feature: string) => boolean;
   isPremium: boolean;
+  /** true: show unavailable paid features with an upgrade hint (CE); false: hide them (Solo/Agency). */
+  showLockedFeatures: boolean;
   maxInstances: number;
 }
 
 const LicenseContext = createContext<LicenseContextType | undefined>(undefined);
 
 export function LicenseProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [loadedFor, setLoadedFor] = useState<LoginResponse | null | undefined>(undefined);
   const [license, setLicense] = useState<LicenseInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
+    setLicense(null);
     const controller = new AbortController();
     let active = true;
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    getLicenseInfo(controller.signal)
+    getLicenseInfo(controller.signal, !!user)
       .then((info) => {
         if (active) setLicense(info);
       })
@@ -37,7 +48,7 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
       })
       .finally(() => {
         clearTimeout(timeout);
-        if (active) setLoading(false);
+        if (active) { setLoadedFor(user); setLoading(false); }
       });
 
     return () => {
@@ -45,24 +56,24 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    if (license?.edition) {
-      document.title = `Controla - ${license.edition}`;
-    }
-  }, [license]);
-
+  const currentLicense = loadedFor === user ? license : null;
   const isFeatureEnabled = (feature: string) => {
-    if (!license) return false;
-    return !!license.features[feature];
+    return featureEnabled(currentLicense, feature);
   };
 
-  const isPremium = license?.edition === 'Hosted Ops' || license?.edition === 'Premium Edition';
-  const maxInstances = license?.maxInstances ?? 3;
+  const isPremium = isHostedEdition(currentLicense);
+  const showLockedFeatures = showsLockedFeatures(currentLicense);
+  const label = currentLicense?.edition ? editionLabel(currentLicense, isPremium) : null;
+
+  useEffect(() => {
+    if (label) document.title = `Controla - ${label}`;
+  }, [label]);
+  const maxInstances = currentLicense?.tenantBound === false ? 0 : (currentLicense?.maxInstances ?? 0);
 
   return (
-    <LicenseContext.Provider value={{ license, loading, error, isFeatureEnabled, isPremium, maxInstances }}>
+    <LicenseContext.Provider value={{ license: currentLicense, loading: loading || loadedFor !== user, error, isFeatureEnabled, isPremium, showLockedFeatures, maxInstances }}>
       {children}
     </LicenseContext.Provider>
   );

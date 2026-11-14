@@ -4,6 +4,16 @@ import { getLicenseInfo } from './index';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('getLicenseInfo', () => {
+  it('sends the authenticated token only when tenant entitlements are requested', async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ edition: 'Premium Edition', maxInstances: 10 }));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('localStorage', { getItem: () => 'verified-login-token' });
+    await getLicenseInfo(undefined, true);
+    expect(fetch).toHaveBeenCalledWith('/api/license', {
+      cache: 'no-store', signal: undefined, headers: { Authorization: 'Bearer verified-login-token' },
+    });
+  });
   it('loads the public license without a login token or cached response', async () => {
     const fetch = vi.fn().mockResolvedValue(Response.json({ edition: 'Community Edition' }));
     vi.stubGlobal('fetch', fetch);

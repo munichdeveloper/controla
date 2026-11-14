@@ -5,7 +5,7 @@ public class CommunityLicenseService implements LicenseService {
 
     @Override
     public int getMaxInstances() {
-        return 3;
+        return -1;
     }
 
     @Override

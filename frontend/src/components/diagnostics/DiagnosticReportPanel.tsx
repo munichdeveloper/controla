@@ -42,7 +42,7 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
         <div>
           <h3 className={`${CARD_TITLE} mb-1`}>Diagnosebericht</h3>
           {report && (
-            <p className="text-xs text-gray-500 dark:text-zinc-400">
+            <p className="text-xs text-muted">
               Erstellt {formatDate(report.generatedAt)} · {report.checks.length} Prüfungen · {report.durationMs} ms
             </p>
           )}
@@ -60,15 +60,15 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded text-sm">
+        <div className="mb-4 p-4 bg-danger/5 text-danger rounded text-sm">
           Der Diagnosebericht konnte nicht erstellt werden: {(error as Error).message}
         </div>
       )}
 
-      {!report && isFetching && <p className="text-sm text-gray-500 dark:text-zinc-400">Prüfungen laufen…</p>}
+      {!report && isFetching && <p className="text-sm text-muted">Prüfungen laufen…</p>}
 
       {report?.incomplete && (
-        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded text-sm">
+        <div className="mb-4 p-3 bg-warning/5 text-warning rounded text-sm">
           {report.incompleteChecks ?? 1} Prüfung(en) nicht abgeschlossen – der Gesamtstatus berücksichtigt nur die abgeschlossenen Prüfungen.
         </div>
       )}
@@ -91,10 +91,10 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
         <div className="space-y-6">
           {Object.entries(grouped).map(([category, checks]) => (
             <div key={category}>
-              <h4 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-zinc-500 mb-2">
+              <h4 className="font-mono text-[10px] uppercase tracking-wide text-muted mb-2">
                 {CATEGORY_LABEL[category] ?? category}
               </h4>
-              <div className="divide-y divide-gray-100 dark:divide-zinc-800 border border-gray-100 dark:border-zinc-800 rounded-lg">
+              <div className="divide-y divide-border border border-border rounded-lg">
                 {checks.map((check) => {
                   const hasDetails = Object.keys(check.details ?? {}).length > 0;
                   const isOpen = !!expanded[check.id];
@@ -103,21 +103,21 @@ export function DiagnosticReportPanel({ externalId }: { externalId: string }) {
                       <div className="p-3 flex items-start gap-3">
                         <StatusBadge status={check.status} incomplete={check.incomplete} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">{check.title}</p>
-                          <p className="text-sm text-gray-700 dark:text-zinc-300">{check.summary}</p>
-                          {check.hint && <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{check.hint}</p>}
+                          <p className="text-sm font-medium text-foreground">{check.title}</p>
+                          <p className="text-sm text-muted">{check.summary}</p>
+                          {check.hint && <p className="text-xs text-muted mt-1">{check.hint}</p>}
                         </div>
                         {hasDetails && (
                           <button
                             onClick={() => setExpanded((prev) => ({ ...prev, [check.id]: !isOpen }))}
-                            className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline whitespace-nowrap"
+                            className="text-xs text-primary hover:underline whitespace-nowrap"
                           >
                             {isOpen ? 'Details ausblenden' : 'Details'}
                           </button>
                         )}
                       </div>
                       {hasDetails && isOpen && (
-                        <pre className="mx-3 mb-3 p-3 bg-gray-50 dark:bg-zinc-800 rounded text-xs font-mono overflow-auto text-gray-700 dark:text-zinc-300">
+                        <pre className="mx-3 mb-3 p-3 bg-background rounded text-xs font-mono overflow-auto text-muted">
                           {JSON.stringify(check.details, null, 2)}
                         </pre>
                       )}

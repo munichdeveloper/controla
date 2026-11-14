@@ -21,11 +21,11 @@ export const STATUS_LABEL: Record<DiagnosticStatus, string> = {
 };
 
 export const STATUS_BADGE: Record<DiagnosticStatus, string> = {
-  OK: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/30',
-  WARN: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/30',
-  FAIL: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900/30',
-  ERROR: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900/30',
-  SKIPPED: 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
+  OK: 'bg-primary/5 text-primary border-primary/20',
+  WARN: 'bg-warning/5 text-warning border-warning/20',
+  FAIL: 'bg-danger/5 text-danger border-danger/20',
+  ERROR: 'bg-danger/5 text-danger border-danger/20',
+  SKIPPED: 'bg-background text-muted border-border',
 };
 
 export const CATEGORY_LABEL: Record<string, string> = {
@@ -37,9 +37,9 @@ export const CATEGORY_LABEL: Record<string, string> = {
   LOGS: 'Logs',
 };
 
-export const CARD = 'bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-700';
-export const CARD_TITLE = 'text-lg font-semibold mb-4 text-gray-900 dark:text-white';
+export const CARD = 'bg-card p-6 rounded-xl border border-border';
+export const CARD_TITLE = 'text-lg font-semibold mb-4 text-foreground';
 export const BUTTON_SECONDARY =
-  'px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed';
+  'px-3 py-1.5 text-sm rounded-md border border-border text-muted hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed';
 export const SELECT =
-  'px-2 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 rounded-md dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500';
+  'px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-primary focus:border-primary';
