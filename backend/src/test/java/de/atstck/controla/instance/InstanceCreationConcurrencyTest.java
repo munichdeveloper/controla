@@ -172,6 +172,66 @@ class InstanceCreationConcurrencyTest {
         assertThat(repository(first).countByTenantId(tenant)).isEqualTo(5);
     }
 
+    @Test
+    void lifecycleReservationsExpireAndDeletionRemovesCredentials() {
+        when(license.getMaxInstances()).thenReturn(1);
+        String tenant = UUID.randomUUID().toString();
+        InstanceSummaryDto created = create(first, tenant);
+        InstanceService service = first.getBean(InstanceService.class);
+        TenantContext.setTenantId(tenant);
+
+        assertThat(repository(first).findByExternalIdAndTenantId(created.getId(), tenant).orElseThrow().getArchivedAt()).isNull();
+        service.archiveInstance(created.getId());
+        assertThatThrownBy(() -> service.createInstance(new CreateInstanceDto("Duplicate", created.getBaseUrl(), "key")))
+                .isInstanceOf(InstanceSlotLockedException.class);
+        assertThatThrownBy(() -> service.createInstance(new CreateInstanceDto("Other", "https://other.example.com", "key")))
+                .isInstanceOf(InstanceLimitExceededException.class);
+        // Restoring its still-reserved slot is permitted even at the cap.
+        service.restoreInstance(created.getId());
+        service.archiveInstance(created.getId());
+        jdbc.update("UPDATE instances SET archived_at = CURRENT_TIMESTAMP - INTERVAL '7 hours' WHERE tenant_id = ?", tenant);
+        assertThat(service.createInstance(new CreateInstanceDto("Other", "https://other.example.com", "key"))).isNotNull();
+        assertThatThrownBy(() -> service.restoreInstance(created.getId())).isInstanceOf(InstanceLimitExceededException.class);
+        service.deleteInstance(created.getId(), InstanceDeleteOptions.DEFAULT);
+        assertThat(repository(first).findByExternalIdAndTenantId(created.getId(), tenant)).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM instances WHERE tenant_id = ? AND api_key = 'encrypted-key'",
+                Long.class, tenant)).isEqualTo(1L); // Only the other active instance remains.
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM instance_slot_locks WHERE tenant_id = ?", Long.class, tenant)).isEqualTo(1L);
+        assertThatThrownBy(() -> service.createInstance(new CreateInstanceDto("Duplicate", created.getBaseUrl(), "key")))
+                .isInstanceOf(InstanceSlotLockedException.class);
+        jdbc.update("UPDATE instance_slot_locks SET deleted_at = CURRENT_TIMESTAMP - INTERVAL '7 hours' WHERE tenant_id = ?", tenant);
+        service.cleanExpiredSlotLocks();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM instance_slot_locks WHERE tenant_id = ?", Long.class, tenant)).isZero();
+    }
+
+    @Test
+    void listenerRunsInLifecycleTransactionAndFailuresRollBackStateAndReservations() {
+        when(license.getMaxInstances()).thenReturn(1);
+        String tenant = UUID.randomUUID().toString();
+        InstanceSummaryDto created = create(first, tenant);
+        TenantContext.setTenantId(tenant);
+        InstanceLifecycleListener listener = new InstanceLifecycleListener() {
+            private void fail() {
+                assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+                throw new IllegalStateException("listener failure");
+            }
+            @Override public void onArchived(Instance instance) { fail(); }
+            @Override public void onRestored(Instance instance) { fail(); }
+            @Override public void beforeDelete(Instance instance, InstanceDeleteOptions options) { fail(); }
+        };
+        try (var contributedContext = context(license, listener)) {
+            InstanceService service = contributedContext.getBean(InstanceService.class);
+            assertThatThrownBy(() -> service.archiveInstance(created.getId())).hasMessage("listener failure");
+            assertThat(repository(first).findByExternalIdAndTenantId(created.getId(), tenant).orElseThrow().getArchivedAt()).isNull();
+            jdbc.update("UPDATE instances SET archived_at = CURRENT_TIMESTAMP WHERE tenant_id = ?", tenant);
+            assertThatThrownBy(() -> service.restoreInstance(created.getId())).hasMessage("listener failure");
+            assertThat(repository(first).findByExternalIdAndTenantId(created.getId(), tenant).orElseThrow().getArchivedAt()).isNotNull();
+            assertThatThrownBy(() -> service.deleteInstance(created.getId(), new InstanceDeleteOptions(true))).hasMessage("listener failure");
+            assertThat(repository(first).findByExternalIdAndTenantId(created.getId(), tenant)).isPresent();
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM instance_slot_locks WHERE tenant_id = ?", Long.class, tenant)).isZero();
+        }
+    }
+
     private void pauseFirstCreation(CountDownLatch admitted, CountDownLatch release) {
         AtomicBoolean firstCall = new AtomicBoolean(true);
         SecretKey key = mock(SecretKey.class);
@@ -208,7 +268,12 @@ class InstanceCreationConcurrencyTest {
     }
 
     private AnnotationConfigApplicationContext context(LicenseService activeLicense) {
+        return context(activeLicense, null);
+    }
+
+    private AnnotationConfigApplicationContext context(LicenseService activeLicense, InstanceLifecycleListener contribution) {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        if (contribution != null) context.registerBean("lifecycleContribution", InstanceLifecycleListener.class, () -> contribution);
         context.registerBean(DataSource.class, () -> new DriverManagerDataSource(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
         context.registerBean("entityManagerFactory", LocalContainerEntityManagerFactoryBean.class, () -> {
@@ -228,7 +293,7 @@ class InstanceCreationConcurrencyTest {
         context.registerBean(LicenseService.class, () -> activeLicense);
         context.registerBean(InstanceAlertHandler.class, () -> mock(InstanceAlertHandler.class));
         context.registerBean(InstanceCredentialService.class, () -> new InstanceCredentialService(crypto));
-        context.register(Persistence.class, InstanceService.class);
+        context.register(Persistence.class, InstanceLifecycleConfiguration.class, InstanceService.class);
         context.refresh();
         return context;
     }

@@ -185,13 +185,39 @@ docker run --env-file .env -p 3000:3000 -p 8081:8081 controla
 ### Instances
 
 * GET /api/instances
+  (`?includeArchived=true` includes archived instances; responses expose `archivedAt` and `slotAvailableAt`)
 * POST /api/instances
+* POST /api/instances/{id}/archive – pause monitoring and move the instance to the archive
+* POST /api/instances/{id}/restore – restore an archived instance subject to the instance limit
+* DELETE /api/instances/{id} – permanently delete configuration and API key; optional JSON body: `{"deleteExternalData":false}`
 * GET /api/instances/{id}
 * GET /api/instances/{id}/workflows
 * GET /api/instances/{id}/events
 * GET /api/instances/{id}/error-patterns – failed executions grouped by error
 * GET /api/instances/{id}/export – manual workflow export (ZIP)
 * GET /api/instances/{id}/diagnostics – diagnostic report (reachability, TLS, n8n health and readiness, API key, failed executions)
+
+Instance lifecycle support is provided by the CE backend in this source version (1.3.0,
+migration V9). Archive/restore controls require `instances.archive`; permanent deletion
+requires `instances.delete`. Both keys are reported through `/api/license`. A missing or
+false key hides its controls, including when connecting a newer frontend to an older backend.
+
+`controla.instances.archive-slot-lock` is a duration, default `PT6H`. Active instances,
+archives still within that period, and temporary reservations for deleted instances count
+towards `maxInstances`. Deletion starts a new reservation at the deletion time; expired
+reservations do not count and are cleaned up hourly. Restore reuses its own unexpired
+reservation. At capacity, creation/restore returns `409 instance_limit_exceeded`; creation
+with the same URL as a still-reserved archive/deletion returns `409 instance_slot_locked`
+and `availableAt`. URL identity ignores host case, default ports and trailing slashes.
+Unlimited licenses do not reject creation on account of these reservations.
+
+Editions may provide an `InstanceSlotPolicy` bean to choose the duration per tenant.
+`InstanceLifecycleListener` contributions receive `onArchived`, `onRestored` and
+`beforeDelete(instance, options)` in the same transaction; exceptions roll back the operation.
+CE has no additional persisted instance-dependent tables. Contributions clean up their
+own dependent data and interpret `options.deleteExternalData()` (default `false`);
+CE itself does not delete the external n8n installation or its workflows. External side
+effects should be coordinated by the contributing module, for example through an outbox.
 
 ### License & features
 

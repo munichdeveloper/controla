@@ -8,6 +8,8 @@ export interface InstanceSummary {
   version: string;
   latestVersion?: string;
   lastSeenAt: string;
+  archivedAt?: string | null;
+  slotAvailableAt?: string | null;
 }
 
 export interface InstanceDetail {
@@ -19,6 +21,8 @@ export interface InstanceDetail {
   latestVersion?: string;
   lastSeenAt: string;
   createdAt: string;
+  archivedAt?: string | null;
+  slotAvailableAt?: string | null;
 }
 
 export interface Workflow {

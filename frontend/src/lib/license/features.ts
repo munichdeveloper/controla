@@ -4,6 +4,10 @@
  * means the UI must not render the control.
  */
 export const FEATURES = {
+  /** Community: POST /instances/{id}/archive and /restore (CE release containing V9). */
+  INSTANCES_ARCHIVE: 'instances.archive',
+  /** Community: DELETE /instances/{id} (CE release containing V9). */
+  INSTANCES_DELETE: 'instances.delete',
   WORKFLOW_IMPORT: 'workflow.import',
   BACKUP_SCHEDULED: 'backup.scheduled',
   COMPANION_MANAGE: 'companion.manage',

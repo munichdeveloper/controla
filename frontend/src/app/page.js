@@ -11,6 +11,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/Skeleton';
+import { FEATURES } from '@/lib/license/features';
+import { InstanceArchive, InstanceLifecycleActions, useSlotClock } from '@/components/instances/InstanceLifecycle';
 
 function AddInstanceModal({ isOpen, onClose, onSuccess }) {
   const [name, setName] = useState('');
@@ -303,11 +305,12 @@ function LatestErrorPanel({ latestError, event, loading }) {
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { license, maxInstances, isPremium, loading: licenseLoading, error: licenseError } = useLicense();
+  const { license, maxInstances, isPremium, loading: licenseLoading, error: licenseError, isFeatureEnabled } = useLicense();
   const router = useRouter();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingInstance, setEditingInstance] = useState(null);
   const [exportingId, setExportingId] = useState(null);
+  const now = useSlotClock();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -315,11 +318,14 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const { data: instances, isLoading, error } = useQuery({
-    queryKey: ['instances'],
-    queryFn: getInstances,
+  const includeArchived = isFeatureEnabled(FEATURES.INSTANCES_ARCHIVE) || isFeatureEnabled(FEATURES.INSTANCES_DELETE);
+  const { data: allInstances, isLoading, error } = useQuery({
+    queryKey: ['instances', { includeArchived }],
+    queryFn: () => getInstances(includeArchived),
     enabled: isAuthenticated,
   });
+
+  const instances = allInstances?.filter(instance => !instance.archivedAt);
 
   // Errors of the last 24 h per reachable instance, from the existing
   // error-pattern endpoint (CE and Premium). Offline/locked instances stay unknown.
@@ -405,7 +411,9 @@ export default function Dashboard() {
 
   // Without a loaded license the limit is unknown, not zero: keep creation disabled and say why.
   const licenseKnown = !!license;
-  const canAddMore = licenseKnown && (!instances || maxInstances === -1 || instances.length < maxInstances);
+  const occupiedSlots = (allInstances || []).filter(instance => !instance.archivedAt ||
+    (instance.slotAvailableAt && new Date(instance.slotAvailableAt).getTime() > now)).length;
+  const canAddMore = licenseKnown && (maxInstances === -1 || occupiedSlots < maxInstances);
   const hasLockedInstances = instances?.some(i => i.status === 'locked');
   const list = instances || [];
   const onlineCount = list.filter((i) => i.status === 'online').length;
@@ -590,6 +598,7 @@ export default function Dashboard() {
                         <div className="inline-flex items-center gap-1">
                           {editButton(instance)}
                           {exportButton(instance)}
+                          <InstanceLifecycleActions instance={instance} />
                         </div>
                       </td>
                     </tr>
@@ -615,6 +624,7 @@ export default function Dashboard() {
                   <div className="flex shrink-0 items-center">
                     {editButton(instance)}
                     {exportButton(instance)}
+                    <InstanceLifecycleActions instance={instance} />
                   </div>
                 </li>
               ))}
@@ -625,9 +635,11 @@ export default function Dashboard() {
         </>
       )}
 
-      {instances && maxInstances !== -1 && instances.length < maxInstances && instances.length > 0 && (
+      <InstanceArchive instances={allInstances || []} />
+
+      {instances && maxInstances !== -1 && occupiedSlots < maxInstances && instances.length > 0 && (
         <p className="mt-4 text-sm text-muted">
-          Du kannst noch {maxInstances - instances.length} weitere Instanz(en) hinzufügen.
+          Du kannst noch {maxInstances - occupiedSlots} weitere Instanz(en) hinzufügen.
         </p>
       )}
 

@@ -28,7 +28,7 @@ public class InstanceStatusChecker {
     public void checkInstances() {
         long startNanos = System.nanoTime();
         logger.info("Checking instance status... (scheduler run started)");
-        List<Instance> instances = instanceRepository.findAll();
+        List<Instance> instances = instanceRepository.findByArchivedAtIsNull();
         logger.info("Scheduler fetched {} instance(s) for status check", instances.size());
 
         int successCount = 0;
@@ -38,8 +38,7 @@ public class InstanceStatusChecker {
             try {
                 logger.debug("Starting instance status update: tenantId={}, instanceId={}, instanceName={}, currentStatus={}",
                         instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getStatus());
-                instanceService.updateInstanceStatus(instance);
-                instanceRepository.save(instance);
+                instanceService.refreshInstanceStatus(instance.getExternalId(), instance.getTenantId());
                 logger.debug("Finished instance status update: tenantId={}, instanceId={}, instanceName={}, resultingStatus={}",
                         instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getStatus());
                 successCount++;
