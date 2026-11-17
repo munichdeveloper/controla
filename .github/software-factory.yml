@@ -48,7 +48,7 @@ workers:
     enabled: false
   coding:
     enabled: true
-    agent: codex
+    agent: claude
     model: gpt-6.1-sol
     reasoningEffort: high
     validationWorkflow: null
