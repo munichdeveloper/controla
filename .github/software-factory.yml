@@ -37,7 +37,9 @@ execution:
   dispatchGraceMinutes: 10
   engine: temporal
 llm:
-  provider: openai
+  # Temporarily deterministic (2026-11-18): OpenAI planning answered HTTP 429 on every pass, so no worker started.
+  # Switch back to openai once the broker's OpenAI key has quota again.
+  provider: mock
   model: gpt-4.1-mini
   reasoningEffort: null
   maxOutputTokens: 4000
@@ -97,6 +99,7 @@ merge:
   maxReviewsPerRun: 1
   maxActionsPerRun: 1
   review:
+    provider: openai # keeps the independent OpenAI review while planning is deterministic (llm.provider mock)
     model: gpt-6.1-sol
     reasoningEffort: high
     timeoutSeconds: 120
