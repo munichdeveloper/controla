@@ -240,4 +240,35 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>n8n-contract</id>
+            <!-- Opt-in only (-Pn8n-contract): starts real n8n containers, so it never runs in the default build
+                 or in the required check test-backend. The pinned n8n versions live in N8nContractIT. -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <configuration>
+                            <includes>
+                                <include>**/N8nContractIT.java</include>
+                            </includes>
+                            <failIfNoTests>true</failIfNoTests>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
