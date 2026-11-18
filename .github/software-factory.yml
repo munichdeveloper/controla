@@ -48,9 +48,13 @@ workers:
     enabled: false
   coding:
     enabled: true
-    agent: codex
-    model: gpt-6.1-sol
-    reasoningEffort: high
+    agents:
+      - agent: claude
+        model: claude-opus-5-5
+        reasoningEffort: high
+      - agent: codex
+        model: gpt-6.1-sol
+        reasoningEffort: high
     validationWorkflow: null
   review: false
 reporting:
