@@ -1,5 +1,8 @@
 package de.atstck.controla.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.atstck.controla.alerts.triage.FailureSignal;
+
 import java.time.Instant;
 import java.util.Map;
 
@@ -9,6 +12,8 @@ public class EventDto {
     private String severity;
     private Instant occurredAt;
     private Map<String, Object> payload;
+    @JsonIgnore
+    private FailureSignal failureSignal;
 
     public EventDto() {
     }
@@ -51,6 +56,15 @@ public class EventDto {
 
     public void setPayload(Map<String, Object> payload) {
         this.payload = payload;
+    }
+
+    @JsonIgnore
+    public FailureSignal getFailureSignal() {
+        return failureSignal;
+    }
+
+    public void setFailureSignal(FailureSignal failureSignal) {
+        this.failureSignal = failureSignal;
     }
 }
 
