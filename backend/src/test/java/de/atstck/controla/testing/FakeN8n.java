@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * export, import and instance limits can be tested without real n8n containers.
  *
  * <p>One server simulates any number of instances under {@code /i/{name}}; the base URL of an instance
- * is {@link Instance#baseUrl()}. Behaviour follows n8n 1.x where Controla depends on it: API key in
+ * is {@link Instance#baseUrl()}. Behaviour follows n8n where Controla depends on it: API key in
  * {@code X-N8N-API-KEY} (401 otherwise), cursor pagination with a default page size of 100 and a
  * maximum of 250, string ids, and a workflow create endpoint that rejects read-only or unknown fields.
  * Where this differs from a real n8n, the real n8n wins; the contract test is the reference.
@@ -303,8 +303,12 @@ public final class FakeN8n implements AutoCloseable {
     private void handleInstance(HttpExchange exchange, Instance instance, String path) throws IOException {
         String method = exchange.getRequestMethod();
         if (path.equals("/") || path.isEmpty()) {
-            sendText(exchange, 200, "text/html", "<!DOCTYPE html><html><head><script>window.n8nVersion = '"
-                    + instance.version + "';</script></head><body>n8n</body></html>");
+            // Current n8n exposes its release in the base64-encoded Sentry config in the editor HTML.
+            String sentryConfig = Base64.getEncoder().encodeToString(JSON.writeValueAsBytes(
+                    Map.of("release", "n8n@" + instance.version)));
+            sendText(exchange, 200, "text/html", "<!DOCTYPE html><html><head>"
+                    + "<meta name=\"n8n:config:sentry\" content=\"" + sentryConfig
+                    + "\"></head><body>n8n</body></html>");
             return;
         }
         if (path.equals("/healthz") || path.equals("/healthz/readiness")) {

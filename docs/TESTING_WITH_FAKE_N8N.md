@@ -13,13 +13,63 @@ n8n-Container testen, in JUnit und als eigenständiger Prozess.
 | `POST /api/v1/workflows` | Nimmt nur `name`, `nodes`, `connections`, `settings`, `staticData` an; Felder wie `id`, `active`, `tags` ergeben 400 |
 | `GET /api/v1/workflows/{id}` | einzelner Workflow |
 | `GET /api/v1/executions` | Filter `status`, `workflowId`, `includeData`, Pagination; neueste zuerst; Fehlertext unter `data.resultData.error.message` |
-| `GET /`, `/healthz`, `/healthz/readiness` | Versions-HTML (`window.n8nVersion`) und Health-Antworten |
+| `GET /`, `/healthz`, `/healthz/readiness` | Versions-HTML (Base64-Metadatum `n8n:config:sentry`) und Health-Antworten |
 
 Ausfälle: `down()` schließt die Verbindung ohne Antwort (Controla: `offline`), `down(BAD_GATEWAY)` bzw.
 `down(UNAVAILABLE)` antworten mit 502/503 (Controla: `error`).
 
-Wo der Fake von einem echten n8n abweicht, gilt das echte n8n. Ein Contract-Test gegen `n8nio/n8n` per
-Testcontainers ist als Folgeschritt geplant.
+Wo der Fake von einem echten n8n abweicht, gilt das echte n8n. `N8nContractIT` prüft den gemeinsamen
+Consumer-Contract gegen echte `n8nio/n8n`-Container; `FakeN8nContractTest` prüft dieselben Assertions
+gegen den Fake im normalen Testlauf.
+
+## Contract-Test gegen n8n 2.x und 3.x
+
+Mit laufendem Docker-Daemon vom Repository-Root aus:
+
+```bash
+mvn -B -pl backend -Pn8n-contract verify
+```
+
+Das Profil `n8n-contract` startet nacheinander die Debian-Images der aktuellen 2.x- und 3.x-Linie.
+Die beiden Versionsselektoren stehen ausschließlich in `backend/pom.xml` unter
+`n8n.contract.version.2` und `n8n.contract.version.3`. Ein Hauptversionswert (`2` bzw. `3`) wählt den
+höchsten stabilen `<major>.<minor>.<patch>-debian`-Tag aus der paginierten Docker-Hub-API. Dadurch
+werden weder ungesicherte Major-Alias-Tags noch npm für die Image-Auswahl vorausgesetzt.
+Der Docker-Lauf braucht dafür neben den Image-Pulls Zugriff auf `hub.docker.com`.
+Für einen reproduzierbaren Lauf lassen sich konkrete Versionen dort eintragen oder per
+`-Dn8n.contract.version.2=<version>` und entsprechend `-Dn8n.contract.version.3=3.3.0` überschreiben;
+dann entfällt die Tag-Abfrage. Die gewählte genaue Version wird mit `n8n --version` im Container
+und mit der Erkennung durch `N8nApiClient` verglichen. Ein Image aus der falschen Hauptversion
+lässt den Test fehlschlagen.
+
+Die Vorbereitung erfolgt ausschließlich per HTTP: Owner über `POST /rest/owner/setup`, Abfrage aller
+Scopes über `GET /rest/api-keys/scopes`, Schlüssel über `POST /rest/api-keys`, Workflow über die
+Public-API und manueller Lauf über `POST /rest/workflows/run`. Der Workflow verbindet einen Manual
+Trigger mit Stop And Error. Der Test wartet auf die gespeicherte Fehler-Execution samt Fehlerdaten.
+Jeder Container hat eine frische Datenbank; Container und HTTP-Verbindungen werden danach geschlossen.
+
+`N8nApiContract` enthält die gemeinsamen Assertions für Online-Status, fehlenden und falschen API-Key,
+exakte Version, rohe und gemappte Workflows einschließlich Ausführungszeitpunkten, abgewiesene
+schreibgeschützte Workflow-Felder, Fehler-Executions mit und ohne Daten, exklusiven Zeitfilter sowie
+`/healthz` und `/healthz/readiness` mit den echten Diagnose-Checks. Die Produktionsaufrufe verwenden
+den echten `N8nApiClient`; zusätzliche HTTP-Assertions prüfen das Datenformat von `includeData`.
+Beim Fake werden nur die Execution und die erwartete Version über die Teststeuerung vorbereitet.
+
+`FakeN8nContractTest.contractRejectsADeliberateFakeDeviation` verändert absichtlich die vom Fake
+gemeldete Version und erwartet einen Contract-Fehler. Eine Implementierungsabweichung lässt sich
+ebenfalls prüfen: im Fake zum Beispiel den Fehlertext nicht mehr unter `data.resultData.error.message`
+ausgeben und `mvn -B -pl backend -Dtest=FakeN8nContractTest test` ausführen. Der positive Contract-Test
+muss dann fehlschlagen; die absichtliche Änderung anschließend zurücknehmen.
+
+Ohne Profil startet ein lokaler Standardlauf keine n8n-Container. In GitHub Actions aktiviert
+`GITHUB_ACTIONS=true` das Profil automatisch: der vorhandene Schritt `mvn -B clean verify` im Job
+`test-backend` von `.github/workflows/test.yml` führt damit beide Container-Contracts auf dem
+GitHub-hosted Runner aus. Ein fehlender Docker-Daemon führt zum Fehler, nicht zum Überspringen.
+Berichte liegen unter `backend/target/failsafe-reports/`, die schnellen Fake-Tests unter
+`backend/target/surefire-reports/`. Weitere Prüfschritte stehen in [VERIFICATION.md](VERIFICATION.md).
+
+Die Ermittlung der neuesten n8n-Version für das Produkt (`getLatestN8nVersion`, Issue #117) bleibt
+unverändert und wird von diesen Tests nicht aufgerufen.
 
 ## In JUnit
 
