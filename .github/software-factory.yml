@@ -112,5 +112,9 @@ merge:
     enabled: true
     mode: enforce
     autoMergeUpTo: medium
+    # Like merge.review: the assessor calls a real model while planning is deterministic (llm.provider mock);
+    # with provider llm it refuses and every PR counted as critical. The broker asks Claude first, OpenAI second.
+    assessor:
+      provider: openai
 deploy:
   enabled: false
