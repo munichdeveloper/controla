@@ -70,6 +70,10 @@ notifications:
         # A PR above merge.risk.autoMergeUpTo waits for /harness approve.
         enabled: true
         channel: null
+      grant_required:
+        # A task waits for nothing but a person's harness:ready (software-factory#127).
+        enabled: true
+        channel: null
       issue_created:
         enabled: true
         channel: null
