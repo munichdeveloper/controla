@@ -1,11 +1,13 @@
 package de.atstck.controla.service;
 
+import de.atstck.controla.alerts.triage.FailureSignalExtractor;
 import de.atstck.controla.dto.EventDto;
 import de.atstck.controla.dto.WorkflowDto;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -37,6 +39,8 @@ public class N8nApiClient {
 
     private final Map<NameKey, CachedNames> workflowNameCache = new java.util.concurrent.ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
+    @Value("${controla.triage.enabled:false}")
+    private boolean failureTriageEnabled;
     private String cachedLatestVersion;
     private long lastVersionCheck = 0;
     private static final long VERSION_CHECK_INTERVAL = 3600000; // 1 hour
@@ -390,6 +394,48 @@ public class N8nApiClient {
         return events;
     }
 
+    /** Metadata-only counts for shadow triage; pages until the time window ends, without loading names or execution data. */
+    public Map<String, Integer> fetchExecutionFailureCounts(String baseUrl, String apiKey, Instant startedAfter) {
+        String base = baseUrl.replaceAll("/$", "");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-N8N-API-KEY", apiKey);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        Map<String, Integer> counts = new HashMap<>();
+        Set<String> executions = new HashSet<>();
+        Set<String> cursors = new HashSet<>();
+        String cursor = null;
+        do {
+            String url = base + "/api/v1/executions?status=error&includeData=false&limit=" + SUMMARY_PAGE_SIZE
+                    + (cursor == null ? "" : "&cursor={cursor}");
+            Map<String, Object> variables = cursor == null ? Map.of() : Map.of("cursor", cursor);
+            Map<?, ?> body = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class, variables).getBody();
+            if (body == null || !(body.get("data") instanceof List<?> data)) {
+                throw new IllegalStateException("Invalid execution count response");
+            }
+            boolean reachedOlder = false;
+            for (Object item : data) {
+                if (!(item instanceof Map<?, ?> execution)) continue;
+                Instant started = parseInstant(execution.get("startedAt"));
+                if (started == null) continue;
+                if (!started.isAfter(startedAfter)) {
+                    reachedOlder = true;
+                    continue;
+                }
+                if (execution.get("id") != null && execution.get("workflowId") != null
+                        && executions.add(String.valueOf(execution.get("id")))) {
+                    counts.merge(String.valueOf(execution.get("workflowId")), 1, Integer::sum);
+                }
+            }
+            Object next = body.get("nextCursor");
+            cursor = next instanceof String text && !text.isBlank() ? text : null;
+            if (reachedOlder || cursor == null) break;
+            if (!cursors.add(cursor)) {
+                throw new IllegalStateException("Repeated execution count cursor");
+            }
+        } while (true);
+        return counts;
+    }
+
     private static Instant parseInstant(Object value) {
         if (!(value instanceof String text)) {
             return null;
@@ -445,6 +491,9 @@ public class N8nApiClient {
 
     private EventDto mapToEventDto(Map<String, Object> data) {
         EventDto dto = new EventDto();
+        if (failureTriageEnabled) {
+            dto.setFailureSignal(FailureSignalExtractor.fromExecution(data));
+        }
         dto.setId((String) data.get("id"));
         dto.setEventType("WORKFLOW_ERROR");
         dto.setSeverity("ERROR");

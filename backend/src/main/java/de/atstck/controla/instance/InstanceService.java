@@ -1,6 +1,7 @@
 package de.atstck.controla.instance;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.atstck.controla.alerts.triage.FailureTriageObserver;
 import de.atstck.controla.dto.*;
 import de.atstck.controla.security.TenantContext;
 import de.atstck.controla.service.CoreApiClient;
@@ -45,6 +46,12 @@ public class InstanceService {
     private final InstanceCredentialService credentialService;
     private InstanceSlotPolicy slotPolicy = tenantId -> Duration.ofHours(6);
     private List<InstanceLifecycleListener> lifecycleListeners = List.of();
+    private FailureTriageObserver failureTriageObserver;
+
+    @Autowired(required = false)
+    void configureFailureTriage(FailureTriageObserver observer) {
+        this.failureTriageObserver = observer;
+    }
 
     /** Configure contributions without changing the constructor used by existing editions. */
     public void configureLifecycle(InstanceSlotPolicy slotPolicy, List<InstanceLifecycleListener> listeners) {
@@ -553,6 +560,15 @@ public class InstanceService {
             instance.setLastErrorCheck(LocalDateTime.now());
             logger.debug("Finished workflow error check: tenantId={}, instanceId={}, instanceName={}, newLastErrorCheck={}",
                     instance.getTenantId(), instance.getExternalId(), instance.getName(), instance.getLastErrorCheck());
+
+            // Finish forwarding and advance the checkpoint before shadow work. Failures arriving
+            // during classification must remain in the next polling window.
+            if (failureTriageObserver != null && !errors.isEmpty()) {
+                Map<String, Integer> failureCounts = failureTriageObserver.failureCounts(instance, apiKey);
+                for (EventDto error : errors) {
+                    failureTriageObserver.observeForwarded(instance, error, failureCounts);
+                }
+            }
         } catch (Exception e) {
             // Log error but don't fail status update
             logger.error("Failed to check workflow errors: tenantId={}, instanceId={}, instanceName={}",
