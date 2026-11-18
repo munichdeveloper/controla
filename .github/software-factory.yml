@@ -48,9 +48,13 @@ workers:
     enabled: false
   coding:
     enabled: true
-    agent: codex
-    model: gpt-6.1-sol
-    reasoningEffort: high
+    agents:
+      - agent: claude
+        model: claude-opus-5-5
+        reasoningEffort: high
+      - agent: codex
+        model: gpt-6.1-sol
+        reasoningEffort: high
     validationWorkflow: null
   review: false
 reporting:
@@ -68,6 +72,10 @@ notifications:
         channel: null
       approval_required:
         # A PR above merge.risk.autoMergeUpTo waits for /harness approve.
+        enabled: true
+        channel: null
+      grant_required:
+        # A task waits for nothing but a person's harness:ready (software-factory#127).
         enabled: true
         channel: null
       issue_created:
