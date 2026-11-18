@@ -28,6 +28,8 @@ autonomy:
     cancel_worker: allow
     expand_scope: deny
     merge_pr: allow # Mandatory independent AI review and native GitHub gates still apply.
+  # Johannes 2026-11-18: fully autonomous; every harness:managed task starts without a person's harness:ready.
+  startGrant: none
 execution:
   dryRun: false
   maxParallelWorkers: 1
