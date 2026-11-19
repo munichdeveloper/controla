@@ -20,6 +20,54 @@ Die Kürzel verweisen auf die genauen Befehle und Bestehenskriterien weiter unte
 | Abhängigkeits-Update | **V**; bei npm-/Frontend- oder gemeinsamem Toolchain-Update zusätzlich **F**; bei Änderungen am ausgelieferten Laufzeit-/Container-Stack zusätzlich **C**. POM-/Lockfile-Diff und transitive Änderungen prüfen; [Lizenzinventar](LICENSE_INVENTORY.md) berücksichtigen. | Alte/neue Versionen, direkte und relevante transitive Änderungen, Ergebnisse der betroffenen Tests/Builds, Lizenz-/Sicherheitshinweise und bei Laufzeitänderungen Docker-Smoke-Ergebnis. |
 | Doku-only | **O**: Whitespace prüfen sowie relative Links, Dateipfade und dokumentierte Befehle mit den aktuellen Quellen abgleichen. Sobald sich ausführbarer Code, Abhängigkeiten oder Konfiguration ändern, gelten zusätzlich deren Zeilen. | Ergebnis von `git diff --check`, geprüfte Links/Pfade und Befehlsquellen; begründen, warum keine Laufzeitprüfung erforderlich ist. |
 
+## Pflicht für UI- und API-Änderungen: `npm run verify`
+
+Jede Änderung an Frontend-Seiten/Komponenten oder an Backend-API und Services
+(auch von Coding-Agents) muss zusätzlich zu den Prüfungen der Tabelle diesen
+Befehl ausführen und den Bericht prüfen. Er ersetzt **V** und **F** nicht.
+
+```sh
+cd frontend
+npm ci
+npm run verify
+```
+
+Der Befehl baut Backend-JAR (`mvn`) und Frontend, startet das Backend mit einer
+eigenen PostgreSQL-Test-Datenbank (lokale `initdb`/`pg_ctl`-Binaries, kein
+Docker), `FakeN8n` als eigenen Prozess (Instanzen: online, offline,
+Auth-Fehler, mit Fehler-Executions) und das Frontend. Danach läuft ein
+Playwright-Rundgang (Login, Instanzübersicht, Instanzdetail mit Fehlern,
+Alerts, Export/Import, Einstellungen) in Desktop- und 390-px-Ansicht. Der
+echte n8n bleibt den Contract-Tests vorbehalten.
+
+Ergebnis: `target/verify-report/report.md` (bestanden/fehlgeschlagen je Schritt),
+Screenshots (`*.png`) und Prozess-Logs (`*.log`) im selben Ordner. Bestanden:
+Exitcode 0. Jede Konsolenfehlermeldung, jede JavaScript-Ausnahme und jede
+5xx-Antwort lässt den betroffenen Schritt mit Meldung (Methode und Pfad)
+fehlschlagen. Der Import-Knopf ist Premium; in der CE wird er nicht geprüft.
+Chromium muss installiert sein (`npx playwright install --with-deps chromium`).
+
+Das Backend läuft als Produktions-JAR ohne Testprofil. FakeN8n auf 127.0.0.1
+ist trotzdem erreichbar, weil die Community Edition keine Zieladressen
+einschränkt (`AllowAllTargetPolicy`); eine zusätzliche Loopback-Freigabe gibt es
+nicht. Weil kein Mailserver läuft, schaltet der Lauf nur den Mail-Healthcheck ab
+(`MANAGEMENT_HEALTH_MAIL_ENABLED=false`). Das beim Start erzeugte
+Admin-Passwort steht in `backend.log` maskiert. Abbruch mit Strg+C beendet alle
+gestarteten Prozesse, entfernt die Wegwerf-Datenbank und schreibt den Bericht
+mit „Abbruch durch SIGINT“ (Exitcode 130).
+
+Unterstützt: Linux (geprüft) und macOS mit Homebrew-PostgreSQL. Windows wird
+nicht unterstützt (Prozessgruppen und Unix-Socket-Verzeichnis), dort WSL
+verwenden. `initdb` verweigert den Start als root; als root (z. B. in
+Containern) eine vorhandene Test-Datenbank über `VERIFY_DATABASE_URL` angeben.
+
+Optionale Umgebungsvariablen: `VERIFY_SKIP_BUILD=1` (vorhandene Builds nutzen),
+`VERIFY_DATABASE_URL`/`VERIFY_DATABASE_USER`/`VERIFY_DATABASE_PASSWORD` (vorhandene
+Test-Datenbank), `VERIFY_PG_BIN` (PostgreSQL-Binaries), `VERIFY_BACKEND_PORT`
+(Standard 8081). Selbsttest der Fehlermeldung: `VERIFY_BREAK_API=/api/instances`
+lässt diesen Endpunkt mit 500 antworten, der Lauf muss dann fehlschlagen.
+Ports 3027 und 8081 müssen frei sein.
+
 ## Voraussetzungen und Ausführungsort
 
 - Root-Befehle laufen im Repository-Root, Frontend-Befehle in `frontend/`.
@@ -178,5 +226,4 @@ dürfen keine Zugangsdaten oder Kundendaten enthalten.
   aktuellen Checkout gibt es dafür noch keinen ausführbaren Prüfbefehl. Sobald
   sie implementiert sind, den realen Befehl, die geprüften n8n-Versionen und die
   Bestehenskriterien hier bei **N** ergänzen und verbindlich machen.
-- Ein zusammenfassender Verifikationsbefehl für Agents ist ein separates Issue;
-  bis dahin gelten die einzelnen Befehle dieses Katalogs.
+- Ein CI-Job für `npm run verify` und der Verweis in `AGENTS.md` folgen separat.
