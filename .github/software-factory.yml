@@ -135,50 +135,158 @@ deploy:
 router:
   enabled: true
   model: typesafe/jev-1.14
-  minConfidence: 0.5
+  # Johannes 2026-11-19: Jev chooses freely from the full model x effort matrix. With 11 options an even split is 9 %,
+  # so 0.25 already means a clear lean; below it the configured workers.coding.agents run.
+  minConfidence: 0.25
   timeoutSeconds: 10
   coding:
     candidates:
+      - id: haiku-low
+        agent: claude
+        model: claude-haiku-5-5
+        reasoningEffort: low
+        description: "Trivial edits: typos, texts, config values, a one-line fix with an obvious place."
+      - id: haiku-medium
+        agent: claude
+        model: claude-haiku-5-5
+        reasoningEffort: medium
+        description: "Small, fully specified change in one or two files that follows an existing pattern."
+      - id: haiku-high
+        agent: claude
+        model: claude-haiku-5-5
+        reasoningEffort: high
+        description: "Small change in one area that needs some care, e.g. a simple test or a small UI tweak."
+      - id: sonnet-low
+        agent: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: low
+        description: "Routine contained change with clear acceptance criteria and little reasoning needed."
       - id: sonnet-medium
         agent: claude
         model: claude-sonnet-5-5
         reasoningEffort: medium
-        description: Clearly specified, contained changes in one area; bug fixes, small
-          features, texts, tests.
+        description: "Clearly specified, contained changes in one area; bug fixes, small features, texts, tests."
+      - id: sonnet-high
+        agent: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: high
+        description: "Medium feature touching a few files, or a bug whose cause still has to be found."
+      - id: opus-low
+        agent: claude
+        model: claude-opus-5-5
+        reasoningEffort: low
+        description: "Broad but well understood change where judgement matters more than deep reasoning."
+      - id: opus-medium
+        agent: claude
+        model: claude-opus-5-5
+        reasoningEffort: medium
+        description: "Changes across several modules or a non-trivial feature with some design decisions."
       - id: opus-high
         agent: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: Changes across several modules, new architecture, migrations,
-          security or hard debugging.
+        description: "New architecture, migrations, security, concurrency or hard debugging across modules."
+      - id: codex-medium
+        agent: codex
+        model: gpt-6.1-sol
+        reasoningEffort: medium
+        description: "Mechanical change across many files with a clear rule, e.g. renames or API updates."
       - id: codex-high
         agent: codex
         model: gpt-6.1-sol
         reasoningEffort: high
-        description: Mostly mechanical but wide changes, refactorings and renames across
-          many files.
+        description: "Mostly mechanical but wide changes, refactorings and renames across many files."
   review:
     candidates:
+      - id: haiku-low
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: low
+        description: "Tiny pull requests: texts, docs, config values, one-line fixes."
+      - id: haiku-medium
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: medium
+        description: "Small pull requests with one clear purpose in one or two files."
+      - id: haiku-high
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: high
+        description: "Small pull requests where a mistake would still be easy to spot."
+      - id: sonnet-low
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: low
+        description: "Routine pull requests of a few files with low behavioural impact."
       - id: sonnet-medium
         provider: claude
         model: claude-sonnet-5-5
         reasoningEffort: medium
-        description: Small pull requests with few files and a clear purpose.
+        description: "Small to medium pull requests with few files and a clear purpose."
+      - id: sonnet-high
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: high
+        description: "Medium pull requests that change behaviour in several files."
+      - id: opus-low
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: low
+        description: "Large but mechanical pull requests, e.g. renames across many files."
+      - id: opus-medium
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: medium
+        description: "Large pull requests or ones touching shared modules."
       - id: opus-high
         provider: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: Large pull requests, security-relevant or behaviour-changing code.
+        description: "Security, authentication, payments, data migrations, deployment or concurrency changes."
   risk:
     candidates:
+      - id: haiku-low
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: low
+        description: "Tiny pull requests: texts, docs, config values, one-line fixes."
+      - id: haiku-medium
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: medium
+        description: "Small pull requests with one clear purpose in one or two files."
+      - id: haiku-high
+        provider: claude
+        model: claude-haiku-5-5
+        reasoningEffort: high
+        description: "Small pull requests where a mistake would still be easy to spot."
+      - id: sonnet-low
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: low
+        description: "Routine pull requests of a few files with low behavioural impact."
       - id: sonnet-medium
         provider: claude
         model: claude-sonnet-5-5
         reasoningEffort: medium
-        description: Small pull requests with few files and a clear purpose.
+        description: "Small to medium pull requests with few files and a clear purpose."
+      - id: sonnet-high
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: high
+        description: "Medium pull requests that change behaviour in several files."
+      - id: opus-low
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: low
+        description: "Large but mechanical pull requests, e.g. renames across many files."
+      - id: opus-medium
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: medium
+        description: "Large pull requests or ones touching shared modules."
       - id: opus-high
         provider: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: Large pull requests, data migrations, authentication, payments or
-          deployment changes.
+        description: "Security, authentication, payments, data migrations, deployment or concurrency changes."
