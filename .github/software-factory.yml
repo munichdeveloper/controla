@@ -145,57 +145,68 @@ router:
         agent: claude
         model: claude-haiku-5-5
         reasoningEffort: low
-        description: "Trivial edits: typos, texts, config values, a one-line fix with an obvious place."
+        description: "Trivial edits: typos, texts, config values, a one-line fix with an
+          obvious place."
       - id: haiku-medium
         agent: claude
         model: claude-haiku-5-5
         reasoningEffort: medium
-        description: "Small, fully specified change in one or two files that follows an existing pattern."
+        description: "Small, fully specified change in one or two files that follows an
+          existing pattern."
       - id: haiku-high
         agent: claude
         model: claude-haiku-5-5
         reasoningEffort: high
-        description: "Small change in one area that needs some care, e.g. a simple test or a small UI tweak."
+        description: "Small change in one area that needs some care, e.g. a simple test
+          or a small UI tweak."
       - id: sonnet-low
         agent: claude
         model: claude-sonnet-5-5
         reasoningEffort: low
-        description: "Routine contained change with clear acceptance criteria and little reasoning needed."
+        description: "Routine contained change with clear acceptance criteria and little
+          reasoning needed."
       - id: sonnet-medium
         agent: claude
         model: claude-sonnet-5-5
         reasoningEffort: medium
-        description: "Clearly specified, contained changes in one area; bug fixes, small features, texts, tests."
+        description: "Clearly specified, contained changes in one area; bug fixes, small
+          features, texts, tests."
       - id: sonnet-high
         agent: claude
         model: claude-sonnet-5-5
         reasoningEffort: high
-        description: "Medium feature touching a few files, or a bug whose cause still has to be found."
+        description: "Medium feature touching a few files, or a bug whose cause still
+          has to be found."
       - id: opus-low
         agent: claude
         model: claude-opus-5-5
         reasoningEffort: low
-        description: "Broad but well understood change where judgement matters more than deep reasoning."
+        description: "Broad but well understood change where judgement matters more than
+          deep reasoning."
       - id: opus-medium
         agent: claude
         model: claude-opus-5-5
         reasoningEffort: medium
-        description: "Changes across several modules or a non-trivial feature with some design decisions."
+        description: "Changes across several modules or a non-trivial feature with some
+          design decisions."
       - id: opus-high
         agent: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: "New architecture, migrations, security, concurrency or hard debugging across modules."
+        description: "New architecture, migrations, security, concurrency or hard
+          debugging across modules."
       - id: codex-medium
         agent: codex
         model: gpt-6.1-sol
         reasoningEffort: medium
-        description: "Mechanical change across many files with a clear rule, e.g. renames or API updates."
+        description: "Mechanical change across many files with a clear rule, e.g.
+          renames or API updates."
       - id: codex-high
         agent: codex
         model: gpt-6.1-sol
         reasoningEffort: high
-        description: "Mostly mechanical but wide changes, refactorings and renames across many files."
+        description: "Mostly mechanical but wide changes, refactorings and renames
+          across many files."
   review:
     candidates:
       - id: haiku-low
@@ -242,7 +253,8 @@ router:
         provider: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: "Security, authentication, payments, data migrations, deployment or concurrency changes."
+        description: "Security, authentication, payments, data migrations, deployment or
+          concurrency changes."
   risk:
     candidates:
       - id: haiku-low
@@ -289,4 +301,5 @@ router:
         provider: claude
         model: claude-opus-5-5
         reasoningEffort: high
-        description: "Security, authentication, payments, data migrations, deployment or concurrency changes."
+        description: "Security, authentication, payments, data migrations, deployment or
+          concurrency changes."
