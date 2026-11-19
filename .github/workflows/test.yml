@@ -83,6 +83,49 @@ jobs:
       working-directory: .
       run: mvn checkstyle:check
       continue-on-error: true
+  n8n-contract:
+    # Contract test against real n8n 2.x and 3.x containers (Testcontainers, Docker on the hosted runner).
+    # Separate from the required check test-backend so the normal test run stays fast.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+    - name: Configure Maven Settings
+      run: |
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml <<EOF
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <servers>
+            <server>
+              <id>github</id>
+              <username>${{ github.actor }}</username>
+              <password>${{ secrets.GITHUB_TOKEN }}</password>
+            </server>
+          </servers>
+        </settings>
+        EOF
+    - name: Run n8n contract (FakeN8n and real n8n 2.x/3.x)
+      run: mvn -B -pl backend -Pn8n-contract -Dtest=FakeN8nContractTest verify
+    - name: Upload contract reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: n8n-contract-reports
+        path: |
+          backend/target/failsafe-reports
+          backend/target/surefire-reports
+        retention-days: 7
+        if-no-files-found: ignore
+
   test-frontend:
     runs-on: ubuntu-latest
     defaults:

@@ -32,7 +32,7 @@ class N8nContractIT {
      * The pinned n8n releases. Raise them here; nothing else selects an image, and no registry lookup
      * happens at test time. Each value must be a concrete release with a published {@code -debian} tag.
      */
-    static final String N8N_2_VERSION = "2.0.0";
+    static final String N8N_2_VERSION = "2.49.2";
     static final String N8N_3_VERSION = "3.3.0";
     private static final String IMAGE_SUFFIX = "-debian";
 
@@ -58,6 +58,8 @@ class N8nContractIT {
         String image = "n8nio/n8n:" + expectedVersion + IMAGE_SUFFIX;
         try (GenericContainer<?> n8n = new GenericContainer<>(DockerImageName.parse(image))
                 .withExposedPorts(5678)
+                // Bind IPv4 explicitly: n8n defaults to "::" and exits where Docker has no IPv6.
+                .withEnv("N8N_LISTEN_ADDRESS", "0.0.0.0")
                 .withEnv("N8N_SECURE_COOKIE", "false")
                 .withEnv("N8N_DIAGNOSTICS_ENABLED", "false")
                 .withEnv("N8N_VERSION_NOTIFICATIONS_ENABLED", "false")
