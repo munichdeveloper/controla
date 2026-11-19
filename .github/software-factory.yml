@@ -52,7 +52,6 @@ workers:
     enabled: false
   coding:
     enabled: true
-    # Johannes 2026-11-19: first attempt Sonnet medium; Opus high only after the agent itself failed (SF 0.15.0).
     agents:
       - agent: claude
         model: claude-sonnet-5-5
