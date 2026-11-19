@@ -38,6 +38,8 @@ execution:
   workerTimeoutMinutes: 30
   dispatchGraceMinutes: 10
   engine: temporal
+  # Johannes 2026-11-19 (controla#124 / PR #148): the Factory reworks AI review request_changes itself.
+  rework: true
 llm:
   # Temporarily deterministic (2026-11-18): OpenAI planning answered HTTP 429 on every pass, so no worker started.
   # Switch back to openai once the broker's OpenAI key has quota again.
