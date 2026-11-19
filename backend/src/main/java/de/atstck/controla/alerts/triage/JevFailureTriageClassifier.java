@@ -18,8 +18,6 @@ import java.util.concurrent.TimeoutException;
 public class JevFailureTriageClassifier implements FailureTriageClassifier {
     private static final Logger logger = LoggerFactory.getLogger(JevFailureTriageClassifier.class);
     private static final URI ENDPOINT = URI.create("https://api.typesafe.ai/v1/systemone");
-    private final String apiKey;
-    private final HttpClient client;
     private static final String QUESTION = "triage";
     public static final String DEFAULT_MODEL = "jev-latest";
     public static final long DEFAULT_TIMEOUT_MS = 5000;
