@@ -54,17 +54,77 @@ public class N8nApiClient {
         if (System.currentTimeMillis() - lastVersionCheck < VERSION_CHECK_INTERVAL && cachedLatestVersion != null) {
             return cachedLatestVersion;
         }
+        String latest = fetchLatestFromDockerHub();
+        if (latest == null) {
+            latest = fetchLatestFromNpm();
+        }
+        if (latest != null) {
+            cachedLatestVersion = latest;
+            lastVersionCheck = System.currentTimeMillis();
+            return latest;
+        }
+        return cachedLatestVersion != null ? cachedLatestVersion : "unknown";
+    }
+
+    private static final String DOCKER_TAGS_URL = "https://hub.docker.com/v2/repositories/n8nio/n8n/tags?page_size=100";
+    private static final int MAX_TAG_PAGES = 3;
+    private static final java.util.regex.Pattern STABLE_TAG = java.util.regex.Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)$");
+
+    /** Highest plain {@code X.Y.Z} tag on Docker Hub (n8n 3.x is no longer published to npm); null if unavailable. */
+    @SuppressWarnings("unchecked")
+    private String fetchLatestFromDockerHub() {
         try {
-            Map<String, Object> response = restTemplate.getForObject("https://registry.npmjs.org/n8n/latest", Map.class);
-            if (response != null && response.containsKey("version")) {
-                cachedLatestVersion = (String) response.get("version");
-                lastVersionCheck = System.currentTimeMillis();
-                return cachedLatestVersion;
+            String best = null;
+            String url = DOCKER_TAGS_URL;
+            for (int page = 0; page < MAX_TAG_PAGES && url != null; page++) {
+                Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+                if (response == null) {
+                    break;
+                }
+                Object results = response.get("results");
+                if (results instanceof List<?> list) {
+                    for (Object entry : list) {
+                        if (entry instanceof Map<?, ?> m && m.get("name") instanceof String name
+                                && STABLE_TAG.matcher(name).matches()
+                                && (best == null || compareStable(name, best) > 0)) {
+                            best = name;
+                        }
+                    }
+                }
+                url = response.get("next") instanceof String next && !next.isBlank() ? next : null;
+            }
+            return best;
+        } catch (Exception e) {
+            logger.debug("Docker Hub version lookup failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static int compareStable(String a, String b) {
+        java.util.regex.Matcher ma = STABLE_TAG.matcher(a);
+        java.util.regex.Matcher mb = STABLE_TAG.matcher(b);
+        ma.matches();
+        mb.matches();
+        for (int i = 1; i <= 3; i++) {
+            int c = Integer.compare(Integer.parseInt(ma.group(i)), Integer.parseInt(mb.group(i)));
+            if (c != 0) {
+                return c;
+            }
+        }
+        return 0;
+    }
+
+    /** Fallback only: npm stops at 2.x. */
+    private String fetchLatestFromNpm() {
+        try {
+            Map<?, ?> response = restTemplate.getForObject("https://registry.npmjs.org/n8n/latest", Map.class);
+            if (response != null && response.get("version") instanceof String v) {
+                return v;
             }
         } catch (Exception e) {
             // ignore
         }
-        return cachedLatestVersion != null ? cachedLatestVersion : "unknown";
+        return null;
     }
 
     public SystemInfo getSystemInfo(String baseUrl, String apiKey) {
