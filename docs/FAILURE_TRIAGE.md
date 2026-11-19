@@ -12,6 +12,8 @@ Configuration properties (environment variable equivalents in parentheses):
 | `controla.triage.enabled` (`CONTROLA_TRIAGE_ENABLED`) | `false` | Enable shadow observation and its logs. |
 | `controla.triage.provider` (`CONTROLA_TRIAGE_PROVIDER`) | `rules` | `rules` or `jev`. |
 | `controla.triage.jev.api-key` (`CONTROLA_TRIAGE_JEV_API_KEY`) | empty | Required to activate the external adapter. |
+| `controla.triage.jev.model` (`CONTROLA_TRIAGE_JEV_MODEL`) | `jev-latest` | Model sent to TypeSafe System One. |
+| `controla.triage.jev.timeout-ms` (`CONTROLA_TRIAGE_JEV_TIMEOUT_MS`) | `5000` | Deadline for the entire Jev HTTP call. Triage runs after alerts are forwarded, so it never delays alerting. |
 
 When disabled, no classifier or observer is created, no metadata is extracted,
 no history requests are added, and no triage logs are emitted. A custom
@@ -35,22 +37,25 @@ eligible for the next poll.
 Jev is activated only with the flag, `provider=jev` and a nonblank API key.
 Without its key it yields `UNSURE` with `provider_not_configured`, making no
 external requests. The adapter posts JSON to the fixed endpoint
-`https://api.typesafe.ai/v1/systemone`, authenticating with a Bearer header.
-The prototype wire contract sends exactly these fields:
+`https://api.typesafe.ai/v1/systemone`, authenticating with the API key in the
+standard HTTP `Authorization` header (Bearer token scheme). The request body is
+a System One call with one `choice` question named `triage` (options `ALERT`
+and `NOISE`, with German/English criteria):
 
 ```json
-{"workflowId":"wf1","nodeType":"n8n-nodes-base.httpRequest","httpStatus":429,"errorCategory":"RATE_LIMIT","retry":true,"failureCount24h":1}
+{"model":"jev-latest","state":"Workflow id: wf1\nNode type: n8n-nodes-base.httpRequest\nHTTP status: 429\nError category: RATE_LIMIT\nRetry: true\nFailures in last 24 h: 1",
+ "questions":{"triage":{"type":"choice","instructions":"...","criteria":{"ALERT":"...","NOISE":"..."}}}}
 ```
 
-Missing metadata is `null`; unknown categories are `UNKNOWN`. Categories are
-fixed enum values and node types come from the failing node's type, never its
-display name. Messages, execution payloads, workflow JSON, credentials, URLs,
-instance names and instance ids are excluded from the request body. Responses
-must have the shape
-`{"decision":"NOISE","confidence":0.8,"reasonCode":"transient_retry"}`.
-Decisions are `ALERT`, `NOISE` or `UNSURE`; confidence must be finite and within
-0–1; reason codes are short identifiers. Redirects are disabled. A one-second
-deadline covers the entire HTTP response. Errors, invalid responses and
+`state` is a short text rendering of the metadata-only signal; missing values
+render as `unknown`. Messages, execution payloads, workflow JSON, credentials,
+URLs, instance names and instance ids are excluded from the request body.
+The response is read from `answers.triage`:
+`{"model":"...","answers":{"triage":{"choice":"NOISE","confidence":0.82,"probabilities":{}}},"usage":{}}`.
+`choice` `ALERT`/`NOISE` becomes the decision, `confidence` (finite, 0–1) the
+confidence and `jev_choice` the reason code. A missing or invalid answer yields
+`UNSURE` (`jev_invalid_answer`). Redirects are disabled. The configured
+timeout covers the entire HTTP response. Errors, invalid responses and
 timeouts yield `UNSURE`; provider logs omit response bodies and exception text.
 
 Each forwarded failure gets one `Failure triage shadow` log with `instanceId`
