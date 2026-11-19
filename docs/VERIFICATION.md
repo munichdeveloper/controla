@@ -219,11 +219,38 @@ fehlgeschlagenen Befehl und die Ursache dokumentieren und nach der Korrektur die
 betroffenen Prüfungen für den neuen Stand wiederholen. Logs und Screenshots
 dürfen keine Zugangsdaten oder Kundendaten enthalten.
 
+## Echter n8n-Contract (Testcontainers)
+
+Die folgenden Befehle werden vom Repository-Root ausgeführt. Voraussetzung sind Java 17, Maven
+und für die Integrationstests ein laufender Docker-Daemon. Beim ersten Lauf werden Maven-Abhängigkeiten
+und Container-Images geladen.
+
+| Prüfung | Befehl | Nachweis |
+|---|---|---|
+| Backend einschließlich PostgreSQL-Integrationstests | `mvn -B -pl backend verify` | `backend/target/surefire-reports/` |
+| Schneller Fake-n8n-Contract einschließlich absichtlicher Abweichung | `mvn -B -pl backend -Dtest=FakeN8nContractTest test` | `backend/target/surefire-reports/` |
+| Echter n8n-Contract gegen die gepinnten 2.x- und 3.x-Debian-Images | `mvn -B -pl backend -Pn8n-contract -Dtest=FakeN8nContractTest verify` | `backend/target/failsafe-reports/TEST-de.atstck.controla.service.N8nContractIT.xml` |
+
+`FakeN8nContractTest` und `N8nContractIT` verwenden dieselben Assertions aus `N8nApiContract` und den
+echten `N8nApiClient`. Geprüft werden Status und Authentifizierung, genaue installierte Version,
+Workflows, Fehler-Executions mit und ohne Daten einschließlich Zeitfilter sowie Health und Readiness.
+Der echte Test richtet Owner und API-Key mit allen verfügbaren Scopes per API ein und führt einen
+absichtlich fehlschlagenden Workflow aus. Der negative Fake-Test stellt sicher, dass eine abweichende
+Versionsantwort den Contract verletzt.
+
+Die zwei n8n-Versionen sind fest gepinnt (Konstanten `N8N_2_VERSION` und `N8N_3_VERSION` in
+`N8nContractIT`, Images `n8nio/n8n:<version>-debian`). Zur Testlaufzeit wird kein Tag über Docker Hub
+aufgelöst. Ein fehlender Docker-Daemon führt zum Fehler. Ohne das Profil `n8n-contract` startet kein
+Lauf n8n-Container; der Pflicht-Check `test-backend` (`mvn -B clean verify`) führt den Contract-Test
+daher nicht aus. In CI läuft er im eigenen Job `n8n-contract` in `.github/workflows/test.yml`.
+Einzelheiten zur Vorbereitung und eine Anleitung für eine manuelle Mutation des Fakes stehen in
+[TESTING_WITH_FAKE_N8N.md](TESTING_WITH_FAKE_N8N.md).
+
+Die Produktlogik zur neuesten n8n-Version (Issue #117) gehört nicht zu dieser Änderung.
+
 ## Folgeschritte
 
-- Contract-Tests gegen echte `n8nio/n8n`-Instanzen per Testcontainers sind laut
-  [Fake-n8n-Anleitung](TESTING_WITH_FAKE_N8N.md) ein separates Folge-Issue. Im
-  aktuellen Checkout gibt es dafür noch keinen ausführbaren Prüfbefehl. Sobald
-  sie implementiert sind, den realen Befehl, die geprüften n8n-Versionen und die
-  Bestehenskriterien hier bei **N** ergänzen und verbindlich machen.
+- Die Contract-Tests gegen echte `n8nio/n8n`-Instanzen stehen im Abschnitt
+  [Echter n8n-Contract](#echter-n8n-contract-testcontainers). Sobald sie in CI
+  stabil laufen, bei **N** als Pflicht ergänzen.
 - Ein CI-Job für `npm run verify` und der Verweis in `AGENTS.md` folgen separat.
