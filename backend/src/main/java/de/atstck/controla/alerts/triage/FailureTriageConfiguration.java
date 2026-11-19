@@ -14,12 +14,14 @@ public class FailureTriageConfiguration {
     @ConditionalOnMissingBean(FailureTriageClassifier.class)
     public FailureTriageClassifier failureTriageClassifier(
             @Value("${controla.triage.provider:rules}") String provider,
-            @Value("${controla.triage.jev.api-key:}") String apiKey) {
+            @Value("${controla.triage.jev.api-key:}") String apiKey,
+            @Value("${controla.triage.jev.model:jev-latest}") String model,
+            @Value("${controla.triage.jev.timeout-ms:5000}") long timeoutMs) {
         return switch (provider) {
             case "rules" -> new RuleBasedFailureTriageClassifier();
             case "jev" -> apiKey.isBlank()
                     ? signal -> TriageDecision.unsure("provider_not_configured")
-                    : new JevFailureTriageClassifier(apiKey);
+                    : new JevFailureTriageClassifier(apiKey, model, timeoutMs);
             default -> throw new IllegalArgumentException("Unsupported controla.triage.provider");
         };
     }

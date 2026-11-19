@@ -15,9 +15,7 @@ import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
@@ -36,40 +34,55 @@ class JevFailureTriageClassifierTest {
 
     @Test
     void sendsExactlyTheMetadataAllowlistAndParsesTypedDecision() throws Exception {
-        respond(200, "{\"decision\":\"NOISE\",\"confidence\":0.8,\"reasonCode\":\"transient_retry\"}");
+        respond(200, answer("NOISE", "0.8"));
         FailureSignal metadata = FailureSignalExtractor.fromExecution(Map.of("workflowId", "wf1", "retryOf", "42",
                 "instanceName", "PRIVATE_INSTANCE_NAME", "payload", Map.of("value", "PRIVATE_PAYLOAD"),
                 "resultData", Map.of("error", Map.of("httpCode", "429", "message", "PRIVATE_ERROR_MESSAGE",
                         "node", Map.of("type", "n8n-nodes-base.httpRequest", "credentials", "PRIVATE_CREDENTIALS")))))
                 .withFailureCount24h(1);
 
-        assertThat(classifier.classify(metadata)).isEqualTo(new TriageDecision(NOISE, 0.8, "transient_retry"));
+        assertThat(classifier.classify(metadata)).isEqualTo(new TriageDecision(NOISE, 0.8, "jev_choice"));
 
         ArgumentCaptor<HttpRequest> captured = ArgumentCaptor.forClass(HttpRequest.class);
         verify(client).sendAsync(captured.capture(), any(HttpResponse.BodyHandler.class));
         HttpRequest request = captured.getValue();
         assertThat(request.uri().toString()).isEqualTo("https://api.typesafe.ai/v1/systemone");
         assertThat(request.method()).isEqualTo("POST");
-        assertThat(request.timeout()).contains(Duration.ofSeconds(1));
+        assertThat(request.timeout()).contains(Duration.ofSeconds(5));
         assertThat(request.headers().firstValue("Authorization")).contains("Bearer PRIVATE_API_KEY");
         String body = requestBody(request);
         JsonNode json = new ObjectMapper().readTree(body);
-        Set<String> fields = new HashSet<>();
-        json.fieldNames().forEachRemaining(fields::add);
-        assertThat(fields).containsExactlyInAnyOrder("workflowId", "nodeType", "httpStatus", "errorCategory", "retry", "failureCount24h");
-        assertThat(json.get("workflowId").asText()).isEqualTo("wf1");
-        assertThat(json.get("httpStatus").asInt()).isEqualTo(429);
-        assertThat(json.get("retry").asBoolean()).isTrue();
+        assertThat(json.get("model").asText()).isEqualTo("jev-latest");
+        String state = json.get("state").asText();
+        assertThat(state).contains("wf1", "n8n-nodes-base.httpRequest", "429", "RATE_LIMIT", "true");
+        JsonNode triage = json.get("questions").get("triage");
+        assertThat(triage.get("type").asText()).isEqualTo("choice");
+        assertThat(triage.get("criteria").has("ALERT")).isTrue();
+        assertThat(triage.get("criteria").has("NOISE")).isTrue();
+        assertThat(state).doesNotContain("PRIVATE_ERROR_MESSAGE", "PRIVATE_PAYLOAD", "PRIVATE_INSTANCE_NAME",
+                "PRIVATE_CREDENTIALS", "https://");
         assertThat(body).doesNotContain("errorMessage", "message", "payload", "instanceName", "workflowName",
                 "credentials", "PRIVATE_API_KEY", "PRIVATE_INSTANCE_NAME", "PRIVATE_PAYLOAD",
                 "PRIVATE_ERROR_MESSAGE", "PRIVATE_CREDENTIALS", "https://");
     }
 
     @Test
+    void mapsAlertChoiceAndConfiguredModelAndTimeout() throws Exception {
+        JevFailureTriageClassifier custom = new JevFailureTriageClassifier("K", "my-model", 2000, client);
+        respond(200, answer("ALERT", "0.9"));
+        assertThat(custom.classify(signal)).isEqualTo(new TriageDecision(ALERT, 0.9, "jev_choice"));
+        ArgumentCaptor<HttpRequest> captured = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(client).sendAsync(captured.capture(), any(HttpResponse.BodyHandler.class));
+        assertThat(captured.getValue().timeout()).contains(Duration.ofSeconds(2));
+        assertThat(new ObjectMapper().readTree(requestBody(captured.getValue())).get("model").asText())
+                .isEqualTo("my-model");
+    }
+
+    @Test
     void deadlineCoversEntireResponseAndCancelsRequest() throws Exception {
         CompletableFuture<HttpResponse<String>> pending = mock(CompletableFuture.class);
         doReturn(pending).when(client).sendAsync(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
-        when(pending.get(1, TimeUnit.SECONDS)).thenThrow(new TimeoutException());
+        when(pending.get(5000, TimeUnit.MILLISECONDS)).thenThrow(new TimeoutException());
 
         assertThat(classifier.classify(signal)).isEqualTo(TriageDecision.unsure("provider_timeout"));
         verify(pending).cancel(true);
@@ -89,14 +102,19 @@ class JevFailureTriageClassifierTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"not json", "null", "{}",
-            "{\"decision\":\"ALERT\",\"confidence\":null,\"reasonCode\":\"bad\"}",
-            "{\"decision\":\"ALERT\",\"confidence\":1.1,\"reasonCode\":\"bad\"}",
-            "{\"decision\":\"SUPPRESS\",\"confidence\":0.9,\"reasonCode\":\"bad\"}",
-            "{\"decision\":\"ALERT\",\"confidence\":0.9,\"reasonCode\":\"PRIVATE message\"}"})
+    @ValueSource(strings = {"not json", "null", "{}", "{\"answers\":{}}",
+            "{\"answers\":{\"triage\":{\"choice\":\"ALERT\"}}}",
+            "{\"answers\":{\"triage\":{\"choice\":\"ALERT\",\"confidence\":1.1}}}",
+            "{\"answers\":{\"triage\":{\"choice\":\"SUPPRESS\",\"confidence\":0.9}}}",
+            "{\"answers\":{\"triage\":{\"choice\":null,\"confidence\":0.9}}}"})
     void invalidResponseIsUnsure(String response) {
         respond(200, response);
         assertThat(classifier.classify(signal).decision()).isEqualTo(UNSURE);
+    }
+
+    private static String answer(String choice, String confidence) {
+        return "{\"model\":\"jev-latest\",\"answers\":{\"triage\":{\"choice\":\""+ choice
+                + "\",\"confidence\":" + confidence + ",\"probabilities\":{}}},\"usage\":{}}";
     }
 
     private void respond(int status, String body) {
