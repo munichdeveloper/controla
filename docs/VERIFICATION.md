@@ -47,6 +47,20 @@ Exitcode 0. Jede Konsolenfehlermeldung, jede JavaScript-Ausnahme und jede
 fehlschlagen. Der Import-Knopf ist Premium; in der CE wird er nicht geprüft.
 Chromium muss installiert sein (`npx playwright install --with-deps chromium`).
 
+Das Backend läuft als Produktions-JAR ohne Testprofil. FakeN8n auf 127.0.0.1
+ist trotzdem erreichbar, weil die Community Edition keine Zieladressen
+einschränkt (`AllowAllTargetPolicy`); eine zusätzliche Loopback-Freigabe gibt es
+nicht. Weil kein Mailserver läuft, schaltet der Lauf nur den Mail-Healthcheck ab
+(`MANAGEMENT_HEALTH_MAIL_ENABLED=false`). Das beim Start erzeugte
+Admin-Passwort steht in `backend.log` maskiert. Abbruch mit Strg+C beendet alle
+gestarteten Prozesse, entfernt die Wegwerf-Datenbank und schreibt den Bericht
+mit „Abbruch durch SIGINT“ (Exitcode 130).
+
+Unterstützt: Linux (geprüft) und macOS mit Homebrew-PostgreSQL. Windows wird
+nicht unterstützt (Prozessgruppen und Unix-Socket-Verzeichnis), dort WSL
+verwenden. `initdb` verweigert den Start als root; als root (z. B. in
+Containern) eine vorhandene Test-Datenbank über `VERIFY_DATABASE_URL` angeben.
+
 Optionale Umgebungsvariablen: `VERIFY_SKIP_BUILD=1` (vorhandene Builds nutzen),
 `VERIFY_DATABASE_URL`/`VERIFY_DATABASE_USER`/`VERIFY_DATABASE_PASSWORD` (vorhandene
 Test-Datenbank), `VERIFY_PG_BIN` (PostgreSQL-Binaries), `VERIFY_BACKEND_PORT`

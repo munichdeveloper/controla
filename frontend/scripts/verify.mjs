@@ -44,12 +44,25 @@ function run(command, args, options = {}) {
   if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} endete mit Exit-Code ${result.status}`);
 }
 
+// AdminUserInitializer prints the generated admin password once ("Password: ..."); keep it out of the report.
+function maskSecrets(line) {
+  return line.replace(/(Password: )\S+/g, '$1********');
+}
+
 function start(name, command, args, options = {}) {
   const logFile = createWriteStream(path.join(reportDir, `${name}.log`));
   const child = spawn(command, args, { detached: true, stdio: ['ignore', 'pipe', 'pipe'], ...options });
   child.output = '';
   for (const stream of [child.stdout, child.stderr]) {
-    stream.on('data', chunk => { child.output += chunk; logFile.write(chunk); });
+    // The log file is part of the report and may be shared: write whole lines with secrets masked.
+    let pending = '';
+    stream.on('data', chunk => {
+      child.output += chunk;
+      const lines = (pending + chunk).split('\n');
+      pending = lines.pop();
+      for (const line of lines) logFile.write(`${maskSecrets(line)}\n`);
+    });
+    stream.on('end', () => { if (pending) logFile.write(maskSecrets(pending)); pending = ''; });
   }
   child.on('error', error => { child.output += `spawn error: ${error.message}\n`; });
   child.exited = new Promise(resolve => child.on('exit', code => resolve(code ?? -1)));
@@ -208,7 +221,8 @@ async function tour(browser, credentials, fixtures) {
     await step('login', async () => {
       await page.goto(`${baseUrl}/login`);
       await page.locator('#password').waitFor();
-      await page.locator('#username').fill(credentials.username);
+      // Community Edition locks the username to "admin" (disabled field), so only fill it when editable.
+      if (await page.locator('#username').isEditable()) await page.locator('#username').fill(credentials.username);
       await page.locator('#password').fill(credentials.password);
       await page.screenshot({ path: path.join(reportDir, `${viewport.name}-login-form.png`) });
       await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
@@ -217,12 +231,12 @@ async function tour(browser, credentials, fixtures) {
     await step('instanzuebersicht', async () => {
       await page.goto(baseUrl);
       await heading('Instanzübersicht');
-      for (const name of Object.values(fixtures.names)) await page.getByText(name, { exact: true }).first().waitFor();
+      for (const name of Object.values(fixtures.names)) await page.getByText(name, { exact: true }).filter({ visible: true }).first().waitFor();
     });
     await step('instanzdetail-fehler', async () => {
       await page.goto(`${baseUrl}/instances/${fixtures.ids.errors}`);
       await page.getByRole('button', { name: 'Fehler', exact: true }).click();
-      await page.getByText(fixtures.errorMessage).first().waitFor();
+      await page.getByText(fixtures.errorMessage).filter({ visible: true }).first().waitFor();
     });
     await step('alarme', async () => {
       await page.goto(`${baseUrl}/settings/alerts`);
@@ -283,6 +297,8 @@ async function main() {
     SPRING_DATASOURCE_URL: db.url, SPRING_DATASOURCE_USERNAME: db.user, SPRING_DATASOURCE_PASSWORD: db.password,
     MAIL_HOST: '127.0.0.1', MAIL_PORT: '2525', MAIL_USERNAME: 'verify', MAIL_PASSWORD: 'verify',
     CORS_ALLOWED_ORIGINS: baseUrl, FRONTEND_URL: baseUrl, N8N_MONITOR_INTERVAL_MS: '2000',
+    // No mail server in the verify run: its health indicator would keep /actuator/health at 503 (DOWN).
+    MANAGEMENT_HEALTH_MAIL_ENABLED: 'false',
   } });
   await waitFor('Backend startet', async () => {
     adminPassword ||= /Password: (\S+)/.exec(backend.output)?.[1] || '';
@@ -344,13 +360,26 @@ function writeReport(fatal) {
 }
 
 let fatal = '';
-for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { killAll(); process.exit(130); });
+let interrupted = false;
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, async () => {
+    if (interrupted) return;
+    interrupted = true;
+    // Same cleanup as a normal end: stop the processes and remove the throwaway database.
+    record('Abbruch', false, `durch ${signal}`);
+    writeReport(`Abbruch durch ${signal}`);
+    await cleanup();
+    process.exit(130);
+  });
+}
 try {
   await main();
 } catch (error) {
   fatal = error.message;
   record('Abbruch', false, fatal.split('\n')[0]);
 }
+// After a signal the handler owns report and cleanup; the killed processes must not overwrite its report.
+if (interrupted) await new Promise(() => {});
 const ok = writeReport(fatal);
 await cleanup();
 console.log(`\n[verify] ${ok ? 'BESTANDEN' : 'FEHLGESCHLAGEN'} - Bericht: ${path.relative(repoRoot, path.join(reportDir, 'report.md'))}`);
