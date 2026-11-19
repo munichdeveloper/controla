@@ -127,3 +127,52 @@ merge:
       provider: openai
 deploy:
   enabled: false
+
+# Model router (Johannes, 2026-11-19, SF 0.16.0): TypeSafe Jev picks model and effort per call from these candidates.
+# Without the broker's OpenRouter key, or on low confidence, the configured models run and Slack reports it.
+router:
+  enabled: true
+  model: typesafe/jev-1.14
+  minConfidence: 0.5
+  timeoutSeconds: 10
+  coding:
+    candidates:
+      - id: sonnet-medium
+        agent: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: medium
+        description: Clearly specified, contained changes in one area; bug fixes, small features, texts, tests.
+      - id: opus-high
+        agent: claude
+        model: claude-opus-5-5
+        reasoningEffort: high
+        description: Changes across several modules, new architecture, migrations, security or hard debugging.
+      - id: codex-high
+        agent: codex
+        model: gpt-6.1-sol
+        reasoningEffort: high
+        description: Mostly mechanical but wide changes, refactorings and renames across many files.
+  review:
+    candidates:
+      - id: sonnet-medium
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: medium
+        description: Small pull requests with few files and a clear purpose.
+      - id: opus-high
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: high
+        description: Large pull requests, security-relevant or behaviour-changing code.
+  risk:
+    candidates:
+      - id: sonnet-medium
+        provider: claude
+        model: claude-sonnet-5-5
+        reasoningEffort: medium
+        description: Small pull requests with few files and a clear purpose.
+      - id: opus-high
+        provider: claude
+        model: claude-opus-5-5
+        reasoningEffort: high
+        description: Large pull requests, data migrations, authentication, payments or deployment changes.
