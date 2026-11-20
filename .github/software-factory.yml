@@ -43,7 +43,7 @@ execution:
 llm:
   # Temporarily deterministic (2026-11-18): OpenAI planning answered HTTP 429 on every pass, so no worker started.
   # Switch back to openai once the broker's OpenAI key has quota again.
-  provider: mock
+  provider: static
   model: gpt-4.1-mini
   reasoningEffort: null
   maxOutputTokens: 4000
