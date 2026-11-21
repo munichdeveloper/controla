@@ -31,6 +31,8 @@ autonomy:
   # Johannes 2026-11-18: fully autonomous; every harness:managed task starts without a person's harness:ready.
   startGrant: none
 execution:
+  # Johannes 2026-11-20 (SF #188): one extra rescue attempt with workers.coding.retryAgents after the last regular one.
+  rescue: { enabled: true, maxPerDay: 3 }
   dryRun: false
   maxParallelWorkers: 1
   maxRetries: 2
