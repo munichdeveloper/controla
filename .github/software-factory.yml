@@ -82,6 +82,14 @@ notifications:
     maxPerRun: 20
     since: '2026-11-07T00:54:52Z' # Do not backfill earlier actions.
     events:
+      attention_required:
+        # Johannes 2026-11-21 (SF #188): the Factory cannot go on alone and needs a person.
+        enabled: true
+        channel: C0CJZDHJMSB # factory-todo
+      start_refused:
+        # Johannes 2026-11-21 (SF #188): starts refused for the whole repository (at most once per code and day).
+        enabled: true
+        channel: C0CJZDHJMSB # factory-todo
       run_started:
         enabled: true
         channel: null
