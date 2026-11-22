@@ -1,0 +1,30 @@
+name: Formal verification
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.agents/skills/formal-verification/**'
+      - '.github/workflows/formal-verification.yml'
+      - 'verification/failure-triage/**'
+      - 'docs/FAILURE_TRIAGE.md'
+      - 'backend/src/main/java/de/atstck/controla/alerts/triage/**'
+      - 'backend/src/test/java/de/atstck/controla/alerts/triage/**'
+
+permissions:
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r verification/failure-triage/requirements.txt
+      - run: python verification/failure-triage/check.py
